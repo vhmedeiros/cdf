@@ -656,17 +656,20 @@ min_tier: # pior modelo aceitável por tarefa; abaixo disso, o job ESPERA em vez
 
 ## 13. Estado atual
 
-- **Fase:** 0 (concluída)
+- **Fase:** 1 (concluída)
 - **Feito:**
-  - Setup inicial com Next.js 15 (Pages Router), Node 24 e TypeScript (`strict: true`).
-  - Configuração de linters e formatação: ESLint, Prettier e EditorConfig.
-  - Configuração de Conventional Commits: Husky e Commitlint.
-  - Infraestrutura de desenvolvimento em Docker Compose (`infra/compose.yaml`): PostgreSQL 17 com `pgvector`, Redis 7 e Mailcatcher.
-  - Camada de banco de dados (`infra/database.ts`), script de espera com backoff exponencial (`infra/scripts/wait-for-postgres.ts`) e migrações com `node-pg-migrate`.
-  - Tratamento central de erros e respostas padronizadas em PT-BR (`infra/errors.ts` e `infra/controller.ts`).
-  - Primeiro endpoint implementado: `GET /api/v1/status` retornando versão do Postgres, conexões abertas e máximas.
-  - Teste de integração automatizado com Jest e orquestrador (`tests/orchestrator.ts` e `tests/integration/api/v1/status/get.test.ts`), passando 100%.
-  - Workflow de CI no GitHub Actions (`.github/workflows/ci.yaml`).
-- **Próximo passo:** Fase 1: Contas (users, sessions, features, controller com `canRequest`, login/logout, convites, reset de senha com mailcatcher, rate-limit).
+  - **Fase 0 (Fundação):** Next.js 15, Node 24, TS strict, Docker Compose (Postgres 17 pgvector, Redis 7, Mailcatcher), migrações com node-pg-migrate, `GET /api/v1/status`, orquestrador de testes e CI.
+  - **Fase 1 (Contas e Autenticação):**
+    - Migrações das tabelas `users`, `sessions`, `invites` e `password_resets`.
+    - Regras de negócio em `models/` (`user.ts`, `session.ts`, `invite.ts`, `passwordReset.ts`).
+    - Sessões server-side gravadas no banco com cookies `httpOnly`, `SameSite=Lax` e expiração deslizante (sliding session).
+    - Hashing de senha com `bcryptjs` (custo 10) e proteção contra timing attack.
+    - Rate-limiting no Redis em `infra/rate-limit.ts` (bloqueio progressivo após 5 erros por IP/email).
+    - Middlewares `injectAnonymousOrUser` e `canRequest(feature)` em `infra/controller.ts` (autorização granular por features: student vs admin).
+    - Endpoints de autenticação: login/logout (`POST`/`DELETE /api/v1/sessions`), perfil (`GET /api/v1/user`), convites (`POST /api/v1/admin/invites`, `GET`/`PATCH /api/v1/invites/[token]`), redefinição de senha (`POST`/`PATCH /api/v1/password-resets`).
+    - Envio de e-mail integrado ao Mailcatcher em `infra/email.ts`.
+    - 21 testes de integração automatizados passando com Jest (100% verde).
+    - Caderno de estudos para aprendizado em `docs/learning/` com analogias completas com Django.
+- **Próximo passo:** Fase 2: Cursos + Drive (tabelas de cursos, módulos, lições e materiais; leitor puro `buildTree` do Drive com as 3 estratégias de agrupamento; preview; worker BullMQ; telas de admin de cursos; seed de desenvolvimento).
 - **Problemas conhecidos:** —
 - **Decisões pendentes com o dono:** nome definitivo da plataforma; domínio; provedor de e-mail (SMTP); lista inicial de disciplinas/assuntos (taxonomia) e bancas prioritárias; se a plataforma será só para uso próprio/grupo fechado ou comercial (afeta plano da IA e questões de direito autoral).
