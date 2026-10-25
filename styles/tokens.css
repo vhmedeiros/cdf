@@ -1,0 +1,31 @@
+/* styles/tokens.css — Biblioteca Noturna Design System Tokens */
+
+:root {
+  --bg: #0b0b0c;
+  --surface: #131315;
+  --surface-2: #1b1b1e;
+  --border: #2a2a2e;
+  --text: #ece9e2;
+  --text-muted: #9a978f;
+  --accent: #d4af37;
+  --accent-soft: #f5d76e;
+  --accent-deep: #a8892c;
+  --success: #6fbf73;
+  --danger: #e5484d;
+  --radius: 14px;
+}
+
+@theme {
+  --color-bg: #0b0b0c;
+  --color-surface: #131315;
+  --color-surface-2: #1b1b1e;
+  --color-border: #2a2a2e;
+  --color-text: #ece9e2;
+  --color-text-muted: #9a978f;
+  --color-accent: #d4af37;
+  --color-accent-soft: #f5d76e;
+  --color-accent-deep: #a8892c;
+  --color-success: #6fbf73;
+  --color-danger: #e5484d;
+  --radius-custom: 14px;
+}

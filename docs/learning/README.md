@@ -10,7 +10,8 @@ Bem-vindo ao caderno de estudos do projeto! Cada fase tem um arquivo explicando 
 | 1. Contas e Autenticação | [fase-1-contas.md](./fase-1-contas.md)       | ✅ Concluída |
 | 2. Cursos + Drive        | [fase-2-cursos.md](./fase-2-cursos.md)       | ✅ Concluída |
 | 3. Streaming             | [fase-3-streaming.md](./fase-3-streaming.md) | ✅ Concluída |
-| 4. Experiência de Aula   | [fase-4-player.md](./fase-4-player.md)       | ⏳ Próxima   |
+| 4. Experiência de Aula   | [fase-4-player.md](./fase-4-player.md)       | ✅ Concluída |
+| 5. Aprendizado           | [fase-5-progresso.md](./fase-5-progresso.md) | ⏳ Próxima   |
 
 ---
 
@@ -19,7 +20,8 @@ Bem-vindo ao caderno de estudos do projeto! Cada fase tem um arquivo explicando 
 Além do passo a passo de cada fase, mantemos um documento central com os maiores desafios técnicos enfrentados e suas soluções detalhadas:
 
 👉 **[Descobertas de Arquitetura e Lições Práticas](./descobertas-e-licoes.md)**
-- *Connection Leaks* no Node.js vs Django
+
+- _Connection Leaks_ no Node.js vs Django
 - Como resolver o problema N+1 com SQL Puro (`ANY($1::uuid[])`)
 - Como funciona o seek de vídeos via Range Requests (HTTP 206)
 - A técnica `X-Accel-Redirect` do Nginx para desonerar o backend

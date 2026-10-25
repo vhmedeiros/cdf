@@ -13,7 +13,7 @@ router.get(getHandler);
 async function getHandler(req: NextApiRequest, res: NextApiResponse) {
   const user = req.context.user;
 
-  if ("isAnonymous" in user && user.isAnonymous) {
+  if (("isAnonymous" in user && user.isAnonymous) || !user.id) {
     throw new UnauthorizedError();
   }
 

@@ -1,0 +1,42 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+html,
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbars with library night aesthetic */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-deep);
+}
+
+/* Tabular numbers for clean durations and stats */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Golden focus visible */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

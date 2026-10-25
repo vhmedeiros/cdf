@@ -15,7 +15,7 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse) {
   const { slug } = req.query as { slug: string };
   const user = req.context.user;
 
-  if ("isAnonymous" in user && user.isAnonymous) {
+  if (("isAnonymous" in user && user.isAnonymous) || !user.id) {
     throw new UnauthorizedError();
   }
 

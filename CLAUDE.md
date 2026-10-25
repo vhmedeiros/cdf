@@ -656,19 +656,23 @@ min_tier: # pior modelo aceitável por tarefa; abaixo disso, o job ESPERA em vez
 
 ## 13. Estado atual
 
-- **Fase:** 3 (concluída)
+- **Fase:** 4 (concluída)
 - **Feito:**
   - **Fase 0 (Fundação):** Next.js 15, Node 24, TS strict, Docker Compose, migrações, `GET /api/v1/status`, orquestrador de testes e CI.
   - **Fase 1 (Contas e Autenticação):** users, sessions, invites, password_resets, rate-limiting, sliding sessions, middlewares `injectAnonymousOrUser` e `canRequest(feature)`.
   - **Fase 2 (Cursos + Google Drive):** courses, modules, lessons, materials, enrollments, sync_runs, função pura `buildTree`, fila BullMQ, endpoints de cursos e admin, seed offline.
-  - **Fase 3 (Streaming Seguro):**
-    - Endpoint `/api/v1/stream/[id]` com desligamento de body parser e limite de resposta (`bodyParser: false, responseLimit: false`).
-    - Verificação de matrícula ativa e privilégios antes de qualquer transmissão.
-    - Modo Produção (`STREAM_MODE=nginx`): Next autoriza em 2ms e responde com `X-Accel-Redirect: /_drive/[drive_id]`, liberando o processo Node imediatamente; token da SA nunca exposto ao cliente.
-    - Configuração do Nginx (`infra/nginx/site.conf`) com location interna `/_drive/`, proxy para o Google Drive e headers de `Range`.
-    - Modo Desenvolvimento (`STREAM_MODE=node`): proxy no Node com suporte completo a Range Requests (HTTP 206 Partial Content, `Accept-Ranges: bytes`, `Content-Range`) para seek instantâneo no player.
-    - 40 testes automatizados (unitários e de integração em 10 suites) passando no Jest (100% verde).
-    - Caderno de estudos atualizado em `docs/learning/fase-3-streaming.md`.
-- **Próximo passo:** Fase 4: Experiência de aula (Página do curso, árvore lateral responsiva, player Vidstack, leitor de PDF inline com react-pdf, modo áudio, autoplay da próxima aula, mini-player global em `_app.tsx`, atalhos de teclado).
+  - **Fase 3 (Streaming Seguro):** endpoint `/api/v1/stream/[id]`, X-Accel-Redirect e Range Requests (HTTP 206), verificação de matrícula, fallback dev em Node.
+  - **Fase 4 (Experiência de Aula):**
+    - Design tokens da "Biblioteca Noturna" em `styles/tokens.css` e integração com Tailwind CSS v4.
+    - `PlayerContext` global montado em `pages/_app.tsx` com reatividade de mídia, persistência de preferências em `localStorage` e suporte ao `GlobalMiniPlayer`.
+    - Player de vídeo (`components/player/VideoPlayer.tsx`) com streaming direto, Range Requests seek, controle de velocidade (0.5x–2.5x), modo teatro (`T`), fullscreen (`F`), play/pause (`Espaço/K`) e contagem regressiva de 5s para autoplay da próxima aula.
+    - Árvore lateral hierárquica Módulo → Aula → Materiais (`components/course/CourseSidebar.tsx`) com busca instantânea, indicadores de progresso percentual e $x/y$, expansão/recolhimento e auto-scroll até a aula ativa.
+    - Mini-player flutuante global (`components/player/GlobalMiniPlayer.tsx`) disparado automaticamente ao rolar a página ou navegar.
+    - Leitor de PDF inline (`components/player/PdfViewer.tsx`) com zoom e lembrança da última página lida por material.
+    - Modo Áudio dedicado (`components/player/AudioPlayer.tsx`) para estudo com menor uso de tela/dados.
+    - Atalhos de teclado universais (`hooks/useShortcuts.ts`) com modal interativo de ajuda (`?`).
+    - 42 testes automatizados passando no Jest (11 test suites 100% verde).
+    - Caderno de estudos criado em `docs/learning/fase-4-player.md`.
+- **Próximo passo:** Fase 5: Aprendizado (Progresso com heartbeat a cada 15s + flush agendado para o Postgres a cada 1 min, anotações com timestamp clicável e editor markdown, Pomodoro sincronizado, caderno do curso).
 - **Problemas conhecidos:** —
 - **Decisões pendentes com o dono:** nome definitivo da plataforma; domínio; provedor de e-mail (SMTP); lista inicial de disciplinas/assuntos (taxonomia) e bancas prioritárias; se a plataforma será só para uso próprio/grupo fechado ou comercial (afeta plano da IA e questões de direito autoral).
