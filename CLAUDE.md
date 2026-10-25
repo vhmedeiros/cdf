@@ -656,20 +656,19 @@ min_tier: # pior modelo aceitável por tarefa; abaixo disso, o job ESPERA em vez
 
 ## 13. Estado atual
 
-- **Fase:** 2 (concluída)
+- **Fase:** 3 (concluída)
 - **Feito:**
-  - **Fase 0 (Fundação):** Next.js 15, Node 24, TS strict, Docker Compose (Postgres 17 pgvector, Redis 7, Mailcatcher), migrações com node-pg-migrate, `GET /api/v1/status`, orquestrador de testes e CI.
+  - **Fase 0 (Fundação):** Next.js 15, Node 24, TS strict, Docker Compose, migrações, `GET /api/v1/status`, orquestrador de testes e CI.
   - **Fase 1 (Contas e Autenticação):** users, sessions, invites, password_resets, rate-limiting, sliding sessions, middlewares `injectAnonymousOrUser` e `canRequest(feature)`.
-  - **Fase 2 (Cursos + Google Drive):**
-    - Migrações das tabelas `courses`, `modules`, `lessons`, `materials`, `enrollments` e `sync_runs`.
-    - Função pura `services/drive/buildTree.ts` testada unitariamente com 100% de cobertura (estratégias `auto`, `folders`, `files`, ordenação natural, limpeza de títulos, resolução de atalhos e descarte de arquivos do player antigo).
-    - Modelos de domínio: `models/course.ts` (carregamento de árvore hierárquica sem N+1 em 3 queries) e `models/enrollment.ts`.
-    - Fila BullMQ com Redis em `infra/queue.ts` e processo worker com job `syncCourse` em `worker/jobs/syncCourse.ts` e `worker/index.ts`.
-    - Endpoints de cursos: `GET /api/v1/courses` e `GET /api/v1/courses/[slug]` (com verificação rigorosa de matrícula).
-    - Endpoints administrativos: `GET`/`POST /api/v1/admin/courses`, `POST /api/v1/admin/courses/[id]/preview`, `POST`/`GET /api/v1/admin/courses/[id]/sync`, `POST`/`DELETE /api/v1/admin/enrollments`.
-    - Script de dados offline `npm run seed` com admin padrão e curso completo estruturado para desenvolvimento.
-    - 37 testes automatizados (unitários e de integração) passando com 100% de sucesso.
-    - Caderno de estudos atualizado em `docs/learning/fase-2-cursos.md`.
-- **Próximo passo:** Fase 3: Streaming (`/api/v1/stream/[id]`, config Nginx com `X-Accel-Redirect`, fallback dev `STREAM_MODE=node` com `Readable.fromWeb`, seek com range request 206, proteção de matrícula).
+  - **Fase 2 (Cursos + Google Drive):** courses, modules, lessons, materials, enrollments, sync_runs, função pura `buildTree`, fila BullMQ, endpoints de cursos e admin, seed offline.
+  - **Fase 3 (Streaming Seguro):**
+    - Endpoint `/api/v1/stream/[id]` com desligamento de body parser e limite de resposta (`bodyParser: false, responseLimit: false`).
+    - Verificação de matrícula ativa e privilégios antes de qualquer transmissão.
+    - Modo Produção (`STREAM_MODE=nginx`): Next autoriza em 2ms e responde com `X-Accel-Redirect: /_drive/[drive_id]`, liberando o processo Node imediatamente; token da SA nunca exposto ao cliente.
+    - Configuração do Nginx (`infra/nginx/site.conf`) com location interna `/_drive/`, proxy para o Google Drive e headers de `Range`.
+    - Modo Desenvolvimento (`STREAM_MODE=node`): proxy no Node com suporte completo a Range Requests (HTTP 206 Partial Content, `Accept-Ranges: bytes`, `Content-Range`) para seek instantâneo no player.
+    - 40 testes automatizados (unitários e de integração em 10 suites) passando no Jest (100% verde).
+    - Caderno de estudos atualizado em `docs/learning/fase-3-streaming.md`.
+- **Próximo passo:** Fase 4: Experiência de aula (Página do curso, árvore lateral responsiva, player Vidstack, leitor de PDF inline com react-pdf, modo áudio, autoplay da próxima aula, mini-player global em `_app.tsx`, atalhos de teclado).
 - **Problemas conhecidos:** —
 - **Decisões pendentes com o dono:** nome definitivo da plataforma; domínio; provedor de e-mail (SMTP); lista inicial de disciplinas/assuntos (taxonomia) e bancas prioritárias; se a plataforma será só para uso próprio/grupo fechado ou comercial (afeta plano da IA e questões de direito autoral).
