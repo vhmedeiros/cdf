@@ -66,8 +66,20 @@ export default function CoursesListPage() {
               ))}
             </div>
           ) : error ? (
-            <div className="p-8 rounded-2xl bg-[#131315] border border-[#2a2a2e] text-center text-xs text-[#9a978f]">
-              Não foi possível carregar os cursos. Por favor, tente novamente.
+            <div className="p-8 rounded-2xl bg-[#131315] border border-[#2a2a2e] text-center space-y-3">
+              <p className="text-xs text-[#9a978f]">
+                {error.status === 401
+                  ? "Você precisa entrar com sua conta para ver seus cursos."
+                  : "Não foi possível carregar os cursos. Por favor, tente novamente."}
+              </p>
+              {error.status === 401 && (
+                <Link
+                  href="/login"
+                  className="inline-block px-4 py-2 bg-[#d4af37] text-black font-semibold text-xs rounded-lg hover:bg-[#f5d76e] transition"
+                >
+                  Fazer Login
+                </Link>
+              )}
             </div>
           ) : courses && courses.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
