@@ -4,11 +4,12 @@ Bem-vindo ao caderno de estudos do projeto! Cada fase tem um arquivo explicando 
 
 ## Índice
 
-| Fase                     | Arquivo                                    | Status       |
-| ------------------------ | ------------------------------------------ | ------------ |
-| 0. Fundação              | [fase-0-fundacao.md](./fase-0-fundacao.md) | ✅ Concluída |
-| 1. Contas e Autenticação | [fase-1-contas.md](./fase-1-contas.md)     | ✅ Concluída |
-| 2. Cursos + Drive        | [fase-2-cursos.md](./fase-2-cursos.md)     | ⏳ Próxima   |
+| Fase                     | Arquivo                                      | Status       |
+| ------------------------ | -------------------------------------------- | ------------ |
+| 0. Fundação              | [fase-0-fundacao.md](./fase-0-fundacao.md)   | ✅ Concluída |
+| 1. Contas e Autenticação | [fase-1-contas.md](./fase-1-contas.md)       | ✅ Concluída |
+| 2. Cursos + Drive        | [fase-2-cursos.md](./fase-2-cursos.md)       | ✅ Concluída |
+| 3. Streaming             | [fase-3-streaming.md](./fase-3-streaming.md) | ⏳ Próxima   |
 
 ---
 

@@ -25,7 +25,7 @@ async function waitForAllServices() {
 async function clearDatabase() {
   // Truncate em cascata: limpa na ordem correta respeitando FKs
   await database.query(
-    "TRUNCATE TABLE password_resets, invites, sessions, users RESTART IDENTITY CASCADE;",
+    "TRUNCATE TABLE sync_runs, enrollments, materials, lessons, modules, courses, password_resets, invites, sessions, users RESTART IDENTITY CASCADE;",
   );
 }
 

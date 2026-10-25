@@ -656,20 +656,20 @@ min_tier: # pior modelo aceitável por tarefa; abaixo disso, o job ESPERA em vez
 
 ## 13. Estado atual
 
-- **Fase:** 1 (concluída)
+- **Fase:** 2 (concluída)
 - **Feito:**
   - **Fase 0 (Fundação):** Next.js 15, Node 24, TS strict, Docker Compose (Postgres 17 pgvector, Redis 7, Mailcatcher), migrações com node-pg-migrate, `GET /api/v1/status`, orquestrador de testes e CI.
-  - **Fase 1 (Contas e Autenticação):**
-    - Migrações das tabelas `users`, `sessions`, `invites` e `password_resets`.
-    - Regras de negócio em `models/` (`user.ts`, `session.ts`, `invite.ts`, `passwordReset.ts`).
-    - Sessões server-side gravadas no banco com cookies `httpOnly`, `SameSite=Lax` e expiração deslizante (sliding session).
-    - Hashing de senha com `bcryptjs` (custo 10) e proteção contra timing attack.
-    - Rate-limiting no Redis em `infra/rate-limit.ts` (bloqueio progressivo após 5 erros por IP/email).
-    - Middlewares `injectAnonymousOrUser` e `canRequest(feature)` em `infra/controller.ts` (autorização granular por features: student vs admin).
-    - Endpoints de autenticação: login/logout (`POST`/`DELETE /api/v1/sessions`), perfil (`GET /api/v1/user`), convites (`POST /api/v1/admin/invites`, `GET`/`PATCH /api/v1/invites/[token]`), redefinição de senha (`POST`/`PATCH /api/v1/password-resets`).
-    - Envio de e-mail integrado ao Mailcatcher em `infra/email.ts`.
-    - 21 testes de integração automatizados passando com Jest (100% verde).
-    - Caderno de estudos para aprendizado em `docs/learning/` com analogias completas com Django.
-- **Próximo passo:** Fase 2: Cursos + Drive (tabelas de cursos, módulos, lições e materiais; leitor puro `buildTree` do Drive com as 3 estratégias de agrupamento; preview; worker BullMQ; telas de admin de cursos; seed de desenvolvimento).
+  - **Fase 1 (Contas e Autenticação):** users, sessions, invites, password_resets, rate-limiting, sliding sessions, middlewares `injectAnonymousOrUser` e `canRequest(feature)`.
+  - **Fase 2 (Cursos + Google Drive):**
+    - Migrações das tabelas `courses`, `modules`, `lessons`, `materials`, `enrollments` e `sync_runs`.
+    - Função pura `services/drive/buildTree.ts` testada unitariamente com 100% de cobertura (estratégias `auto`, `folders`, `files`, ordenação natural, limpeza de títulos, resolução de atalhos e descarte de arquivos do player antigo).
+    - Modelos de domínio: `models/course.ts` (carregamento de árvore hierárquica sem N+1 em 3 queries) e `models/enrollment.ts`.
+    - Fila BullMQ com Redis em `infra/queue.ts` e processo worker com job `syncCourse` em `worker/jobs/syncCourse.ts` e `worker/index.ts`.
+    - Endpoints de cursos: `GET /api/v1/courses` e `GET /api/v1/courses/[slug]` (com verificação rigorosa de matrícula).
+    - Endpoints administrativos: `GET`/`POST /api/v1/admin/courses`, `POST /api/v1/admin/courses/[id]/preview`, `POST`/`GET /api/v1/admin/courses/[id]/sync`, `POST`/`DELETE /api/v1/admin/enrollments`.
+    - Script de dados offline `npm run seed` com admin padrão e curso completo estruturado para desenvolvimento.
+    - 37 testes automatizados (unitários e de integração) passando com 100% de sucesso.
+    - Caderno de estudos atualizado em `docs/learning/fase-2-cursos.md`.
+- **Próximo passo:** Fase 3: Streaming (`/api/v1/stream/[id]`, config Nginx com `X-Accel-Redirect`, fallback dev `STREAM_MODE=node` com `Readable.fromWeb`, seek com range request 206, proteção de matrícula).
 - **Problemas conhecidos:** —
 - **Decisões pendentes com o dono:** nome definitivo da plataforma; domínio; provedor de e-mail (SMTP); lista inicial de disciplinas/assuntos (taxonomia) e bancas prioritárias; se a plataforma será só para uso próprio/grupo fechado ou comercial (afeta plano da IA e questões de direito autoral).

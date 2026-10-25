@@ -10,6 +10,7 @@
     "build": "next build",
     "start": "next start",
     "worker:dev": "tsx watch worker/index.ts",
+    "seed": "tsx infra/scripts/seed.ts",
     "services:up": "docker compose -f infra/compose.yaml up -d",
     "services:stop": "docker compose -f infra/compose.yaml stop",
     "services:down": "docker compose -f infra/compose.yaml down",
@@ -33,9 +34,11 @@
   "dependencies": {
     "async-retry": "1.3.3",
     "bcryptjs": "^2.4.3",
+    "bullmq": "^5.41.6",
     "cookie": "^0.7.2",
     "dotenv": "16.4.7",
     "dotenv-expand": "12.0.1",
+    "google-auth-library": "^9.15.1",
     "ioredis": "^5.3.2",
     "next": "15.2.1",
     "next-connect": "1.0.0",
@@ -49,6 +52,7 @@
   "devDependencies": {
     "@commitlint/cli": "19.7.1",
     "@commitlint/config-conventional": "19.7.1",
+    "@faker-js/faker": "^9.5.0",
     "@types/async-retry": "1.4.8",
     "@types/bcryptjs": "^2.4.6",
     "@types/cookie": "^0.6.0",
