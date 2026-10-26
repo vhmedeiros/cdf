@@ -241,10 +241,19 @@ export function buildTree(items: DriveItem[], options: BuildTreeOptions): Parsed
           lessonDuration += duration;
           materialsCount++;
 
+          const cleanedTitle = cleanTitle(file.name);
+          const lowerTitle = cleanedTitle.toLowerCase();
+          const displayTitle =
+            lowerTitle === "ext" && kind === "video"
+              ? "Vídeo da Aula"
+              : lowerTitle === "content"
+                ? "Conteúdo da Aula"
+                : cleanedTitle;
+
           materials.push({
             driveFileId: file.id,
             rawName: file.name,
-            title: cleanTitle(file.name),
+            title: displayTitle,
             kind,
             mime: file.mimeType,
             sizeBytes: file.size ? Number(file.size) : 0,
