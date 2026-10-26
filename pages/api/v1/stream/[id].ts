@@ -1,13 +1,14 @@
+import fs from "node:fs";
+import { Readable } from "node:stream";
 import { NextApiRequest, NextApiResponse } from "next";
 import { createRouter } from "next-connect";
-import { Readable } from "node:stream";
 import controller from "@/infra/controller";
 import database from "@/infra/database";
 import { ForbiddenError, NotFoundError, UnauthorizedError } from "@/infra/errors";
 import EnrollmentModel from "@/models/enrollment";
+import { getDriveFileStream } from "@/services/drive/client";
 
-// Desliga o bodyParser e o limite de tamanho de resposta do Next.js
-// Essencial para permitir streaming contínuo de vídeo em alta resolução sem travar a memória do Node.js
+// Desliga bodyParser e responseLimit para permitir streaming contínuo sem bufferizar na memória
 export const config = {
   api: {
     bodyParser: false,
@@ -45,8 +46,8 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse) {
     throw new NotFoundError({ message: "Material não encontrado." });
   }
 
-  // 2. Verifica autorização (matrícula ativa ou admin)
-  const isAdmin = user.features.includes("read:course:all");
+  // 2. Autorização: admin ou aluno matriculado
+  const isAdmin = user.features?.includes("read:course:all");
   const isEnrolled = await EnrollmentModel.isEnrolled(user.id, material.course_id);
 
   if (!isAdmin && !isEnrolled) {
@@ -67,8 +68,43 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   // 4. Modo Desenvolvimento / Testes (STREAM_MODE=node):
-  //    O Node faz o proxy de streaming com suporte a Range Requests (206 Partial Content)
   const rangeHeader = req.headers.range;
+
+  // Se houver Google Service Account configurada, faz o stream real do Google Drive!
+  if (process.env.GOOGLE_SA_FILE && fs.existsSync(process.env.GOOGLE_SA_FILE)) {
+    try {
+      const driveRes = await getDriveFileStream(material.drive_file_id, rangeHeader);
+      if (driveRes) {
+        const contentType = driveRes.headers.get("content-type") || material.mime;
+        const contentLength = driveRes.headers.get("content-length");
+        const contentRange = driveRes.headers.get("content-range");
+        const acceptRanges = driveRes.headers.get("accept-ranges") || "bytes";
+
+        const headers: Record<string, string> = {
+          "Content-Type": contentType,
+          "Accept-Ranges": acceptRanges,
+        };
+
+        if (contentLength) headers["Content-Length"] = contentLength;
+        if (contentRange) headers["Content-Range"] = contentRange;
+
+        if (material.kind === "pdf") {
+          headers["Content-Disposition"] = 'inline; filename="documento.pdf"';
+        }
+
+        res.writeHead(driveRes.status, headers);
+
+        if (driveRes.body) {
+          return Readable.fromWeb(driveRes.body as any).pipe(res);
+        }
+        return res.end();
+      }
+    } catch (streamErr) {
+      console.error("Erro no stream real do Google Drive, caindo para fallback:", streamErr);
+    }
+  }
+
+  // 5. Fallback para dev offline e testes unitários com dados mockados
   const size = Number(material.size_bytes) || 1048576; // fallback 1MB para simulações
 
   if (material.kind === "pdf") {
@@ -92,7 +128,6 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse) {
       "Content-Type": material.mime,
     });
 
-    // Cria um buffer simulado para dev/testes ou pipe da API se houver SA configurada
     const chunk = Buffer.alloc(chunksize);
     return res.end(chunk);
   }

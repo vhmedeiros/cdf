@@ -32,63 +32,119 @@ export function extractFolderId(input: string): string {
   return trimmed;
 }
 
-export async function fetchDriveFolderItems(folderId: string): Promise<DriveItem[]> {
+/**
+ * Obtém o token de acesso da Service Account do Google Drive
+ */
+export async function getAccessToken(): Promise<string | null> {
   const saFile = process.env.GOOGLE_SA_FILE;
 
-  // Se não houver Service Account configurada (offline dev ou testes),
-  // retorna lista vazia ou dados mockados
   if (!saFile || !fs.existsSync(saFile)) {
+    return null;
+  }
+
+  try {
+    const auth = new GoogleAuth({
+      keyFile: saFile,
+      scopes: ["https://www.googleapis.com/auth/drive.readonly"],
+    });
+
+    const client = await auth.getClient();
+    const tokenResponse = await client.getAccessToken();
+    return tokenResponse.token || null;
+  } catch (error) {
+    console.error("Erro ao obter access token do Google:", error);
+    return null;
+  }
+}
+
+/**
+ * Varre a pasta raiz e todas as suas subpastas recursivamente
+ */
+export async function fetchDriveFolderItems(rootFolderId: string): Promise<DriveItem[]> {
+  const accessToken = await getAccessToken();
+
+  if (!accessToken) {
     return [];
   }
 
-  const auth = new GoogleAuth({
-    keyFile: saFile,
-    scopes: ["https://www.googleapis.com/auth/drive.readonly"],
-  });
-
-  const client = await auth.getClient();
-  const tokenResponse = await client.getAccessToken();
-  const accessToken = tokenResponse.token;
-
-  if (!accessToken) {
-    throw new Error("Não foi possível obter o token da Service Account.");
-  }
-
   const items: DriveItem[] = [];
-  let pageToken: string | undefined;
+  const foldersToScan = [rootFolderId];
+  const scannedFolders = new Set<string>();
 
   const fields =
     "nextPageToken,files(id,name,mimeType,size,md5Checksum,modifiedTime,videoMediaMetadata,shortcutDetails,parents)";
 
-  do {
-    const url = new URL("https://www.googleapis.com/drive/v3/files");
-    url.searchParams.set("q", `trashed = false and '${folderId}' in parents`);
-    url.searchParams.set("fields", fields);
-    url.searchParams.set("pageSize", "1000");
-    url.searchParams.set("supportsAllDrives", "true");
-    url.searchParams.set("includeItemsFromAllDrives", "true");
-    if (pageToken) {
-      url.searchParams.set("pageToken", pageToken);
-    }
+  while (foldersToScan.length > 0) {
+    const currentFolderId = foldersToScan.shift()!;
+    if (scannedFolders.has(currentFolderId)) continue;
+    scannedFolders.add(currentFolderId);
 
-    const response = await fetch(url.toString(), {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    let pageToken: string | undefined;
 
-    if (!response.ok) {
-      const err = await response.text();
-      throw new Error(`Erro na API do Google Drive (${response.status}): ${err}`);
-    }
+    do {
+      const url = new URL("https://www.googleapis.com/drive/v3/files");
+      url.searchParams.set("q", `trashed = false and '${currentFolderId}' in parents`);
+      url.searchParams.set("fields", fields);
+      url.searchParams.set("pageSize", "1000");
+      url.searchParams.set("supportsAllDrives", "true");
+      url.searchParams.set("includeItemsFromAllDrives", "true");
+      if (pageToken) {
+        url.searchParams.set("pageToken", pageToken);
+      }
 
-    const data = await response.json();
-    if (Array.isArray(data.files)) {
-      items.push(...data.files);
-    }
+      const response = await fetch(url.toString(), {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
 
-    pageToken = data.nextPageToken;
-  } while (pageToken);
+      if (!response.ok) {
+        const err = await response.text();
+        throw new Error(`Erro na API do Google Drive (${response.status}): ${err}`);
+      }
+
+      const data = await response.json();
+      if (Array.isArray(data.files)) {
+        for (const file of data.files) {
+          items.push(file);
+          // Se for subpasta, enfileira para varredura recursiva
+          if (file.mimeType === "application/vnd.google-apps.folder") {
+            foldersToScan.push(file.id);
+          }
+        }
+      }
+
+      pageToken = data.nextPageToken;
+    } while (pageToken);
+  }
 
   return items;
+}
+
+/**
+ * Obtém stream de arquivo do Google Drive com suporte opcional a Range
+ */
+export async function getDriveFileStream(
+  driveFileId: string,
+  rangeHeader?: string,
+): Promise<Response | null> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return null;
+
+  const url = `https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media&supportsAllDrives=true`;
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${accessToken}`,
+  };
+
+  if (rangeHeader) {
+    headers.Range = rangeHeader;
+  }
+
+  const response = await fetch(url, { headers });
+  if (!response.ok && response.status !== 206) {
+    console.error(`Erro ao obter stream do Drive (${response.status}):`, await response.text());
+    return null;
+  }
+
+  return response;
 }
