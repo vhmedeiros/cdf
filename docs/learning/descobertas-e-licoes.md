@@ -175,3 +175,37 @@ Separamos em duas partes:
 2. **Função Pura (`services/drive/buildTree.ts`):** Recebe a lista de arquivos em memória e devolve a árvore estruturada.
 
 Por ser uma função pura (sem banco, sem rede), conseguimos criar uma suíte com dezenas de testes no Jest que rodam em **0.3 segundos**, testando estratégias de módulos, remoção de prefixos numéricos e ordenação natural.
+
+---
+
+## 6. O "Gargalo do Google Drive": Por que o stream direto trava e como o Smart Cache em Disco resolve
+
+### O Problema:
+
+Ao testar as aulas reais do Google Drive no navegador, o vídeo começava a tocar mas ficava travando a cada poucos segundos ("engasgando" o áudio e a imagem).
+Analisando os logs do servidor, vimos requisições levando de **15 a 30 segundos** por trecho:
+
+```text
+GET /api/v1/stream/1f25f6be... 206 in 29658ms
+```
+
+### Por que isso aconteceu?
+
+1. **A API do Google Drive não é uma CDN de Streaming:** O endpoint `v3/files/{id}?alt=media` do Google Drive foi desenhado como API REST para baixar documentos, e não para streaming de mídia em tempo real com micro-requisições contínuas.
+2. **O comportamento do navegador com players `<video>`:** O Chrome não baixa o vídeo inteiro de uma vez só: ele envia dezenas de _Range Requests_ curtos (`Range: bytes=0-1024`, `Range: bytes=1024-500000`, etc.) a cada segundo conforme o usuário escuta e assiste.
+3. **Throttling por requisição:** Quando o Node.js repassava cada micro-requisição dessas para o Google Drive em tempo real, cada requisição precisava renegociar TLS, autenticar a Service Account e aguardar os servidores do Google. O Google percebia múltiplas requisições simultâneas e limitava a banda por conexão, esvaziando o buffer do player do navegador.
+
+### A Solução: Smart Cache em Disco (`services/drive/mediaCache.ts`)
+
+Fizemos um teste empírico revelador:
+
+- Baixar o vídeo de **85 MB de forma contínua e única** do Drive para o disco local levou apenas **3.7 segundos** (uma taxa excelente de 22 MB/s).
+- Mas fatiar esse mesmo vídeo em dezenas de micro-requisições diretas levava mais de **30 segundos**.
+
+**A arquitetura implementada:**
+
+1. Quando uma aula em vídeo é solicitada, o backend verifica se o arquivo já está em cache local (`.cache/media/<drive_file_id>.mp4`).
+2. Se já estiver, o Node.js serve o arquivo diretamente do disco via `fs.createReadStream` com suporte nativo a HTTP 206 Range Requests.
+3. Se não estiver, o sistema faz o download contínuo único em alta velocidade para o disco e imediatamente serve as requisições a partir dele.
+4. **Resultado:** O tempo de resposta para seek e reprodução caiu de **30.000 ms para apenas 9 ms** (mais de **3.000 vezes mais rápido**), acabando com os travamentos.
+5. **Em Produção:** No ambiente de produção na VM da Oracle, essa mesma lógica é executada pelo Nginx usando a diretiva `proxy_cache` vinculada ao `X-Accel-Redirect` (§5.5 do `CLAUDE.md`).
