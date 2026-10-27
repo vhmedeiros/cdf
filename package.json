@@ -10,6 +10,8 @@
     "build": "next build",
     "start": "next start",
     "worker:dev": "tsx watch worker/index.ts",
+    "worker:build": "esbuild worker/index.ts --bundle --platform=node --target=node24 --outfile=dist/worker/index.js --packages=external --alias:@=.",
+    "worker:start": "node dist/worker/index.js",
     "seed": "tsx infra/scripts/seed.ts",
     "services:up": "docker compose -f infra/compose.yaml up -d",
     "services:stop": "docker compose -f infra/compose.yaml stop",

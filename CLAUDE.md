@@ -656,7 +656,7 @@ min_tier: # pior modelo aceitável por tarefa; abaixo disso, o job ESPERA em vez
 
 ## 13. Estado atual
 
-- **Fase:** 6 (concluída)
+- **Fase:** 7 (concluída)
 - **Feito:**
   - **Fase 0 (Fundação):** Next.js 15, Node 24, TS strict, Docker Compose, migrações, `GET /api/v1/status`, orquestrador de testes e CI.
   - **Fase 1 (Contas e Autenticação):** users, sessions, invites, password_resets, rate-limiting, sliding sessions, middlewares `injectAnonymousOrUser` e `canRequest(feature)`.
@@ -692,6 +692,14 @@ min_tier: # pior modelo aceitável por tarefa; abaixo disso, o job ESPERA em vez
     - Suporte PWA com `manifest.json` e Service Worker isolado (`public/sw.js`) sem cachear vídeos.
     - 53 testes automatizados passando no Jest (17 test suites 100% verde).
     - Caderno de estudos criado em `docs/learning/fase-6-engajamento.md`.
-- **Próximo passo:** Fase 7: Deploy e Produção (`compose.prod.yaml`, Nginx + TLS certbot, backup automático, `deploy.sh`).
+  - **Fase 7 (Deploy e Infraestrutura de Produção):**
+    - `next.config.mjs` configurado com `output: "standalone"` para imagens Docker mínimas (~150MB).
+    - `Dockerfile` multi-stage otimizado para ARM64 / Node 24 Alpine, buildando o Next.js standalone e o worker BullMQ via `esbuild`.
+    - `infra/compose.prod.yaml` configurado com PostgreSQL 17 + pgvector isolado em rede interna (`cdf-network` sem expor porta 5432 no host, evitando conflito com containers legados), Redis 7 com persistência e limite de 512MB, containers `web`, `worker`, `migrate` e `nginx`.
+    - `infra/nginx/prod.conf` com compressão gzip, headers de segurança OWASP, rate-limiting em `/api/v1/sessions`, cache imutável de assets estáticos e location interna `/_drive/` para aceleração de streaming Range Requests (206).
+    - `infra/scripts/backup.sh` com backup diário comprimido do Postgres e retenção automática de 7 dias.
+    - `deploy.sh` automatizado executando `git pull`, `build`, migrações pontuais com `run --rm migrate`, inicialização dos serviços e verificação de saúde HTTP.
+    - `infra/README.md` com arquitetura de integração transparente com o proxy `lupa-caddy` e DNS do Registro.br.
+- **Próximo passo:** Fase 8: Endurecimento & Testes E2E com Playwright (ou Fase 9: Base de Questões e IA).
 - **Problemas conhecidos:** —
 - **Decisões pendentes com o dono:** nome definitivo da plataforma; domínio; provedor de e-mail (SMTP); lista inicial de disciplinas/assuntos (taxonomia) e bancas prioritárias; se a plataforma será só para uso próprio/grupo fechado ou comercial (afeta plano da IA e questões de direito autoral).
