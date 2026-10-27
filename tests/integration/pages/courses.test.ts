@@ -21,6 +21,6 @@ describe("Pages /courses and /courses/[slug]", () => {
     const html = await response.text();
     expect(html).toContain("Aula");
     expect(html).toContain("text-[#ece9e2]");
-    expect(html).toContain("Visão Geral");
+    expect(html).toContain("Progresso do Curso");
   });
 });

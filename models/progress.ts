@@ -1,5 +1,6 @@
 import database from "@/infra/database";
 import { NotFoundError } from "@/infra/errors";
+import ReviewModel from "@/models/review";
 import { z } from "zod";
 
 export const updateProgressSchema = z.object({
@@ -135,6 +136,34 @@ async function upsert(
   );
 
   const row = result.rows[0];
+
+  // 3. Registra atividade diária (study_days) e agenda revisões se aula concluída
+  try {
+    const isNowCompleted = row.is_completed === true;
+    const addedCompleted = isNowCompleted && completed !== false ? 1 : 0;
+
+    if (watchedDelta > 0 || addedCompleted > 0) {
+      await database.query(
+        `INSERT INTO study_days (user_id, date, seconds, materials_completed, updated_at)
+         VALUES ($1, CURRENT_DATE, $2, $3, now())
+         ON CONFLICT (user_id, date) DO UPDATE SET
+           seconds = study_days.seconds + EXCLUDED.seconds,
+           materials_completed = CASE 
+             WHEN EXCLUDED.materials_completed > 0 THEN study_days.materials_completed + EXCLUDED.materials_completed 
+             ELSE study_days.materials_completed 
+           END,
+           updated_at = now()`,
+        [userId, Math.round(watchedDelta), addedCompleted],
+      );
+    }
+
+    if (isNowCompleted) {
+      await ReviewModel.scheduleReviews(userId, materialId, material.course_id);
+    }
+  } catch (err) {
+    console.error("Erro ao registrar atividade ou agendar revisões:", err);
+  }
+
   return {
     ...row,
     position_seconds: parseFloat(row.position_seconds as any),

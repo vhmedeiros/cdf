@@ -21,6 +21,8 @@ import {
   AlertCircle,
   Download,
   BookOpen,
+  Target,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import PomodoroTimer from "@/components/player/PomodoroTimer";
@@ -64,6 +66,8 @@ export default function CourseClassroomPage() {
     audioMode,
     theaterMode,
     toggleTheater,
+    focusMode,
+    toggleFocusMode,
     toggleShortcutsModal,
     completedIds,
     toggleCompleted,
@@ -130,75 +134,105 @@ export default function CourseClassroomPage() {
       </Head>
 
       <div className="min-h-screen flex flex-col bg-[#0b0b0c] text-[#ece9e2]">
-        {/* Top Navbar */}
-        <header className="h-16 border-b border-[#2a2a2e] bg-[#131315]/90 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-6 flex items-center justify-between">
-          <div className="flex items-center gap-3 min-w-0">
-            <Link
-              href="/courses"
-              className="p-2 rounded-lg bg-[#1b1b1e] border border-[#2a2a2e] text-[#9a978f] hover:text-[#ece9e2] hover:border-[#d4af37] transition"
-              title="Voltar para lista de cursos"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Link>
-
-            <div className="min-w-0">
-              <h1 className="text-sm font-semibold text-[#ece9e2] truncate font-serif">
-                {course?.title || "Carregando curso..."}
-              </h1>
-              {activeItem && (
-                <p className="text-xs text-[#9a978f] truncate">
-                  {activeItem.module.title} &bull; {activeItem.lesson.title}
-                </p>
-              )}
+        {/* Top Navbar ou Floating Focus Bar */}
+        {focusMode ? (
+          <div className="fixed top-4 right-4 z-50 flex items-center gap-3 bg-[#131315]/95 backdrop-blur-md border border-[#d4af37]/40 px-3.5 py-1.5 rounded-xl shadow-2xl">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#d4af37] animate-pulse" />
+              <span className="text-xs font-medium text-[#d4af37]">Modo Foco</span>
             </div>
-          </div>
-
-          {/* Action buttons */}
-          <div className="flex items-center gap-2">
-            {/* Pomodoro Timer */}
             <PomodoroTimer />
-
-            {/* Link para o Caderno do Curso */}
-            {slug && (
-              <Link
-                href={`/courses/${slug}/caderno`}
-                className="hidden lg:flex items-center gap-1.5 p-2 rounded-lg text-xs text-[#9a978f] hover:text-[#d4af37] hover:bg-[#1b1b1e] transition border border-transparent hover:border-[#2a2a2e]"
-                title="Abrir Caderno de Estudos do Curso"
-              >
-                <BookOpen className="w-4 h-4" />
-                <span>Caderno</span>
-              </Link>
-            )}
-
             <button
-              onClick={toggleShortcutsModal}
-              className="p-2 rounded-lg text-[#9a978f] hover:text-[#d4af37] hover:bg-[#1b1b1e] transition"
-              title="Atalhos do teclado (?)"
+              onClick={toggleFocusMode}
+              className="p-1.5 rounded-lg bg-[#1b1b1e] hover:bg-[#2a2a2e] text-[#9a978f] hover:text-[#ece9e2] transition flex items-center gap-1.5 text-xs ml-2"
+              title="Sair do Modo Foco (Shift+F)"
             >
-              <Keyboard className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={toggleTheater}
-              className={`hidden sm:flex p-2 rounded-lg transition ${
-                theaterMode
-                  ? "text-[#d4af37] bg-[#1b1b1e]"
-                  : "text-[#9a978f] hover:text-[#ece9e2] hover:bg-[#1b1b1e]"
-              }`}
-              title="Modo Teatro (T)"
-            >
-              <Tv className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={() => setMobileSidebarOpen(true)}
-              className="md:hidden p-2 rounded-lg text-[#9a978f] hover:text-[#ece9e2] hover:bg-[#1b1b1e] transition"
-              title="Abrir conteúdo do curso"
-            >
-              <Menu className="w-5 h-5" />
+              <X className="w-3.5 h-3.5" />
+              <span>Sair (Shift+F)</span>
             </button>
           </div>
-        </header>
+        ) : (
+          <header className="h-16 border-b border-[#2a2a2e] bg-[#131315]/90 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-6 flex items-center justify-between">
+            <div className="flex items-center gap-3 min-w-0">
+              <Link
+                href="/courses"
+                className="p-2 rounded-lg bg-[#1b1b1e] border border-[#2a2a2e] text-[#9a978f] hover:text-[#ece9e2] hover:border-[#d4af37] transition"
+                title="Voltar para lista de cursos"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Link>
+
+              <div className="min-w-0">
+                <h1 className="text-sm font-semibold text-[#ece9e2] truncate font-serif">
+                  {course?.title || "Carregando curso..."}
+                </h1>
+                {activeItem && (
+                  <p className="text-xs text-[#9a978f] truncate">
+                    {activeItem.module.title} &bull; {activeItem.lesson.title}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-2">
+              {/* Pomodoro Timer */}
+              <PomodoroTimer />
+
+              {/* Link para o Caderno do Curso */}
+              {slug && (
+                <Link
+                  href={`/courses/${slug}/caderno`}
+                  className="hidden lg:flex items-center gap-1.5 p-2 rounded-lg text-xs text-[#9a978f] hover:text-[#d4af37] hover:bg-[#1b1b1e] transition border border-transparent hover:border-[#2a2a2e]"
+                  title="Abrir Caderno de Estudos do Curso"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  <span>Caderno</span>
+                </Link>
+              )}
+
+              <button
+                onClick={toggleShortcutsModal}
+                className="p-2 rounded-lg text-[#9a978f] hover:text-[#d4af37] hover:bg-[#1b1b1e] transition"
+                title="Atalhos do teclado (?)"
+              >
+                <Keyboard className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={toggleFocusMode}
+                className={`hidden sm:flex p-2 rounded-lg transition ${
+                  focusMode
+                    ? "text-[#d4af37] bg-[#1b1b1e]"
+                    : "text-[#9a978f] hover:text-[#d4af37] hover:bg-[#1b1b1e]"
+                }`}
+                title="Modo Foco (Shift+F)"
+              >
+                <Target className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={toggleTheater}
+                className={`hidden sm:flex p-2 rounded-lg transition ${
+                  theaterMode
+                    ? "text-[#d4af37] bg-[#1b1b1e]"
+                    : "text-[#9a978f] hover:text-[#ece9e2] hover:bg-[#1b1b1e]"
+                }`}
+                title="Modo Teatro (T)"
+              >
+                <Tv className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={() => setMobileSidebarOpen(true)}
+                className="md:hidden p-2 rounded-lg text-[#9a978f] hover:text-[#ece9e2] hover:bg-[#1b1b1e] transition"
+                title="Abrir conteúdo do curso"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+            </div>
+          </header>
+        )}
 
         {/* Main Content Layout */}
         <div className="flex-1 flex flex-col md:flex-row min-w-0">
@@ -380,10 +414,12 @@ export default function CourseClassroomPage() {
           </main>
 
           {/* Sidebar */}
-          <CourseSidebar
-            isOpenMobile={mobileSidebarOpen}
-            onCloseMobile={() => setMobileSidebarOpen(false)}
-          />
+          {!focusMode && (
+            <CourseSidebar
+              isOpenMobile={mobileSidebarOpen}
+              onCloseMobile={() => setMobileSidebarOpen(false)}
+            />
+          )}
         </div>
       </div>
     </>

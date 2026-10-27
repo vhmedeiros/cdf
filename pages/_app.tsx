@@ -1,8 +1,10 @@
+import { useEffect } from "react";
 import type { AppProps } from "next/app";
 import { SWRConfig } from "swr";
 import { PlayerProvider } from "@/context/PlayerContext";
 import { GlobalMiniPlayer } from "@/components/player/GlobalMiniPlayer";
 import { KeyboardShortcutsModal } from "@/components/ui/KeyboardShortcutsModal";
+import CommandPalette from "@/components/search/CommandPalette";
 import "@/styles/globals.css";
 
 const fetcher = async (url: string) => {
@@ -18,6 +20,12 @@ const fetcher = async (url: string) => {
 };
 
 export default function App({ Component, pageProps }: AppProps) {
+  useEffect(() => {
+    if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+  }, []);
+
   return (
     <SWRConfig
       value={{
@@ -30,6 +38,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <Component {...pageProps} />
         <GlobalMiniPlayer />
         <KeyboardShortcutsModal />
+        <CommandPalette />
       </PlayerProvider>
     </SWRConfig>
   );

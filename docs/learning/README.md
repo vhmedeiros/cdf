@@ -12,7 +12,7 @@ Bem-vindo ao caderno de estudos do projeto! Cada fase tem um arquivo explicando 
 | 3. Streaming             | [fase-3-streaming.md](./fase-3-streaming.md)     | ✅ Concluída |
 | 4. Experiência de Aula   | [fase-4-player.md](./fase-4-player.md)           | ✅ Concluída |
 | 5. Aprendizado           | [fase-5-aprendizado.md](./fase-5-aprendizado.md) | ✅ Concluída |
-| 6. Engajamento           | [fase-6-engajamento.md](./fase-6-engajamento.md) | ⏳ Próxima   |
+| 6. Engajamento           | [fase-6-engajamento.md](./fase-6-engajamento.md) | ✅ Concluída |
 
 ---
 

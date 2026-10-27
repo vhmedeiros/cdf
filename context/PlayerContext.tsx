@@ -42,6 +42,7 @@ interface PlayerContextType {
   volume: number;
   isMuted: boolean;
   theaterMode: boolean;
+  focusMode: boolean;
   audioMode: boolean;
   miniPlayer: boolean;
   completedIds: string[];
@@ -62,6 +63,7 @@ interface PlayerContextType {
   setVolume: (vol: number) => void;
   toggleMute: () => void;
   toggleTheater: () => void;
+  toggleFocusMode: () => void;
   toggleAudioMode: () => void;
   setMiniPlayer: (active: boolean) => void;
   closeMiniPlayer: () => void;
@@ -87,6 +89,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [volume, setVolumeState] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [theaterMode, setTheaterMode] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
   const [audioMode, setAudioMode] = useState(false);
   const [miniPlayer, setMiniPlayerState] = useState(false);
   const [completedIds, setCompletedIds] = useState<string[]>([]);
@@ -459,6 +462,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const toggleFocusMode = useCallback(() => {
+    setFocusMode((prev) => !prev);
+  }, []);
+
   const toggleAudioMode = useCallback(() => {
     setAudioMode((prev) => !prev);
   }, []);
@@ -513,6 +520,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         volume,
         isMuted,
         theaterMode,
+        focusMode,
         audioMode,
         miniPlayer,
         completedIds,
@@ -531,6 +539,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         setVolume,
         toggleMute,
         toggleTheater,
+        toggleFocusMode,
         toggleAudioMode,
         setMiniPlayer,
         closeMiniPlayer,

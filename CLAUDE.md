@@ -656,7 +656,7 @@ min_tier: # pior modelo aceitável por tarefa; abaixo disso, o job ESPERA em vez
 
 ## 13. Estado atual
 
-- **Fase:** 5 (concluída)
+- **Fase:** 6 (concluída)
 - **Feito:**
   - **Fase 0 (Fundação):** Next.js 15, Node 24, TS strict, Docker Compose, migrações, `GET /api/v1/status`, orquestrador de testes e CI.
   - **Fase 1 (Contas e Autenticação):** users, sessions, invites, password_resets, rate-limiting, sliding sessions, middlewares `injectAnonymousOrUser` e `canRequest(feature)`.
@@ -680,8 +680,18 @@ min_tier: # pior modelo aceitável por tarefa; abaixo disso, o job ESPERA em vez
     - Anotações inteligentes por aula (`components/player/NotesSection.tsx`) com captura automática de timestamp clicável (`▶ 04:32`), atalho `N` (pausa o vídeo e foca o texto) e marcação de "Importante" (⭐).
     - Cronômetro Pomodoro (`components/player/PomodoroTimer.tsx`) integrado à barra superior com modos Foco (25m), Pausa Curta (5m) e Longa (15m), sintetizador de sino suave via Web Audio API e preferências salvas no banco.
     - Caderno de Estudos do Curso (`pages/courses/[slug]/caderno.tsx`) agrupado por módulos e aulas com busca em tempo real e exportação para arquivo Markdown (.md).
-    - 48 testes automatizados passando no Jest (14 test suites 100% verde).
-    - Caderno de estudos criado em `docs/learning/fase-5-aprendizado.md`.
-- **Próximo passo:** Fase 6: Engajamento (Home "Continuar", paleta `Ctrl+K`, busca full-text, streak/heatmap de estudo, revisão espaçada).
+    - Painel administrativo de cursos (`/admin/courses` e `/admin/courses/new`) com preview em tempo real de pastas do Google Drive e sincronização direta instantânea.
+  - **Fase 6 (Engajamento & Produtividade):**
+    - Migração `7_create-engagement-schema.ts`: extensão `unaccent`, tabela `study_days` e tabela `reviews`.
+    - Dashboard do Estudante na Home (`pages/index.tsx`) com Hero "Continuar Assistindo" inteligente e retomada no segundo exato.
+    - Paleta de Comandos Global (`components/search/CommandPalette.tsx`) ativada por `Ctrl+K` / `Cmd+K` com busca unificada em cursos, aulas e notas pessoais.
+    - Busca Full-Text insensível a acentos (`GET /api/v1/search?q=`) com normalização pelo PostgreSQL `unaccent`.
+    - Sistema de Revisão Espaçada (1d, 7d, 30d): agendamento automático ao concluir aulas (`models/review.ts`), fila de revisões de hoje (`components/home/DueReviews.tsx`) e conclusão via `POST /api/v1/me/reviews/[id]/complete`.
+    - Sequência de Estudos e Heatmap estilo GitHub (`components/home/StudyStreak.tsx` e `components/home/StudyHeatmap.tsx`) com 20 semanas de histórico e indicador de ofensiva (`🔥 X dias seguidos`).
+    - Modo Foco (`Shift+F`) no player (`pages/courses/[slug].tsx`) eliminando distrações e expandindo a área de aula.
+    - Suporte PWA com `manifest.json` e Service Worker isolado (`public/sw.js`) sem cachear vídeos.
+    - 53 testes automatizados passando no Jest (17 test suites 100% verde).
+    - Caderno de estudos criado em `docs/learning/fase-6-engajamento.md`.
+- **Próximo passo:** Fase 7: Deploy e Produção (`compose.prod.yaml`, Nginx + TLS certbot, backup automático, `deploy.sh`).
 - **Problemas conhecidos:** —
 - **Decisões pendentes com o dono:** nome definitivo da plataforma; domínio; provedor de e-mail (SMTP); lista inicial de disciplinas/assuntos (taxonomia) e bancas prioritárias; se a plataforma será só para uso próprio/grupo fechado ou comercial (afeta plano da IA e questões de direito autoral).

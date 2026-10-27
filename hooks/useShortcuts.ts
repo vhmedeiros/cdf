@@ -15,6 +15,7 @@ export function useShortcuts(handlers?: ShortcutHandlers) {
     playbackRate,
     setPlaybackRate,
     toggleTheater,
+    toggleFocusMode,
     toggleMute,
     toggleAudioMode,
     toggleShortcutsModal,
@@ -92,7 +93,11 @@ export function useShortcuts(handlers?: ShortcutHandlers) {
         case "f":
         case "F":
           event.preventDefault();
-          handlers?.onToggleFullscreen?.();
+          if (event.shiftKey) {
+            toggleFocusMode();
+          } else {
+            handlers?.onToggleFullscreen?.();
+          }
           break;
 
         case "t":
@@ -145,6 +150,7 @@ export function useShortcuts(handlers?: ShortcutHandlers) {
     playbackRate,
     setPlaybackRate,
     toggleTheater,
+    toggleFocusMode,
     toggleMute,
     toggleAudioMode,
     toggleShortcutsModal,
