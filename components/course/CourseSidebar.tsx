@@ -219,9 +219,20 @@ export function CourseSidebar({ isOpenMobile, onCloseMobile }: CourseSidebarProp
                       <div key={lesson.id} className="px-2">
                         {/* If lesson has a distinct title or multiple materials */}
                         {mod.lessons.length > 1 && (
-                          <div className="px-3 py-1 text-[11px] font-semibold text-[#9a978f] tracking-wide">
-                            {lesson.title}
-                          </div>
+                          <button
+                            onClick={() => {
+                              const primaryMat =
+                                lesson.materials.find((m) => m.kind === "video") ||
+                                lesson.materials[0];
+                              if (primaryMat) {
+                                selectMaterial(primaryMat.id, true);
+                                onCloseMobile?.();
+                              }
+                            }}
+                            className="w-full text-left px-3 py-1.5 text-[11px] font-semibold text-[#9a978f] hover:text-[#d4af37] tracking-wide transition flex items-center justify-between"
+                          >
+                            <span className="truncate">{lesson.title}</span>
+                          </button>
                         )}
 
                         {lesson.materials.map((mat) => {

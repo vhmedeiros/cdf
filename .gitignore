@@ -17,6 +17,7 @@ dist/
 secrets/
 *.sa.json
 gdrive_sa.json
+.cache/
 
 # Logs & Debug
 npm-debug.log*

@@ -1,12 +1,11 @@
 import fs from "node:fs";
-import { Readable } from "node:stream";
 import { NextApiRequest, NextApiResponse } from "next";
 import { createRouter } from "next-connect";
 import controller from "@/infra/controller";
 import database from "@/infra/database";
 import { ForbiddenError, NotFoundError, UnauthorizedError } from "@/infra/errors";
 import EnrollmentModel from "@/models/enrollment";
-import { getDriveFileStream } from "@/services/drive/client";
+import { ensureMediaCached, streamLocalFile } from "@/services/drive/mediaCache";
 
 // Desliga bodyParser e responseLimit para permitir streaming contínuo sem bufferizar na memória
 export const config = {
@@ -60,7 +59,6 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse) {
 
   // 3. Modo Produção: Next autoriza, Nginx transmite via X-Accel-Redirect
   if (streamMode === "nginx") {
-    // Em produção, o Nginx intercepta este cabeçalho e faz o proxy direto para o Google Drive
     res.setHeader("X-Accel-Redirect", `/_drive/${material.drive_file_id}`);
     res.setHeader("X-Drive-Token", process.env.DRIVE_ACCESS_TOKEN || "token-placeholder");
     res.setHeader("Content-Type", material.mime);
@@ -70,37 +68,18 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse) {
   // 4. Modo Desenvolvimento / Testes (STREAM_MODE=node):
   const rangeHeader = req.headers.range;
 
-  // Se houver Google Service Account configurada, faz o stream real do Google Drive!
+  // Se houver Google Service Account configurada, usa o cache local de alta velocidade!
   if (process.env.GOOGLE_SA_FILE && fs.existsSync(process.env.GOOGLE_SA_FILE)) {
     try {
-      const driveRes = await getDriveFileStream(material.drive_file_id, rangeHeader);
-      if (driveRes) {
-        const contentType = driveRes.headers.get("content-type") || material.mime;
-        const contentLength = driveRes.headers.get("content-length");
-        const contentRange = driveRes.headers.get("content-range");
-        const acceptRanges = driveRes.headers.get("accept-ranges") || "bytes";
+      const cachedFilePath = await ensureMediaCached(material.drive_file_id, material.mime);
 
-        const headers: Record<string, string> = {
-          "Content-Type": contentType,
-          "Accept-Ranges": acceptRanges,
-        };
-
-        if (contentLength) headers["Content-Length"] = contentLength;
-        if (contentRange) headers["Content-Range"] = contentRange;
-
-        if (material.kind === "pdf") {
-          headers["Content-Disposition"] = 'inline; filename="documento.pdf"';
-        }
-
-        res.writeHead(driveRes.status, headers);
-
-        if (driveRes.body) {
-          return Readable.fromWeb(driveRes.body as any).pipe(res);
-        }
-        return res.end();
+      if (material.kind === "pdf") {
+        res.setHeader("Content-Disposition", 'inline; filename="documento.pdf"');
       }
-    } catch (streamErr) {
-      console.error("Erro no stream real do Google Drive, caindo para fallback:", streamErr);
+
+      return streamLocalFile(cachedFilePath, rangeHeader, material.mime, res);
+    } catch (cacheErr) {
+      console.error("Erro ao obter mídia do cache/Drive, caindo para fallback:", cacheErr);
     }
   }
 
@@ -139,7 +118,7 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse) {
     "Accept-Ranges": "bytes",
   });
 
-  const fullBuffer = Buffer.alloc(Math.min(size, 65536)); // amostragem
+  const fullBuffer = Buffer.alloc(Math.min(size, 65536));
   return res.end(fullBuffer);
 }
 

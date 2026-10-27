@@ -136,8 +136,20 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const setCourse = useCallback(
     (newCourse: CourseTree) => {
       setCourseState(newCourse);
-      if (!activeMaterialId && newCourse.modules?.[0]?.lessons?.[0]?.materials?.[0]) {
-        setActiveMaterialId(newCourse.modules[0].lessons[0].materials[0].id);
+      if (!activeMaterialId && newCourse.modules) {
+        // Prioriza o primeiro vídeo do curso para o player abrir direto em uma aula
+        const allMats: Array<{ matId: string; kind: string }> = [];
+        for (const mod of newCourse.modules) {
+          for (const les of mod.lessons) {
+            for (const mat of les.materials) {
+              allMats.push({ matId: mat.id, kind: mat.kind });
+            }
+          }
+        }
+        const firstVideo = allMats.find((m) => m.kind === "video") || allMats[0];
+        if (firstVideo) {
+          setActiveMaterialId(firstVideo.matId);
+        }
       }
     },
     [activeMaterialId],
