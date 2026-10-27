@@ -26,6 +26,11 @@ export interface CountdownState {
   target: FlatItem | null;
 }
 
+export interface ResumeToastState {
+  visible: boolean;
+  time: number;
+}
+
 interface PlayerContextType {
   course: CourseTree | null;
   activeItem: FlatItem | null;
@@ -41,6 +46,7 @@ interface PlayerContextType {
   miniPlayer: boolean;
   completedIds: string[];
   countdown: CountdownState | null;
+  resumeToast: ResumeToastState | null;
   shortcutsModalOpen: boolean;
 
   // Actions
@@ -62,6 +68,7 @@ interface PlayerContextType {
   toggleShortcutsModal: () => void;
   toggleCompleted: (materialId: string) => void;
   dismissCountdown: () => void;
+  dismissResumeToast: () => void;
   triggerCountdownTarget: () => void;
 
   // Ref hook to video element/player instance
@@ -84,12 +91,17 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [miniPlayer, setMiniPlayerState] = useState(false);
   const [completedIds, setCompletedIds] = useState<string[]>([]);
   const [countdown, setCountdown] = useState<CountdownState | null>(null);
+  const [resumeToast, setResumeToast] = useState<ResumeToastState | null>(null);
   const [shortcutsModalOpen, setShortcutsModalOpen] = useState(false);
 
   const playerRef = useRef<any>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingResumeTimeRef = useRef<number | null>(null);
+  const lastHeartbeatTimeRef = useRef<number>(0);
+  const currentTimeRef = useRef<number>(0);
+  currentTimeRef.current = currentTime;
 
-  // Load preferences from localStorage on mount
+  // Load preferences from localStorage and server
   useEffect(() => {
     try {
       const savedRate = localStorage.getItem("cdf_playback_rate");
@@ -106,7 +118,73 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // Ignore localStorage read errors
     }
+
+    // Carrega preferências sincronizadas do servidor
+    fetch("/api/v1/me/preferences")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) {
+          if (data.playback_rate) setPlaybackRateState(data.playback_rate);
+          if (data.volume !== undefined) setVolumeState(data.volume);
+          if (typeof data.theater_mode === "boolean") setTheaterMode(data.theater_mode);
+        }
+      })
+      .catch(() => {});
   }, []);
+
+  // Heartbeat a cada 15 segundos durante a reprodução
+  useEffect(() => {
+    if (!isPlaying || !activeMaterialId) return;
+
+    const interval = setInterval(() => {
+      const pos = currentTimeRef.current;
+      const delta = Math.max(0, pos - lastHeartbeatTimeRef.current);
+      lastHeartbeatTimeRef.current = pos;
+
+      fetch(`/api/v1/progress/${activeMaterialId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          position_seconds: Math.round(pos * 10) / 10,
+          watched_delta: Math.round(Math.min(30, delta) * 10) / 10,
+        }),
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.is_completed) {
+            setCompletedIds((prev) =>
+              prev.includes(activeMaterialId) ? prev : [...prev, activeMaterialId],
+            );
+          }
+        })
+        .catch(() => {});
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, [isPlaying, activeMaterialId]);
+
+  // Flush do buffer ao fechar a aba ou janela
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (!activeMaterialId) return;
+      const pos = currentTimeRef.current;
+      const payload = JSON.stringify({
+        items: [
+          {
+            material_id: activeMaterialId,
+            position_seconds: Math.round(pos * 10) / 10,
+            watched_delta: 0,
+          },
+        ],
+      });
+      if (typeof navigator !== "undefined" && navigator.sendBeacon) {
+        navigator.sendBeacon("/api/v1/progress/batch", payload);
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [activeMaterialId]);
 
   // Flatten course items for easy next/prev navigation
   const flatItems: FlatItem[] = useMemo(() => {
@@ -137,21 +215,43 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const setCourse = useCallback(
     (newCourse: CourseTree) => {
       setCourseState(newCourse);
-      if (!activeMaterialId && newCourse.modules) {
-        // Prioriza o primeiro vídeo do curso para o player abrir direto em uma aula
-        const allMats: Array<{ matId: string; kind: string }> = [];
-        for (const mod of newCourse.modules) {
-          for (const les of mod.lessons) {
-            for (const mat of les.materials) {
-              allMats.push({ matId: mat.id, kind: mat.kind });
+
+      // Consulta os progressos deste curso salvos no banco de dados
+      fetch(`/api/v1/progress?course_id=${newCourse.id}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.items) {
+            const serverCompleted = data.items
+              .filter((i: any) => i.is_completed)
+              .map((i: any) => i.material_id);
+            setCompletedIds(serverCompleted);
+          }
+
+          // Se o usuário estava assistindo uma aula anteriormente, retoma nela!
+          if (!activeMaterialId) {
+            if (data?.summary?.last_material_id) {
+              setActiveMaterialId(data.summary.last_material_id);
+              if (data.summary.last_position_seconds > 5) {
+                pendingResumeTimeRef.current = data.summary.last_position_seconds;
+              }
+            } else if (newCourse.modules) {
+              // Ou prioriza o primeiro vídeo do curso
+              const allMats: Array<{ matId: string; kind: string }> = [];
+              for (const mod of newCourse.modules) {
+                for (const les of mod.lessons) {
+                  for (const mat of les.materials) {
+                    allMats.push({ matId: mat.id, kind: mat.kind });
+                  }
+                }
+              }
+              const firstVideo = allMats.find((m) => m.kind === "video") || allMats[0];
+              if (firstVideo) {
+                setActiveMaterialId(firstVideo.matId);
+              }
             }
           }
-        }
-        const firstVideo = allMats.find((m) => m.kind === "video") || allMats[0];
-        if (firstVideo) {
-          setActiveMaterialId(firstVideo.matId);
-        }
-      }
+        })
+        .catch(() => {});
     },
     [activeMaterialId],
   );
@@ -169,9 +269,20 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       dismissCountdown();
       setActiveMaterialId(materialId);
       setCurrentTime(0);
+      lastHeartbeatTimeRef.current = 0;
       if (autoPlay) {
         setIsPlaying(true);
       }
+
+      // Consulta se há posição salva no servidor para este material
+      fetch(`/api/v1/progress/${materialId}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data && data.position_seconds > 5 && !data.is_completed) {
+            pendingResumeTimeRef.current = data.position_seconds;
+          }
+        })
+        .catch(() => {});
     },
     [dismissCountdown],
   );
@@ -273,6 +384,22 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     if (newDuration && !isNaN(newDuration) && newDuration > 0) {
       setDuration(newDuration);
     }
+
+    // Aplica retomada de onde parou do servidor
+    if (pendingResumeTimeRef.current !== null && pendingResumeTimeRef.current > 5) {
+      const resumeSeconds = pendingResumeTimeRef.current;
+      pendingResumeTimeRef.current = null;
+      if (playerRef.current && Math.abs(time - resumeSeconds) > 3) {
+        playerRef.current.currentTime = resumeSeconds;
+        setCurrentTime(resumeSeconds);
+        setResumeToast({ visible: true, time: resumeSeconds });
+        setTimeout(() => setResumeToast(null), 4000);
+      }
+    }
+  }, []);
+
+  const dismissResumeToast = useCallback(() => {
+    setResumeToast(null);
   }, []);
 
   const setPlaybackRate = useCallback((rate: number) => {
@@ -283,6 +410,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     }
     try {
       localStorage.setItem("cdf_playback_rate", clamped.toString());
+      fetch("/api/v1/me/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playback_rate: clamped }),
+      }).catch(() => {});
     } catch {}
   }, []);
 
@@ -294,6 +426,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     }
     try {
       localStorage.setItem("cdf_volume", clamped.toString());
+      fetch("/api/v1/me/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ volume: clamped }),
+      }).catch(() => {});
     } catch {}
   }, []);
 
@@ -312,6 +449,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       const next = !prev;
       try {
         localStorage.setItem("cdf_theater", next.toString());
+        fetch("/api/v1/me/preferences", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ theater_mode: next }),
+        }).catch(() => {});
       } catch {}
       return next;
     });
@@ -336,7 +478,21 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const toggleCompleted = useCallback((materialId: string) => {
     setCompletedIds((prev) => {
       const exists = prev.includes(materialId);
-      const updated = exists ? prev.filter((id) => id !== materialId) : [...prev, materialId];
+      const nextCompleted = !exists;
+      const updated = nextCompleted
+        ? [...prev, materialId]
+        : prev.filter((id) => id !== materialId);
+
+      // Sincroniza com o Postgres
+      fetch(`/api/v1/progress/${materialId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          position_seconds: Math.round(currentTimeRef.current * 10) / 10,
+          completed: nextCompleted,
+        }),
+      }).catch(() => {});
+
       try {
         localStorage.setItem("cdf_completed_materials", JSON.stringify(updated));
       } catch {}
@@ -361,6 +517,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         miniPlayer,
         completedIds,
         countdown,
+        resumeToast,
         shortcutsModalOpen,
         setCourse,
         selectMaterial,
@@ -380,6 +537,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         toggleShortcutsModal,
         toggleCompleted,
         dismissCountdown,
+        dismissResumeToast,
         triggerCountdownTarget,
         playerRef,
       }}

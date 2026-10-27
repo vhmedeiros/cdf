@@ -20,8 +20,11 @@ import {
   FileText,
   AlertCircle,
   Download,
+  BookOpen,
 } from "lucide-react";
 import Link from "next/link";
+import PomodoroTimer from "@/components/player/PomodoroTimer";
+import NotesSection from "@/components/player/NotesSection";
 
 const VideoPlayer = dynamic(() => import("@/components/player/VideoPlayer"), {
   ssr: false,
@@ -152,6 +155,21 @@ export default function CourseClassroomPage() {
 
           {/* Action buttons */}
           <div className="flex items-center gap-2">
+            {/* Pomodoro Timer */}
+            <PomodoroTimer />
+
+            {/* Link para o Caderno do Curso */}
+            {slug && (
+              <Link
+                href={`/courses/${slug}/caderno`}
+                className="hidden lg:flex items-center gap-1.5 p-2 rounded-lg text-xs text-[#9a978f] hover:text-[#d4af37] hover:bg-[#1b1b1e] transition border border-transparent hover:border-[#2a2a2e]"
+                title="Abrir Caderno de Estudos do Curso"
+              >
+                <BookOpen className="w-4 h-4" />
+                <span>Caderno</span>
+              </Link>
+            )}
+
             <button
               onClick={toggleShortcutsModal}
               className="p-2 rounded-lg text-[#9a978f] hover:text-[#d4af37] hover:bg-[#1b1b1e] transition"
@@ -351,6 +369,11 @@ export default function CourseClassroomPage() {
                       ))}
                     </div>
                   )}
+                </div>
+
+                {/* Seção de Anotações com Timestamp */}
+                <div className="pt-4">
+                  <NotesSection />
                 </div>
               </div>
             )}

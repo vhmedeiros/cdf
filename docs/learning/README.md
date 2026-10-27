@@ -4,14 +4,15 @@ Bem-vindo ao caderno de estudos do projeto! Cada fase tem um arquivo explicando 
 
 ## Índice por Fases
 
-| Fase                     | Arquivo                                      | Status       |
-| ------------------------ | -------------------------------------------- | ------------ |
-| 0. Fundação              | [fase-0-fundacao.md](./fase-0-fundacao.md)   | ✅ Concluída |
-| 1. Contas e Autenticação | [fase-1-contas.md](./fase-1-contas.md)       | ✅ Concluída |
-| 2. Cursos + Drive        | [fase-2-cursos.md](./fase-2-cursos.md)       | ✅ Concluída |
-| 3. Streaming             | [fase-3-streaming.md](./fase-3-streaming.md) | ✅ Concluída |
-| 4. Experiência de Aula   | [fase-4-player.md](./fase-4-player.md)       | ✅ Concluída |
-| 5. Aprendizado           | [fase-5-progresso.md](./fase-5-progresso.md) | ⏳ Próxima   |
+| Fase                     | Arquivo                                          | Status       |
+| ------------------------ | ------------------------------------------------ | ------------ |
+| 0. Fundação              | [fase-0-fundacao.md](./fase-0-fundacao.md)       | ✅ Concluída |
+| 1. Contas e Autenticação | [fase-1-contas.md](./fase-1-contas.md)           | ✅ Concluída |
+| 2. Cursos + Drive        | [fase-2-cursos.md](./fase-2-cursos.md)           | ✅ Concluída |
+| 3. Streaming             | [fase-3-streaming.md](./fase-3-streaming.md)     | ✅ Concluída |
+| 4. Experiência de Aula   | [fase-4-player.md](./fase-4-player.md)           | ✅ Concluída |
+| 5. Aprendizado           | [fase-5-aprendizado.md](./fase-5-aprendizado.md) | ✅ Concluída |
+| 6. Engajamento           | [fase-6-engajamento.md](./fase-6-engajamento.md) | ⏳ Próxima   |
 
 ---
 

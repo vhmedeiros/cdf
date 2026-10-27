@@ -14,7 +14,9 @@ import {
   Search,
   ChevronsUpDown,
   X,
+  BookOpen,
 } from "lucide-react";
+import Link from "next/link";
 
 interface CourseSidebarProps {
   isOpenMobile?: boolean;
@@ -173,6 +175,17 @@ export function CourseSidebar({ isOpenMobile, onCloseMobile }: CourseSidebarProp
             className="w-full pl-9 pr-3 py-1.5 text-xs bg-[#1b1b1e] border border-[#2a2a2e] rounded-lg text-[#ece9e2] placeholder-[#9a978f] focus:outline-none focus:border-[#d4af37]"
           />
         </div>
+
+        {/* Link para o Caderno de Estudos */}
+        {course?.slug && (
+          <Link
+            href={`/courses/${course.slug}/caderno`}
+            className="flex items-center justify-center gap-1.5 w-full py-1.5 px-3 rounded-lg bg-[#1b1b1e] border border-[#2a2a2e] hover:border-[#d4af37] text-xs text-[#9a978f] hover:text-[#d4af37] transition font-medium"
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            Caderno de Estudos
+          </Link>
+        )}
       </div>
 
       {/* Modules Tree */}

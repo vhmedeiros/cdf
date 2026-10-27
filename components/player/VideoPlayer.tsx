@@ -15,6 +15,7 @@ import {
   Headphones,
   SkipForward,
   Settings,
+  StickyNote,
 } from "lucide-react";
 
 interface VideoPlayerProps {
@@ -32,6 +33,8 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
     isMuted,
     theaterMode,
     countdown,
+    resumeToast,
+    dismissResumeToast,
     playerRef,
     togglePlay,
     seek,
@@ -165,6 +168,23 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
           playNext();
         }}
       />
+
+      {/* Toast Retomando de onde parou */}
+      {resumeToast?.visible && (
+        <div className="absolute top-4 left-4 z-30 bg-black/85 backdrop-blur-md border border-[#d4af37]/60 rounded-xl px-3.5 py-1.5 flex items-center gap-2 text-xs text-[#ece9e2] shadow-xl animate-in fade-in slide-in-from-top-2 duration-300">
+          <RotateCcw className="w-3.5 h-3.5 text-[#d4af37]" />
+          <span>
+            Retomando aula de onde parou em{" "}
+            <strong className="text-[#d4af37] font-mono">{formatDuration(resumeToast.time)}</strong>
+          </span>
+          <button
+            onClick={dismissResumeToast}
+            className="ml-1 text-[#9a978f] hover:text-[#ece9e2] text-sm"
+          >
+            &times;
+          </button>
+        </div>
+      )}
 
       {/* 5-second Autoplay Next Lesson Countdown Overlay */}
       {countdown?.active && (
@@ -331,6 +351,17 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
             >
               <SkipForward className="w-4 h-4" />
             </button>
+
+            {/* Quick Note Button */}
+            {onNewNote && (
+              <button
+                onClick={onNewNote}
+                className="p-1.5 rounded-lg hover:bg-white/10 text-[#9a978f] hover:text-[#d4af37] transition"
+                title="Criar anotação neste momento (N)"
+              >
+                <StickyNote className="w-4 h-4" />
+              </button>
+            )}
 
             {/* Theater Mode Toggle */}
             <button

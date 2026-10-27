@@ -224,7 +224,7 @@ async function syncTreeToDatabase(courseId: string, tree: ParsedTree): Promise<v
            last_synced_at = now(),
            updated_at = now()
        WHERE id = $3`,
-      [tree.totalDurationSeconds, tree.materialsCount, courseId],
+      [tree.totalDurationSeconds || 0, tree.materialsCount || 0, courseId],
     );
 
     // 2. Itera sobre módulos, aulas e materiais inserindo / atualizando

@@ -656,12 +656,12 @@ min_tier: # pior modelo aceitável por tarefa; abaixo disso, o job ESPERA em vez
 
 ## 13. Estado atual
 
-- **Fase:** 4 (concluída)
+- **Fase:** 5 (concluída)
 - **Feito:**
   - **Fase 0 (Fundação):** Next.js 15, Node 24, TS strict, Docker Compose, migrações, `GET /api/v1/status`, orquestrador de testes e CI.
   - **Fase 1 (Contas e Autenticação):** users, sessions, invites, password_resets, rate-limiting, sliding sessions, middlewares `injectAnonymousOrUser` e `canRequest(feature)`.
-  - **Fase 2 (Cursos + Google Drive):** courses, modules, lessons, materials, enrollments, sync_runs, função pura `buildTree`, fila BullMQ, endpoints de cursos e admin, seed offline.
-  - **Fase 3 (Streaming Seguro):** endpoint `/api/v1/stream/[id]`, X-Accel-Redirect e Range Requests (HTTP 206), verificação de matrícula, fallback dev em Node.
+  - **Fase 2 (Cursos + Google Drive):** courses, modules, lessons, materials, enrollments, sync_runs, função pura `buildTree`, fila BullMQ, endpoints de cursos e admin, seed offline, importação do curso real do Google Drive com 48 módulos, 382 materiais e 2.733 minutos.
+  - **Fase 3 (Streaming Seguro):** endpoint `/api/v1/stream/[id]`, X-Accel-Redirect e Range Requests (HTTP 206), verificação de matrícula, streaming via cache local em SSD com resposta de 9ms e background download a 22 MB/s.
   - **Fase 4 (Experiência de Aula):**
     - Design tokens da "Biblioteca Noturna" em `styles/tokens.css` e integração com Tailwind CSS v4.
     - `PlayerContext` global montado em `pages/_app.tsx` com reatividade de mídia, persistência de preferências em `localStorage` e suporte ao `GlobalMiniPlayer`.
@@ -671,8 +671,17 @@ min_tier: # pior modelo aceitável por tarefa; abaixo disso, o job ESPERA em vez
     - Leitor de PDF inline (`components/player/PdfViewer.tsx`) com zoom e lembrança da última página lida por material.
     - Modo Áudio dedicado (`components/player/AudioPlayer.tsx`) para estudo com menor uso de tela/dados.
     - Atalhos de teclado universais (`hooks/useShortcuts.ts`) com modal interativo de ajuda (`?`).
-    - 42 testes automatizados passando no Jest (11 test suites 100% verde).
-    - Caderno de estudos criado em `docs/learning/fase-4-player.md`.
-- **Próximo passo:** Fase 5: Aprendizado (Progresso com heartbeat a cada 15s + flush agendado para o Postgres a cada 1 min, anotações com timestamp clicável e editor markdown, Pomodoro sincronizado, caderno do curso).
+    - Eliminação do loop de áudio/gargalo através do desacoplamento de `onTimeProgress` vs `seekTo`.
+  - **Fase 5 (Aprendizado Ativo):**
+    - Migração `6_create-learning-schema.ts`: tabelas `progress`, `notes` e `user_preferences`.
+    - Persistência contínua de progresso com heartbeat a cada 15 segundos e `navigator.sendBeacon` para flush instantâneo no fechamento de abas.
+    - Conclusão automática de aulas ao atingir 90% assistido (`PROGRESS_COMPLETE_RATIO`) e sincronização em tempo real na árvore da barra lateral.
+    - Retomada automática da aula e posição no segundo exato em que o usuário parou, com toast explicativo na tela.
+    - Anotações inteligentes por aula (`components/player/NotesSection.tsx`) com captura automática de timestamp clicável (`▶ 04:32`), atalho `N` (pausa o vídeo e foca o texto) e marcação de "Importante" (⭐).
+    - Cronômetro Pomodoro (`components/player/PomodoroTimer.tsx`) integrado à barra superior com modos Foco (25m), Pausa Curta (5m) e Longa (15m), sintetizador de sino suave via Web Audio API e preferências salvas no banco.
+    - Caderno de Estudos do Curso (`pages/courses/[slug]/caderno.tsx`) agrupado por módulos e aulas com busca em tempo real e exportação para arquivo Markdown (.md).
+    - 48 testes automatizados passando no Jest (14 test suites 100% verde).
+    - Caderno de estudos criado em `docs/learning/fase-5-aprendizado.md`.
+- **Próximo passo:** Fase 6: Engajamento (Home "Continuar", paleta `Ctrl+K`, busca full-text, streak/heatmap de estudo, revisão espaçada).
 - **Problemas conhecidos:** —
 - **Decisões pendentes com o dono:** nome definitivo da plataforma; domínio; provedor de e-mail (SMTP); lista inicial de disciplinas/assuntos (taxonomia) e bancas prioritárias; se a plataforma será só para uso próprio/grupo fechado ou comercial (afeta plano da IA e questões de direito autoral).
