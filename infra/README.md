@@ -132,16 +132,11 @@ chmod 600 secrets/gdrive_sa.json
 
 ### Passo 5: Configurar o Caddy Existente (`lupa-caddy`)
 
-No arquivo `Caddyfile` do seu container Caddy existente, adicione o bloco do domínio `vhmedeiros.dev.br`:
+No arquivo `~/dashboard-lupa/Caddyfile`, adicione o bloco do subdomínio `aula.vhmedeiros.dev.br`:
 
 ```caddyfile
-vhmedeiros.dev.br {
-    reverse_proxy 127.0.0.1:3005 {
-        header_up Host {host}
-        header_up X-Real-IP {remote_host}
-        header_up X-Forwarded-For {remote_host}
-        header_up X-Forwarded-Proto {scheme}
-    }
+aula.vhmedeiros.dev.br {
+    reverse_proxy cdf-prod-nginx:80
 }
 ```
 

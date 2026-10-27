@@ -120,6 +120,7 @@ services:
         condition: service_healthy
     networks:
       - cdf-network
+      - web
 
 volumes:
   cdf_prod_pgdata:
@@ -129,3 +130,5 @@ volumes:
 networks:
   cdf-network:
     driver: bridge
+  web:
+    external: true
