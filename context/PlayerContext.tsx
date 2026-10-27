@@ -51,6 +51,7 @@ interface PlayerContextType {
   togglePlay: () => void;
   seek: (delta: number) => void;
   seekTo: (time: number) => void;
+  onTimeProgress: (time: number, newDuration?: number) => void;
   setPlaybackRate: (rate: number) => void;
   setVolume: (vol: number) => void;
   toggleMute: () => void;
@@ -267,6 +268,13 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     [duration],
   );
 
+  const onTimeProgress = useCallback((time: number, newDuration?: number) => {
+    setCurrentTime(time);
+    if (newDuration && !isNaN(newDuration) && newDuration > 0) {
+      setDuration(newDuration);
+    }
+  }, []);
+
   const setPlaybackRate = useCallback((rate: number) => {
     const clamped = Math.max(0.5, Math.min(2.5, Math.round(rate * 10) / 10));
     setPlaybackRateState(clamped);
@@ -361,6 +369,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         togglePlay,
         seek,
         seekTo,
+        onTimeProgress,
         setPlaybackRate,
         setVolume,
         toggleMute,

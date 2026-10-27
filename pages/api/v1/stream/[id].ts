@@ -1,11 +1,18 @@
 import fs from "node:fs";
+import { Readable } from "node:stream";
 import { NextApiRequest, NextApiResponse } from "next";
 import { createRouter } from "next-connect";
 import controller from "@/infra/controller";
 import database from "@/infra/database";
 import { ForbiddenError, NotFoundError, UnauthorizedError } from "@/infra/errors";
 import EnrollmentModel from "@/models/enrollment";
-import { ensureMediaCached, streamLocalFile } from "@/services/drive/mediaCache";
+import { getDriveFileStream } from "@/services/drive/client";
+import {
+  isMediaCached,
+  getCachePath,
+  ensureMediaCached,
+  streamLocalFile,
+} from "@/services/drive/mediaCache";
 
 // Desliga bodyParser e responseLimit para permitir streaming contínuo sem bufferizar na memória
 export const config = {
@@ -68,23 +75,62 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse) {
   // 4. Modo Desenvolvimento / Testes (STREAM_MODE=node):
   const rangeHeader = req.headers.range;
 
-  // Se houver Google Service Account configurada, usa o cache local de alta velocidade!
+  // Se houver Google Service Account configurada:
   if (process.env.GOOGLE_SA_FILE && fs.existsSync(process.env.GOOGLE_SA_FILE)) {
     try {
-      const cachedFilePath = await ensureMediaCached(material.drive_file_id, material.mime);
-
-      if (material.kind === "pdf") {
-        res.setHeader("Content-Disposition", 'inline; filename="documento.pdf"');
+      // 4a. Se já está em cache local, serve do disco instantaneamente em 1ms!
+      if (isMediaCached(material.drive_file_id, material.mime)) {
+        const cachedFilePath = getCachePath(material.drive_file_id, material.mime);
+        if (material.kind === "pdf") {
+          res.setHeader("Content-Disposition", 'inline; filename="documento.pdf"');
+        }
+        return streamLocalFile(cachedFilePath, rangeHeader, material.mime, res);
       }
 
-      return streamLocalFile(cachedFilePath, rangeHeader, material.mime, res);
-    } catch (cacheErr) {
-      console.error("Erro ao obter mídia do cache/Drive, caindo para fallback:", cacheErr);
+      // 4b. Se não está em cache completo ainda:
+      // Inicia o download para cache em segundo plano (sem travar a resposta HTTP!)
+      ensureMediaCached(material.drive_file_id, material.mime).catch((err) => {
+        console.error("Erro no background cache do Drive:", err);
+      });
+
+      // 4c. E responde IMEDIATAMENTE ao navegador transmitindo o stream do Google Drive!
+      const driveRes = await getDriveFileStream(material.drive_file_id, rangeHeader);
+      if (driveRes) {
+        const contentType = driveRes.headers.get("content-type") || material.mime;
+        const contentLength = driveRes.headers.get("content-length");
+        const contentRange = driveRes.headers.get("content-range");
+        const acceptRanges = driveRes.headers.get("accept-ranges") || "bytes";
+
+        const headers: Record<string, string> = {
+          "Content-Type": contentType,
+          "Accept-Ranges": acceptRanges,
+        };
+
+        if (contentLength) headers["Content-Length"] = contentLength;
+        if (contentRange) headers["Content-Range"] = contentRange;
+
+        if (material.kind === "pdf") {
+          headers["Content-Disposition"] = 'inline; filename="documento.pdf"';
+        }
+
+        res.writeHead(driveRes.status, headers);
+
+        if (driveRes.body) {
+          const nodeStream = Readable.fromWeb(driveRes.body as any);
+          req.on("close", () => {
+            nodeStream.destroy();
+          });
+          return nodeStream.pipe(res);
+        }
+        return res.end();
+      }
+    } catch (streamErr) {
+      console.error("Erro no stream, caindo para fallback:", streamErr);
     }
   }
 
   // 5. Fallback para dev offline e testes unitários com dados mockados
-  const size = Number(material.size_bytes) || 1048576; // fallback 1MB para simulações
+  const size = Number(material.size_bytes) || 1048576;
 
   if (material.kind === "pdf") {
     res.setHeader("Content-Disposition", 'inline; filename="documento.pdf"');
@@ -93,7 +139,6 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse) {
   res.setHeader("Content-Type", material.mime);
   res.setHeader("Accept-Ranges", "bytes");
 
-  // Se a requisição pediu um trecho específico (Range: bytes=start-end)
   if (rangeHeader) {
     const parts = rangeHeader.replace(/bytes=/, "").split("-");
     const start = parseInt(parts[0], 10);
@@ -111,7 +156,6 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse) {
     return res.end(chunk);
   }
 
-  // Requisição completa (200 OK)
   res.writeHead(200, {
     "Content-Length": size,
     "Content-Type": material.mime,

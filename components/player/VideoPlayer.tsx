@@ -36,6 +36,7 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
     togglePlay,
     seek,
     seekTo,
+    onTimeProgress,
     setPlaybackRate,
     setVolume,
     toggleMute,
@@ -152,11 +153,12 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
         onClick={togglePlay}
         onTimeUpdate={(e) => {
           const target = e.currentTarget;
-          seekTo(target.currentTime);
+          onTimeProgress(target.currentTime, target.duration);
         }}
         onLoadedMetadata={(e) => {
           const target = e.currentTarget;
           target.playbackRate = playbackRate;
+          onTimeProgress(target.currentTime, target.duration);
         }}
         onEnded={() => {
           // Trigger next lesson countdown if available

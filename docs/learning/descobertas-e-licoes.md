@@ -209,3 +209,67 @@ Fizemos um teste empírico revelador:
 3. Se não estiver, o sistema faz o download contínuo único em alta velocidade para o disco e imediatamente serve as requisições a partir dele.
 4. **Resultado:** O tempo de resposta para seek e reprodução caiu de **30.000 ms para apenas 9 ms** (mais de **3.000 vezes mais rápido**), acabando com os travamentos.
 5. **Em Produção:** No ambiente de produção na VM da Oracle, essa mesma lógica é executada pelo Nginx usando a diretiva `proxy_cache` vinculada ao `X-Accel-Redirect` (§5.5 do `CLAUDE.md`).
+
+---
+
+## 7. A Armadilha do Loop Infinito no Player: `onTimeUpdate` vs `seekTo`
+
+### O Sintoma:
+
+O vídeo estava baixado no disco local com tempo de resposta de 9ms, mas ao dar play, o áudio picotava ("engasgando" e cortando sílabas) e o player parecia congelar ou lutar contra um gargalo invisível.
+O log do servidor mostrava dezenas de requisições `Range` por segundo para o mesmo trecho do vídeo.
+
+### Por que isso aconteceu? (A armadilha sutil da DOM do HTML5)
+
+No componente React do player, o evento `onTimeUpdate` do `<video>` estava implementado assim:
+
+```tsx
+// ❌ CÓDIGO PROBLEMÁTICO:
+<video
+  onTimeUpdate={(e) => {
+    const target = e.currentTarget;
+    seekTo(target.currentTime);
+  }}
+/>
+```
+
+E no contexto global (`PlayerContext.tsx`):
+
+```tsx
+const seekTo = (time: number) => {
+  if (playerRef.current) {
+    playerRef.current.currentTime = time; // 💥 O PERIGO!
+  }
+  setCurrentTime(time);
+};
+```
+
+Veja o que acontecia a cada **200 milissegundos** enquanto o vídeo tocava:
+
+1. O navegador avança naturalmente a reprodução e dispara o evento `timeupdate`.
+2. O evento chama `seekTo(target.currentTime)`.
+3. O `seekTo` atribui: `playerRef.current.currentTime = time`.
+4. Nos navegadores modernos, **atribuir qualquer valor a `HTMLMediaElement.currentTime` é interpretado como um comando de Seek explícito do usuário**.
+5. O navegador esvazia os buffers de decodificação de áudio e vídeo, pausa a saída de som, renegocia o sincronismo com o codec e tenta estabilizar.
+6. 200ms depois, o vídeo avança um milissegundo e dispara `timeupdate` novamente, reiniciando o ciclo de esvaziamento de buffer!
+
+**Resultado:** O navegador entrava em um **loop contínuo de auto-seek**, cortando o áudio 4 a 5 vezes por segundo. Parecia um gargalo de internet ou lentidão no Docker, mas era puramente um loop de feedback no JavaScript do frontend!
+
+### A Solução: Desacoplar Progresso Passivo de Ação de Seek Ativo
+
+Separamos a responsabilidade em duas funções distintas:
+
+1. **`onTimeProgress(time, duration)`**: Disparado passivamente pelo `onTimeUpdate` e `onLoadedMetadata`. Ele **apenas** atualiza os estados reativos do React (`setCurrentTime`, `setDuration`) para desenhar a barra de progresso dourada e o relógio na tela, **sem jamais tocar em `playerRef.current.currentTime`**.
+2. **`seekTo(time)`**: Chamado **apenas** quando o usuário clica ou arrasta manualmente a barra da linha do tempo ou o input range. Somente nessa ação intencional o elemento `<video>` recebe a atribuição de `currentTime`.
+
+```tsx
+// ✅ CÓDIGO CORRETO:
+<video
+  onTimeUpdate={(e) => {
+    const target = e.currentTarget;
+    onTimeProgress(target.currentTime, target.duration);
+  }}
+/>
+```
+
+**Resultado:** Reprodução fluida, áudio cristalino e o número de requisições HTTP caiu para o fluxo natural de leitura contínua.

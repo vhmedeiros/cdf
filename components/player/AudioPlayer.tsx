@@ -28,6 +28,7 @@ export default function AudioPlayer() {
     togglePlay,
     seek,
     seekTo,
+    onTimeProgress,
     setPlaybackRate,
     setVolume,
     toggleMute,
@@ -61,7 +62,15 @@ export default function AudioPlayer() {
       <audio
         ref={audioRef}
         src={streamSrc}
-        onTimeUpdate={(e) => seekTo(e.currentTarget.currentTime)}
+        onTimeUpdate={(e) => {
+          const target = e.currentTarget;
+          onTimeProgress(target.currentTime, target.duration);
+        }}
+        onLoadedMetadata={(e) => {
+          const target = e.currentTarget;
+          target.playbackRate = playbackRate;
+          onTimeProgress(target.currentTime, target.duration);
+        }}
         onEnded={playNext}
       />
 

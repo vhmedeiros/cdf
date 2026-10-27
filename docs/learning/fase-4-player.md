@@ -162,3 +162,4 @@ Isso garante que o usuário tenha atalhos de alta produtividade sem jamais ter c
 | **Detecção de Scroll**    | `IntersectionObserver`                    | Transforma o vídeo em mini-player flutuante quando menos de 20% estiver visível    |
 | **Biblioteca de PDF**     | `react-pdf` com worker isolado            | Visualização de apostilas sem abrir abas externas e lembrando a página             |
 | **Autoplay de Aula**      | `setInterval` de 5s com estado cancelável | Dá autonomia ao aluno para pausar ou deixar fluir                                  |
+| **Loop de TimeUpdate**    | Separação `onTimeProgress` vs `seekTo`    | Evita que o evento de progresso execute seek contínuo e esvazie o buffer de áudio  |
