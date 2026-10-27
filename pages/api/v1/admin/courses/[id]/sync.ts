@@ -14,11 +14,30 @@ router.post(controller.canRequest("create:course"), postHandler);
 router.get(controller.canRequest("create:course"), getHandler);
 
 async function postHandler(req: NextApiRequest, res: NextApiResponse) {
-  const { id } = req.query as { id: string };
+  const { id, direct } = req.query as { id: string; direct?: string };
 
   const course = await CourseModel.findById(id);
   if (!course) {
     throw new NotFoundError({ message: "Curso não encontrado." });
+  }
+
+  // Execução direta (útil para desenvolvimento e quando o worker não estiver rodando)
+  if (direct === "true") {
+    const { processSyncCourse } = await import("@/worker/jobs/syncCourse");
+    const { default: EnrollmentModel } = await import("@/models/enrollment");
+    await processSyncCourse({ courseId: id });
+    if (req.context.user?.id) {
+      await EnrollmentModel.create({
+        userId: req.context.user.id,
+        courseId: id,
+      });
+    }
+    const updated = await CourseModel.findById(id);
+    return res.status(200).json({
+      message: "Sincronização concluída com sucesso.",
+      course: updated,
+      sync_status: "ok",
+    });
   }
 
   // Enfileira o job no BullMQ com jobId determinístico para evitar duplicatas simultâneas
