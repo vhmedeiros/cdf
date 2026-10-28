@@ -12,6 +12,7 @@ import {
   Mail,
   ShieldCheck,
   AlertCircle,
+  BookOpen,
 } from "lucide-react";
 
 export default function AdminInvitesPage() {
@@ -26,6 +27,15 @@ export default function AdminInvitesPage() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const { data: user } = useSWR<{ features: string[] }>("/api/v1/user");
+  const { data: registeredStudents } = useSWR<
+    Array<{
+      id: string;
+      email: string;
+      display_name: string;
+      created_at: string;
+      enrolled_courses: Array<{ id: string; title: string; slug: string }>;
+    }>
+  >("/api/v1/admin/enrollments");
 
   async function handleCreateInvite(e: React.FormEvent) {
     e.preventDefault();
@@ -222,6 +232,78 @@ export default function AdminInvitesPage() {
                   Envie este link para o aluno (via WhatsApp, e-mail, etc.). Ao abrir, ele definirá
                   seu nome e senha e terá acesso instantâneo.
                 </p>
+              </div>
+            )}
+          </div>
+
+          {/* Lista de Alunos e Cursos Ativos */}
+          <div className="bg-[#131315] border border-[#2a2a2e] rounded-2xl p-6 sm:p-8 shadow-xl space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-[#2a2a2e]">
+              <div>
+                <h2 className="text-lg font-serif font-bold text-[#ece9e2]">
+                  Alunos Cadastrados na Plataforma
+                </h2>
+                <p className="text-xs text-[#9a978f] mt-0.5">
+                  Veja quais cursos cada aluno possui e gerencie permissões
+                </p>
+              </div>
+              <Link
+                href="/admin/courses"
+                className="px-3 py-1.5 rounded-xl bg-[#1b1b1e] border border-[#2a2a2e] hover:border-[#d4af37] text-xs font-semibold text-[#ece9e2] hover:text-[#d4af37] transition flex items-center gap-1.5"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-[#d4af37]" />
+                <span>Gerenciar por Curso</span>
+              </Link>
+            </div>
+
+            {!registeredStudents ? (
+              <div className="py-8 text-center text-xs text-[#9a978f]">
+                Carregando lista de alunos...
+              </div>
+            ) : registeredStudents.length === 0 ? (
+              <div className="py-8 text-center text-xs text-[#9a978f]">
+                Nenhum aluno cadastrado ainda. Crie seu primeiro convite acima!
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {registeredStudents.map((student) => (
+                  <div
+                    key={student.id}
+                    className="p-4 rounded-xl bg-[#1b1b1e] border border-[#2a2a2e] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-full bg-[#131315] border border-[#2a2a2e] flex items-center justify-center font-bold text-xs text-[#d4af37] shrink-0">
+                        {(student.display_name || student.email)[0].toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-xs text-[#ece9e2] truncate">
+                          {student.display_name || "Sem nome"}
+                        </p>
+                        <p className="text-[11px] text-[#9a978f] font-mono truncate">
+                          {student.email}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Cursos Matriculados */}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {student.enrolled_courses && student.enrolled_courses.length > 0 ? (
+                        student.enrolled_courses.map((course) => (
+                          <span
+                            key={course.id}
+                            className="px-2 py-0.5 rounded-lg bg-[#d4af37]/10 border border-[#d4af37]/30 text-[#d4af37] text-[10px] font-medium"
+                          >
+                            {course.title}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-[11px] text-[#9a978f] italic">
+                          Nenhum curso liberado
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>

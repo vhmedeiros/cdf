@@ -48,6 +48,15 @@ const PdfViewer = dynamic(() => import("@/components/player/PdfViewer"), {
   ),
 });
 
+const DocumentViewer = dynamic(() => import("@/components/player/DocumentViewer"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-96 bg-[#131315] animate-pulse rounded-xl flex items-center justify-center text-[#9a978f] border border-[#2a2a2e]">
+      Carregando visualizador de documento...
+    </div>
+  ),
+});
+
 const AudioPlayer = dynamic(() => import("@/components/player/AudioPlayer"), {
   ssr: false,
   loading: () => (
@@ -264,31 +273,15 @@ export default function CourseClassroomPage() {
                   <AudioPlayer />
                 ) : activeItem.material.kind === "video" ? (
                   <VideoPlayer />
-                ) : activeItem.material.kind === "pdf" ? (
-                  <PdfViewer
-                    materialId={activeItem.material.id}
-                    title={activeItem.material.title}
-                  />
                 ) : (
-                  <div className="p-8 rounded-2xl bg-[#131315] border border-[#2a2a2e] text-center space-y-4">
-                    <FileText className="w-12 h-12 text-[#d4af37] mx-auto" />
-                    <div>
-                      <h3 className="font-semibold text-base text-[#ece9e2]">
-                        {activeItem.material.title}
-                      </h3>
-                      <p className="text-xs text-[#9a978f]">Arquivo complementar do curso</p>
-                    </div>
-                    <a
-                      href={`/api/v1/stream/${activeItem.material.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      download
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-[#d4af37] text-black font-semibold text-xs rounded-lg hover:bg-[#f5d76e] transition"
-                    >
-                      <Download className="w-4 h-4" />
-                      Baixar Arquivo
-                    </a>
-                  </div>
+                  <DocumentViewer
+                    materialId={activeItem.material.id}
+                    driveFileId={activeItem.material.drive_file_id}
+                    title={activeItem.material.title}
+                    mime={activeItem.material.mime}
+                    kind={activeItem.material.kind}
+                    sizeBytes={activeItem.material.size_bytes}
+                  />
                 )
               ) : (
                 <div className="w-full aspect-video bg-[#131315] rounded-xl flex items-center justify-center text-[#9a978f] border border-[#2a2a2e]">

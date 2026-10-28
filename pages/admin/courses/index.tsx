@@ -17,6 +17,10 @@ import {
   Users,
   Eye,
   EyeOff,
+  UserCheck,
+  Search,
+  X,
+  Check,
 } from "lucide-react";
 import { formatDuration } from "@/lib/utils";
 
@@ -37,12 +41,27 @@ interface CourseAdminItem {
   created_at: string;
 }
 
+interface StudentEnrollmentItem {
+  id: string;
+  email: string;
+  display_name: string;
+  is_enrolled: boolean;
+  enrolled_at: string | null;
+}
+
 export default function AdminCoursesPage() {
   const [courses, setCourses] = useState<CourseAdminItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncingId, setSyncingId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  // Estados do Modal de Gerenciamento de Alunos
+  const [managingCourse, setManagingCourse] = useState<CourseAdminItem | null>(null);
+  const [students, setStudents] = useState<StudentEnrollmentItem[]>([]);
+  const [studentsLoading, setStudentsLoading] = useState(false);
+  const [studentSearch, setStudentSearch] = useState("");
+  const [togglingStudentId, setTogglingStudentId] = useState<string | null>(null);
 
   const loadCourses = async () => {
     setLoading(true);
@@ -117,6 +136,66 @@ export default function AdminCoursesPage() {
       await loadCourses();
     } catch (err: any) {
       setErrorMsg(err.message || "Falha ao matricular alunos.");
+    }
+  };
+
+  const openEnrollmentsModal = async (course: CourseAdminItem) => {
+    setManagingCourse(course);
+    setStudentsLoading(true);
+    setStudentSearch("");
+    try {
+      const res = await fetch(`/api/v1/admin/courses/${course.id}/enrollments`);
+      if (res.ok) {
+        const data = await res.json();
+        setStudents(data);
+      }
+    } catch {
+      setErrorMsg("Erro ao carregar lista de alunos.");
+    } finally {
+      setStudentsLoading(false);
+    }
+  };
+
+  const handleToggleStudent = async (userId: string, currentEnrolled: boolean) => {
+    if (!managingCourse) return;
+    setTogglingStudentId(userId);
+    try {
+      const res = await fetch(`/api/v1/admin/courses/${managingCourse.id}/enrollments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId, enrolled: !currentEnrolled }),
+      });
+      if (res.ok) {
+        setStudents((prev) =>
+          prev.map((s) => (s.id === userId ? { ...s, is_enrolled: !currentEnrolled } : s)),
+        );
+        await loadCourses();
+      }
+    } catch {
+      setErrorMsg("Erro ao atualizar matrícula do aluno.");
+    } finally {
+      setTogglingStudentId(null);
+    }
+  };
+
+  const handleBatchStudents = async (enrolled: boolean) => {
+    if (!managingCourse) return;
+    const targetIds = students.map((s) => s.id);
+    setStudentsLoading(true);
+    try {
+      const res = await fetch(`/api/v1/admin/courses/${managingCourse.id}/enrollments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_ids: targetIds, enrolled }),
+      });
+      if (res.ok) {
+        setStudents((prev) => prev.map((s) => ({ ...s, is_enrolled: enrolled })));
+        await loadCourses();
+      }
+    } catch {
+      setErrorMsg("Erro na atualização em massa.");
+    } finally {
+      setStudentsLoading(false);
     }
   };
 
@@ -299,14 +378,14 @@ export default function AdminCoursesPage() {
                           )}
                         </button>
 
-                        {/* Matricular Todos os Alunos */}
+                        {/* Gerenciar Alunos & Matrículas */}
                         <button
-                          onClick={() => handleEnrollAll(course.id)}
-                          className="px-3 py-1.5 rounded-xl bg-[#1b1b1e] border border-[#2a2a2e] hover:border-[#6fbf73] text-xs font-semibold text-[#ece9e2] hover:text-[#6fbf73] transition flex items-center gap-1.5"
-                          title="Matricular todos os alunos cadastrados neste curso"
+                          onClick={() => openEnrollmentsModal(course)}
+                          className="px-3 py-1.5 rounded-xl bg-[#1b1b1e] border border-[#2a2a2e] hover:border-[#d4af37] text-xs font-semibold text-[#ece9e2] hover:text-[#d4af37] transition flex items-center gap-1.5 shadow-sm"
+                          title="Selecionar quais alunos têm acesso a este curso"
                         >
-                          <Users className="w-3.5 h-3.5 text-[#6fbf73]" />
-                          <span className="hidden sm:inline">Matricular Todos</span>
+                          <UserCheck className="w-3.5 h-3.5 text-[#d4af37]" />
+                          <span>Alunos & Acesso ({course.enrollments_count ?? 0})</span>
                         </button>
 
                         <button
@@ -396,6 +475,146 @@ export default function AdminCoursesPage() {
             </div>
           )}
         </main>
+
+        {/* Modal de Gerenciamento de Alunos do Curso */}
+        {managingCourse && (
+          <div
+            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+            onClick={() => setManagingCourse(null)}
+          >
+            <div
+              className="bg-[#131315] border border-[#2a2a2e] rounded-2xl w-full max-w-xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header do Modal */}
+              <div className="flex items-center justify-between p-5 border-b border-[#2a2a2e] bg-[#1b1b1e]">
+                <div>
+                  <h3 className="font-serif font-bold text-base text-[#ece9e2]">
+                    Alunos do Curso
+                  </h3>
+                  <p className="text-xs text-[#9a978f] mt-0.5">
+                    Curso: <span className="text-[#d4af37] font-semibold">{managingCourse.title}</span>
+                  </p>
+                </div>
+                <button
+                  onClick={() => setManagingCourse(null)}
+                  className="p-1.5 rounded-lg text-[#9a978f] hover:text-[#ece9e2] hover:bg-[#2a2a2e] transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Barra de Filtro e Ações em Massa */}
+              <div className="p-4 border-b border-[#2a2a2e] space-y-3 bg-[#131315]">
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 w-4 h-4 text-[#9a978f]" />
+                  <input
+                    type="text"
+                    value={studentSearch}
+                    onChange={(e) => setStudentSearch(e.target.value)}
+                    placeholder="Buscar aluno por nome ou e-mail..."
+                    className="w-full pl-9 pr-3 py-2 bg-[#1b1b1e] border border-[#2a2a2e] rounded-xl text-xs text-[#ece9e2] placeholder-[#9a978f] outline-none focus:border-[#d4af37]"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[#9a978f]">
+                    {students.filter((s) => s.is_enrolled).length} de {students.length} alunos matriculados
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleBatchStudents(true)}
+                      disabled={studentsLoading}
+                      className="px-2.5 py-1 rounded-lg bg-[#6fbf73]/10 text-[#6fbf73] border border-[#6fbf73]/30 hover:bg-[#6fbf73]/20 transition text-[11px] font-semibold disabled:opacity-50"
+                    >
+                      Matricular Todos
+                    </button>
+                    <button
+                      onClick={() => handleBatchStudents(false)}
+                      disabled={studentsLoading}
+                      className="px-2.5 py-1 rounded-lg bg-[#e5484d]/10 text-[#e5484d] border border-[#e5484d]/30 hover:bg-[#e5484d]/20 transition text-[11px] font-semibold disabled:opacity-50"
+                    >
+                      Remover Todos
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Lista de Alunos com Toggle */}
+              <div className="p-4 overflow-y-auto space-y-2 flex-1 max-h-96">
+                {studentsLoading ? (
+                  <div className="py-12 text-center text-xs text-[#9a978f]">
+                    Carregando alunos...
+                  </div>
+                ) : students.length === 0 ? (
+                  <div className="py-12 text-center text-xs text-[#9a978f]">
+                    Nenhum aluno cadastrado no sistema ainda.
+                  </div>
+                ) : (
+                  students
+                    .filter(
+                      (s) =>
+                        s.display_name?.toLowerCase().includes(studentSearch.toLowerCase()) ||
+                        s.email?.toLowerCase().includes(studentSearch.toLowerCase()),
+                    )
+                    .map((student) => {
+                      const isToggling = togglingStudentId === student.id;
+
+                      return (
+                        <div
+                          key={student.id}
+                          className="flex items-center justify-between p-3 rounded-xl bg-[#1b1b1e] border border-[#2a2a2e] hover:border-[#3a3a3e] transition gap-3"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-8 h-8 rounded-full bg-[#131315] border border-[#2a2a2e] flex items-center justify-center font-bold text-xs text-[#d4af37] shrink-0">
+                              {(student.display_name || student.email)[0].toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-xs text-[#ece9e2] truncate">
+                                {student.display_name || "Sem nome"}
+                              </p>
+                              <p className="text-[11px] text-[#9a978f] font-mono truncate">
+                                {student.email}
+                              </p>
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => handleToggleStudent(student.id, student.is_enrolled)}
+                            disabled={isToggling}
+                            className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition flex items-center gap-1.5 shrink-0 ${
+                              student.is_enrolled
+                                ? "bg-[#6fbf73]/15 border-[#6fbf73]/40 text-[#6fbf73] hover:bg-[#e5484d]/10 hover:border-[#e5484d]/40 hover:text-[#e5484d]"
+                                : "bg-[#131315] border-[#2a2a2e] text-[#9a978f] hover:text-[#ece9e2] hover:border-[#d4af37]"
+                            }`}
+                          >
+                            {student.is_enrolled ? (
+                              <>
+                                <Check className="w-3.5 h-3.5" />
+                                <span>Matriculado</span>
+                              </>
+                            ) : (
+                              <span>Sem Acesso</span>
+                            )}
+                          </button>
+                        </div>
+                      );
+                    })
+                )}
+              </div>
+
+              {/* Rodapé do Modal */}
+              <div className="p-4 border-t border-[#2a2a2e] bg-[#1b1b1e] flex justify-end">
+                <button
+                  onClick={() => setManagingCourse(null)}
+                  className="px-4 py-2 bg-gradient-to-r from-[#d4af37] to-[#f5d76e] text-black font-semibold text-xs rounded-xl hover:opacity-95 transition shadow-sm"
+                >
+                  Concluir
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
