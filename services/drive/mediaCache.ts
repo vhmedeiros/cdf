@@ -5,8 +5,71 @@ import { getAccessToken } from "./client";
 
 const CACHE_DIR = path.join(process.cwd(), ".cache", "media");
 
+// Limite máximo de armazenamento do cache local em disco (padrão 25 GB)
+const MAX_CACHE_SIZE_BYTES =
+  (Number(process.env.MEDIA_CACHE_MAX_GB) || 25) * 1024 * 1024 * 1024;
+
 // Mapeia downloads em andamento para não duplicar requisições para o mesmo arquivo
 const activeDownloads = new Map<string, Promise<string>>();
+
+/**
+ * Atualiza o timestamp de acesso do arquivo para manter os mais assistidos no cache
+ */
+export function touchCacheFile(filePath: string): void {
+  try {
+    const now = new Date();
+    fs.utimesSync(filePath, now, now);
+  } catch {}
+}
+
+/**
+ * Remove arquivos menos recentemente usados (LRU) se o diretório de cache ultrapassar o teto
+ */
+export function evictOldCacheFiles(bytesToReserve: number = 0): void {
+  if (!fs.existsSync(CACHE_DIR)) return;
+
+  try {
+    const files = fs
+      .readdirSync(CACHE_DIR)
+      .filter((name) => !name.endsWith(".downloading"))
+      .map((name) => {
+        const fullPath = path.join(CACHE_DIR, name);
+        try {
+          const stat = fs.statSync(fullPath);
+          return {
+            path: fullPath,
+            size: stat.size,
+            time: stat.mtimeMs || stat.ctimeMs || 0,
+          };
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean) as Array<{ path: string; size: number; time: number }>;
+
+    const totalCurrentSize = files.reduce((acc, f) => acc + f.size, 0);
+
+    // Se o tamanho total + o download novo ultrapassar o teto configurado
+    if (totalCurrentSize + bytesToReserve > MAX_CACHE_SIZE_BYTES) {
+      // Ordena pelos mais antigos primeiro (LRU - Least Recently Used)
+      files.sort((a, b) => a.time - b.time);
+
+      // Meta: reduzir até 80% do limite máximo para não ficar limpando a cada pequeno chunk
+      const targetSize = MAX_CACHE_SIZE_BYTES * 0.8;
+      let currentSize = totalCurrentSize;
+
+      for (const file of files) {
+        if (currentSize + bytesToReserve <= targetSize) break;
+        try {
+          fs.unlinkSync(file.path);
+          currentSize -= file.size;
+        } catch {}
+      }
+    }
+  } catch (err) {
+    console.error("Aviso: Falha na limpeza de cache LRU:", err);
+  }
+}
 
 export function getExtensionFromMime(mimeType: string): string {
   if (mimeType.includes("mp4")) return "mp4";
@@ -88,8 +151,15 @@ export async function ensureMediaCached(
       }
       fileStream.end();
 
+      // Garante espaço no limite LRU antes de mover o arquivo para o cache definitivo
+      try {
+        const tempStat = fs.statSync(tempPath);
+        evictOldCacheFiles(tempStat.size);
+      } catch {}
+
       // Renomeia o arquivo temporário para o final atômico
       fs.renameSync(tempPath, finalPath);
+      touchCacheFile(finalPath);
       return finalPath;
     } catch (err) {
       if (fs.existsSync(tempPath)) {
@@ -114,6 +184,7 @@ export function streamLocalFile(
   mimeType: string,
   res: ServerResponse,
 ): void {
+  touchCacheFile(filePath);
   const stat = fs.statSync(filePath);
   const totalSize = stat.size;
 

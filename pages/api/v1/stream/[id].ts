@@ -13,6 +13,7 @@ import {
   ensureMediaCached,
   streamLocalFile,
   getExtensionFromMime,
+  touchCacheFile,
 } from "@/services/drive/mediaCache";
 
 // Desliga bodyParser e responseLimit para permitir streaming contínuo sem bufferizar na memória
@@ -74,6 +75,8 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse) {
   // 3a. Se já está em cache local e em modo Nginx: Nginx serve em alta performance via X-Accel-Redirect
   if (isCached && streamMode === "nginx") {
     const ext = getExtensionFromMime(material.mime);
+    const cachedFilePath = getCachePath(material.drive_file_id, material.mime);
+    touchCacheFile(cachedFilePath);
     res.setHeader("X-Accel-Redirect", `/_drive/${material.drive_file_id}.${ext}`);
     res.setHeader("X-Drive-Token", process.env.DRIVE_ACCESS_TOKEN || "token-placeholder");
     res.setHeader("Content-Type", material.mime);
