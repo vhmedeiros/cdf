@@ -54,10 +54,24 @@ async function remove(userId: string, courseId: string): Promise<void> {
   ]);
 }
 
+async function enrollInAllPublishedCourses(
+  userId: string,
+  grantedBy?: string | null,
+): Promise<void> {
+  const publishedCourses = await database.query<{ id: string }>(
+    `SELECT id FROM courses WHERE status = 'published'`,
+  );
+
+  for (const c of publishedCourses.rows) {
+    await create({ userId, courseId: c.id, grantedBy });
+  }
+}
+
 const EnrollmentModel = {
   create,
   isEnrolled,
   remove,
+  enrollInAllPublishedCourses,
 };
 
 export default EnrollmentModel;

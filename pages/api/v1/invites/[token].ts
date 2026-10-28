@@ -6,6 +6,7 @@ import { NotFoundError, ValidationError, CustomError } from "@/infra/errors";
 import Invite from "@/models/invite";
 import User from "@/models/user";
 import Session from "@/models/session";
+import EnrollmentModel from "@/models/enrollment";
 
 const router = createRouter<NextApiRequest, NextApiResponse>();
 
@@ -69,6 +70,13 @@ async function patchHandler(req: NextApiRequest, res: NextApiResponse) {
 
   // Marca o convite como usado — impede uso duplo
   await Invite.markAsUsed(token);
+
+  // Matricula o novo aluno automaticamente nos cursos publicados
+  try {
+    await EnrollmentModel.enrollInAllPublishedCourses(user.id, invite.created_by);
+  } catch (err) {
+    console.error("Erro ao matricular usuário nos cursos:", err);
+  }
 
   // Já loga o usuário criando uma sessão automaticamente
   const session = await Session.create(user.id);

@@ -108,8 +108,24 @@ export default function AdminCoursesPage() {
               <div className="flex items-center gap-2">
                 <Shield className="w-4 h-4 text-[#d4af37]" />
                 <span className="font-semibold text-sm">Painel do Administrador</span>
-                <span className="text-xs text-[#9a978f]">/ Cursos</span>
               </div>
+
+              <div className="h-4 w-px bg-[#2a2a2e]" />
+
+              <nav className="flex items-center gap-1">
+                <Link
+                  href="/admin/courses"
+                  className="px-2.5 py-1 rounded-lg bg-[#1b1b1e] text-[#d4af37] text-xs font-semibold border border-[#2a2a2e]"
+                >
+                  Cursos
+                </Link>
+                <Link
+                  href="/admin/invites"
+                  className="px-2.5 py-1 rounded-lg text-[#9a978f] hover:text-[#ece9e2] text-xs transition"
+                >
+                  Convites & Alunos
+                </Link>
+              </nav>
             </div>
 
             <Link
