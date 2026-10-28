@@ -15,7 +15,7 @@ export default function HeroResume({ lastStudied }: HeroResumeProps) {
           <div className="space-y-2 max-w-xl">
             <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#d4af37]/10 border border-[#d4af37]/20 text-xs text-[#d4af37]">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Bem-vindo à Biblioteca Noturna</span>
+              <span>Plataforma de Estudos</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-serif font-bold text-[#ece9e2]">
               Comece sua jornada de estudos

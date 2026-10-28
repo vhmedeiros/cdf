@@ -79,6 +79,7 @@ services:
     volumes:
       - cdf_prod_media:/app/.cache/media
       - ../secrets:/run/secrets:ro
+      - ../secrets:/app/secrets:ro
     networks:
       - cdf-network
     healthcheck:
@@ -103,6 +104,7 @@ services:
     volumes:
       - cdf_prod_media:/app/.cache/media
       - ../secrets:/run/secrets:ro
+      - ../secrets:/app/secrets:ro
     networks:
       - cdf-network
 

@@ -295,6 +295,22 @@ async function syncTreeToDatabase(courseId: string, tree: ParsedTree): Promise<v
   }
 }
 
+async function updateStatus(id: string, status: CourseStatus): Promise<Course | null> {
+  const result = await database.query<Course>(
+    `UPDATE courses SET status = $1, updated_at = now() WHERE id = $2 RETURNING *`,
+    [status, id],
+  );
+  return result.rows[0] ?? null;
+}
+
+async function getEnrollmentsCount(courseId: string): Promise<number> {
+  const result = await database.query<{ count: string }>(
+    `SELECT count(*)::text as count FROM enrollments WHERE course_id = $1`,
+    [courseId],
+  );
+  return parseInt(result.rows[0]?.count || "0", 10);
+}
+
 const CourseModel = {
   create,
   findById,
@@ -303,6 +319,8 @@ const CourseModel = {
   findEnrolledByUser,
   getTree,
   syncTreeToDatabase,
+  updateStatus,
+  getEnrollmentsCount,
 };
 
 export default CourseModel;

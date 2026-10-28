@@ -67,11 +67,25 @@ async function enrollInAllPublishedCourses(
   }
 }
 
+async function enrollAllUsersInCourse(
+  courseId: string,
+  grantedBy?: string | null,
+): Promise<number> {
+  const usersRes = await database.query<{ id: string }>(`SELECT id FROM users`);
+  let count = 0;
+  for (const u of usersRes.rows) {
+    await create({ userId: u.id, courseId, grantedBy });
+    count++;
+  }
+  return count;
+}
+
 const EnrollmentModel = {
   create,
   isEnrolled,
   remove,
   enrollInAllPublishedCourses,
+  enrollAllUsersInCourse,
 };
 
 export default EnrollmentModel;

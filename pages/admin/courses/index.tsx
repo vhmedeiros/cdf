@@ -14,6 +14,9 @@ import {
   ArrowLeft,
   ChevronRight,
   Shield,
+  Users,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { formatDuration } from "@/lib/utils";
 
@@ -29,6 +32,7 @@ interface CourseAdminItem {
   sync_error: string | null;
   total_duration_seconds: number;
   materials_count: number;
+  enrollments_count?: number;
   last_synced_at: string | null;
   created_at: string;
 }
@@ -81,6 +85,38 @@ export default function AdminCoursesPage() {
       setErrorMsg(err.message || "Falha ao sincronizar.");
     } finally {
       setSyncingId(null);
+    }
+  };
+
+  const handleTogglePublish = async (courseId: string) => {
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    try {
+      const res = await fetch(`/api/v1/admin/courses/${courseId}/publish`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Erro ao alterar status do curso.");
+      setSuccessMsg(data.message);
+      await loadCourses();
+    } catch (err: any) {
+      setErrorMsg(err.message || "Falha ao alterar status.");
+    }
+  };
+
+  const handleEnrollAll = async (courseId: string) => {
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    try {
+      const res = await fetch(`/api/v1/admin/courses/${courseId}/enroll-all`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Erro ao matricular alunos.");
+      setSuccessMsg(data.message);
+      await loadCourses();
+    } catch (err: any) {
+      setErrorMsg(err.message || "Falha ao matricular alunos.");
     }
   };
 
@@ -235,7 +271,44 @@ export default function AdminCoursesPage() {
                       </div>
 
                       {/* Botões de Ação */}
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {/* Publicar / Despublicar */}
+                        <button
+                          onClick={() => handleTogglePublish(course.id)}
+                          className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition flex items-center gap-1.5 ${
+                            course.status === "published"
+                              ? "bg-[#6fbf73]/10 border-[#6fbf73]/40 text-[#6fbf73] hover:bg-[#e5484d]/10 hover:border-[#e5484d]/40 hover:text-[#e5484d]"
+                              : "bg-[#d4af37]/10 border-[#d4af37]/40 text-[#d4af37] hover:bg-[#d4af37]/20"
+                          }`}
+                          title={
+                            course.status === "published"
+                              ? "Clique para despublicar (tornar rascunho)"
+                              : "Clique para publicar e liberar para os alunos"
+                          }
+                        >
+                          {course.status === "published" ? (
+                            <>
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>Publicado</span>
+                            </>
+                          ) : (
+                            <>
+                              <EyeOff className="w-3.5 h-3.5" />
+                              <span>Publicar Curso</span>
+                            </>
+                          )}
+                        </button>
+
+                        {/* Matricular Todos os Alunos */}
+                        <button
+                          onClick={() => handleEnrollAll(course.id)}
+                          className="px-3 py-1.5 rounded-xl bg-[#1b1b1e] border border-[#2a2a2e] hover:border-[#6fbf73] text-xs font-semibold text-[#ece9e2] hover:text-[#6fbf73] transition flex items-center gap-1.5"
+                          title="Matricular todos os alunos cadastrados neste curso"
+                        >
+                          <Users className="w-3.5 h-3.5 text-[#6fbf73]" />
+                          <span className="hidden sm:inline">Matricular Todos</span>
+                        </button>
+
                         <button
                           onClick={() => handleSyncCourse(course.id)}
                           disabled={isSyncing}
@@ -245,7 +318,7 @@ export default function AdminCoursesPage() {
                           <RefreshCw
                             className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin text-[#d4af37]" : ""}`}
                           />
-                          {isSyncing ? "Sincronizando..." : "Sincronizar do Drive"}
+                          {isSyncing ? "Sincronizando..." : "Sincronizar"}
                         </button>
 
                         <Link
@@ -259,7 +332,17 @@ export default function AdminCoursesPage() {
                     </div>
 
                     {/* Métricas e Detalhes */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
+                      <div className="bg-[#1b1b1e] p-2.5 rounded-xl border border-[#2a2a2e] flex items-center gap-2.5">
+                        <Users className="w-4 h-4 text-[#6fbf73] shrink-0" />
+                        <div>
+                          <span className="block font-bold text-[#ece9e2] font-mono">
+                            {course.enrollments_count ?? 0}
+                          </span>
+                          <span className="text-[#9a978f] text-[10px]">Alunos Matriculados</span>
+                        </div>
+                      </div>
+
                       <div className="bg-[#1b1b1e] p-2.5 rounded-xl border border-[#2a2a2e] flex items-center gap-2.5">
                         <Video className="w-4 h-4 text-[#d4af37] shrink-0" />
                         <div>

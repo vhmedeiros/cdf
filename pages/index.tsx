@@ -75,7 +75,7 @@ export default function StudentDashboardPage() {
   return (
     <>
       <Head>
-        <title>Início — Aula | Biblioteca Noturna</title>
+        <title>Início — Aula</title>
         <meta
           name="description"
           content="Ambiente de estudos diário de alto rendimento com repetição espaçada, player de alta performance e anotações."

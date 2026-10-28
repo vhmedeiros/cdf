@@ -4,6 +4,7 @@ import { z } from "zod";
 import controller from "@/infra/controller";
 import { ValidationError } from "@/infra/errors";
 import CourseModel, { LessonStrategy } from "@/models/course";
+import EnrollmentModel from "@/models/enrollment";
 import { extractFolderId } from "@/services/drive/client";
 
 const router = createRouter<NextApiRequest, NextApiResponse>();
@@ -15,7 +16,13 @@ router.post(controller.canRequest("create:course"), postHandler);
 
 async function getHandler(req: NextApiRequest, res: NextApiResponse) {
   const courses = await CourseModel.findAll();
-  return res.status(200).json(courses);
+  const coursesWithCounts = await Promise.all(
+    courses.map(async (c) => ({
+      ...c,
+      enrollments_count: await CourseModel.getEnrollmentsCount(c.id),
+    })),
+  );
+  return res.status(200).json(coursesWithCounts);
 }
 
 const CreateCourseSchema = z.object({
@@ -45,6 +52,8 @@ async function postHandler(req: NextApiRequest, res: NextApiResponse) {
     });
   }
 
+  const adminUser = req.context.user as any;
+
   const course = await CourseModel.create({
     title,
     slug,
@@ -52,8 +61,11 @@ async function postHandler(req: NextApiRequest, res: NextApiResponse) {
     driveUrl: drive_url,
     driveFolderId,
     lessonStrategy: lesson_strategy as LessonStrategy,
-    status: "draft",
+    status: "published",
   });
+
+  // Auto-matricula todos os usuários no novo curso publicado
+  await EnrollmentModel.enrollAllUsersInCourse(course.id, adminUser?.id);
 
   return res.status(201).json(course);
 }

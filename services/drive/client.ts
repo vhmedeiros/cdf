@@ -1,6 +1,28 @@
 import fs from "node:fs";
+import path from "node:path";
 import { GoogleAuth } from "google-auth-library";
 import { DriveItem } from "./buildTree";
+
+/**
+ * Busca o arquivo de credenciais da Service Account do Google em múltiplos caminhos
+ */
+export function getServiceAccountPath(): string | null {
+  const candidates = [
+    process.env.GOOGLE_SA_FILE,
+    "/run/secrets/gdrive_sa.json",
+    path.join(process.cwd(), "secrets", "gdrive_sa.json"),
+    path.join(process.cwd(), "gdrive_sa.json"),
+    "/app/secrets/gdrive_sa.json",
+    "/app/gdrive_sa.json",
+  ].filter(Boolean) as string[];
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return null;
+}
 
 /**
  * Extrai o folder ID de qualquer formato de link do Google Drive:
@@ -36,9 +58,10 @@ export function extractFolderId(input: string): string {
  * Obtém o token de acesso da Service Account do Google Drive
  */
 export async function getAccessToken(): Promise<string | null> {
-  const saFile = process.env.GOOGLE_SA_FILE;
+  const saFile = getServiceAccountPath();
 
-  if (!saFile || !fs.existsSync(saFile)) {
+  if (!saFile) {
+    console.warn("⚠️ [GoogleDrive] Nenhum arquivo gdrive_sa.json encontrado nos caminhos padrão.");
     return null;
   }
 
@@ -51,8 +74,8 @@ export async function getAccessToken(): Promise<string | null> {
     const client = await auth.getClient();
     const tokenResponse = await client.getAccessToken();
     return tokenResponse.token || null;
-  } catch (error) {
-    console.error("Erro ao obter access token do Google:", error);
+  } catch (error: any) {
+    console.error("❌ [GoogleDrive] Erro ao obter access token do Google:", error?.message || error);
     return null;
   }
 }

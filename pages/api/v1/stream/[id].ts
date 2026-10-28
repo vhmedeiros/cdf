@@ -12,6 +12,7 @@ import {
   getCachePath,
   ensureMediaCached,
   streamLocalFile,
+  getExtensionFromMime,
 } from "@/services/drive/mediaCache";
 
 // Desliga bodyParser e responseLimit para permitir streaming contínuo sem bufferizar na memória
@@ -53,7 +54,11 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   // 2. Autorização: admin ou aluno matriculado
-  const isAdmin = user.features?.includes("read:course:all");
+  const isAdmin = Boolean(
+    user.features?.includes("read:course:all") ||
+      user.features?.includes("create:course") ||
+      user.features?.includes("create:invite"),
+  );
   const isEnrolled = await EnrollmentModel.isEnrolled(user.id, material.course_id);
 
   if (!isAdmin && !isEnrolled) {
@@ -62,71 +67,71 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse) {
     });
   }
 
+  const rangeHeader = req.headers.range;
+  const isCached = isMediaCached(material.drive_file_id, material.mime);
   const streamMode = process.env.STREAM_MODE || "node";
 
-  // 3. Modo Produção: Next autoriza, Nginx transmite via X-Accel-Redirect
-  if (streamMode === "nginx") {
-    res.setHeader("X-Accel-Redirect", `/_drive/${material.drive_file_id}`);
+  // 3a. Se já está em cache local e em modo Nginx: Nginx serve em alta performance via X-Accel-Redirect
+  if (isCached && streamMode === "nginx") {
+    const ext = getExtensionFromMime(material.mime);
+    res.setHeader("X-Accel-Redirect", `/_drive/${material.drive_file_id}.${ext}`);
     res.setHeader("X-Drive-Token", process.env.DRIVE_ACCESS_TOKEN || "token-placeholder");
     res.setHeader("Content-Type", material.mime);
+    if (material.kind === "pdf") {
+      res.setHeader("Content-Disposition", 'inline; filename="documento.pdf"');
+    }
     return res.status(200).end();
   }
 
-  // 4. Modo Desenvolvimento / Testes (STREAM_MODE=node):
-  const rangeHeader = req.headers.range;
-
-  // Se houver Google Service Account configurada:
-  if (process.env.GOOGLE_SA_FILE && fs.existsSync(process.env.GOOGLE_SA_FILE)) {
-    try {
-      // 4a. Se já está em cache local, serve do disco instantaneamente em 1ms!
-      if (isMediaCached(material.drive_file_id, material.mime)) {
-        const cachedFilePath = getCachePath(material.drive_file_id, material.mime);
-        if (material.kind === "pdf") {
-          res.setHeader("Content-Disposition", 'inline; filename="documento.pdf"');
-        }
-        return streamLocalFile(cachedFilePath, rangeHeader, material.mime, res);
-      }
-
-      // 4b. Se não está em cache completo ainda:
-      // Inicia o download para cache em segundo plano (sem travar a resposta HTTP!)
-      ensureMediaCached(material.drive_file_id, material.mime).catch((err) => {
-        console.error("Erro no background cache do Drive:", err);
-      });
-
-      // 4c. E responde IMEDIATAMENTE ao navegador transmitindo o stream do Google Drive!
-      const driveRes = await getDriveFileStream(material.drive_file_id, rangeHeader);
-      if (driveRes) {
-        const contentType = driveRes.headers.get("content-type") || material.mime;
-        const contentLength = driveRes.headers.get("content-length");
-        const contentRange = driveRes.headers.get("content-range");
-        const acceptRanges = driveRes.headers.get("accept-ranges") || "bytes";
-
-        const headers: Record<string, string> = {
-          "Content-Type": contentType,
-          "Accept-Ranges": acceptRanges,
-        };
-
-        if (contentLength) headers["Content-Length"] = contentLength;
-        if (contentRange) headers["Content-Range"] = contentRange;
-
-        if (material.kind === "pdf") {
-          headers["Content-Disposition"] = 'inline; filename="documento.pdf"';
-        }
-
-        res.writeHead(driveRes.status, headers);
-
-        if (driveRes.body) {
-          const nodeStream = Readable.fromWeb(driveRes.body as any);
-          req.on("close", () => {
-            nodeStream.destroy();
-          });
-          return nodeStream.pipe(res);
-        }
-        return res.end();
-      }
-    } catch (streamErr) {
-      console.error("Erro no stream, caindo para fallback:", streamErr);
+  // 3b. Se já está em cache local e em modo Node: serve do disco local diretamente
+  if (isCached) {
+    const cachedFilePath = getCachePath(material.drive_file_id, material.mime);
+    if (material.kind === "pdf") {
+      res.setHeader("Content-Disposition", 'inline; filename="documento.pdf"');
     }
+    return streamLocalFile(cachedFilePath, rangeHeader, material.mime, res);
+  }
+
+  // 4. Se NÃO está em cache ainda:
+  // 4a. Inicia o cache em segundo plano para que as próximas execuções sejam instantâneas
+  ensureMediaCached(material.drive_file_id, material.mime).catch((err) => {
+    console.error("Erro no background cache do Drive:", err);
+  });
+
+  // 4b. Transmite o stream diretamente do Google Drive com suporte a Range sem esperar o download
+  try {
+    const driveRes = await getDriveFileStream(material.drive_file_id, rangeHeader);
+    if (driveRes && (driveRes.ok || driveRes.status === 206)) {
+      const contentType = driveRes.headers.get("content-type") || material.mime;
+      const contentLength = driveRes.headers.get("content-length");
+      const contentRange = driveRes.headers.get("content-range");
+      const acceptRanges = driveRes.headers.get("accept-ranges") || "bytes";
+
+      const headers: Record<string, string> = {
+        "Content-Type": contentType,
+        "Accept-Ranges": acceptRanges,
+      };
+
+      if (contentLength) headers["Content-Length"] = contentLength;
+      if (contentRange) headers["Content-Range"] = contentRange;
+
+      if (material.kind === "pdf") {
+        headers["Content-Disposition"] = 'inline; filename="documento.pdf"';
+      }
+
+      res.writeHead(driveRes.status, headers);
+
+      if (driveRes.body) {
+        const nodeStream = Readable.fromWeb(driveRes.body as any);
+        req.on("close", () => {
+          nodeStream.destroy();
+        });
+        return nodeStream.pipe(res);
+      }
+      return res.end();
+    }
+  } catch (streamErr) {
+    console.error("Erro no stream direto do Drive, caindo para fallback:", streamErr);
   }
 
   // 5. Fallback para dev offline e testes unitários com dados mockados

@@ -72,7 +72,7 @@ export default function AcceptInvitePage() {
   return (
     <>
       <Head>
-        <title>Aceitar Convite — Aula | Biblioteca Noturna</title>
+        <title>Aceitar Convite — Aula</title>
       </Head>
 
       <div className="min-h-screen bg-[#0b0b0c] text-[#ece9e2] flex flex-col items-center justify-center p-4">

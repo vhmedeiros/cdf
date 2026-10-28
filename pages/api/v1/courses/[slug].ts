@@ -26,7 +26,11 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse) {
 
   // Verifica se o usuário tem matrícula ativa no curso
   // Admins com "read:course:all" também podem acessar
-  const isAdmin = user.features.includes("read:course:all");
+  const isAdmin = Boolean(
+    user.features?.includes("read:course:all") ||
+      user.features?.includes("create:course") ||
+      user.features?.includes("create:invite"),
+  );
   const isEnrolled = await EnrollmentModel.isEnrolled(user.id, course.id);
 
   if (!isAdmin && !isEnrolled) {

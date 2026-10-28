@@ -17,6 +17,18 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse) {
     throw new UnauthorizedError();
   }
 
+  const isAdmin = Boolean(
+    user.features?.includes("read:course:all") ||
+      user.features?.includes("create:course") ||
+      user.features?.includes("create:invite"),
+  );
+
+  // Se for administrador, visualiza todos os cursos cadastrados
+  if (isAdmin) {
+    const courses = await CourseModel.findAll();
+    return res.status(200).json(courses);
+  }
+
   const courses = await CourseModel.findEnrolledByUser(user.id);
   return res.status(200).json(courses);
 }

@@ -73,7 +73,7 @@ export default function CoursesListPage() {
                 <span>Painel Admin</span>
               </Link>
             )}
-            <div className="text-xs text-[#9a978f] hidden sm:block">Biblioteca Noturna</div>
+            <div className="text-xs text-[#9a978f] hidden sm:block">Plataforma Aula</div>
           </div>
         </header>
 

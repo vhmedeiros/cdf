@@ -8,7 +8,7 @@ const CACHE_DIR = path.join(process.cwd(), ".cache", "media");
 // Mapeia downloads em andamento para não duplicar requisições para o mesmo arquivo
 const activeDownloads = new Map<string, Promise<string>>();
 
-function getExtensionFromMime(mimeType: string): string {
+export function getExtensionFromMime(mimeType: string): string {
   if (mimeType.includes("mp4")) return "mp4";
   if (mimeType.includes("mpeg") || mimeType.includes("mp3")) return "mp3";
   if (mimeType.includes("pdf")) return "pdf";
