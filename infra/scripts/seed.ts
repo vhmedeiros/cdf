@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import dotenvExpand from "dotenv-expand";
 import bcrypt from "bcryptjs";
 import database from "@/infra/database";
+import { seedQuestionsTaxonomy } from "./seed-questions";
 
 dotenvExpand.expand(dotenv.config({ path: ".env.development" }));
 
@@ -165,6 +166,10 @@ async function seed() {
     console.log(`✅ Admin matriculado no curso com sucesso.`);
 
     await client.query("COMMIT;");
+
+    // 6. Popula taxonomia e questões iniciais
+    await seedQuestionsTaxonomy();
+
     console.log("🎉 Seed finalizado com sucesso!");
   } catch (error) {
     await client.query("ROLLBACK;");

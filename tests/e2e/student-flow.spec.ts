@@ -80,8 +80,12 @@ test.describe("Fluxo Completo da Plataforma Aula (E2E)", () => {
     ]);
     await page.waitForURL((url) => !url.pathname.includes("/login"));
 
-    // Navega para um curso válido
-    await page.goto(`/courses/${DEFAULT_COURSE_SLUG}`);
+    // Navega para /courses para abrir a sala do primeiro curso disponível
+    await page.goto("/courses");
+    const courseCard = page.locator('a[href^="/courses/"]').first();
+    await expect(courseCard).toBeVisible({ timeout: 10_000 });
+    await courseCard.click();
+    await page.waitForURL((url) => url.pathname.startsWith("/courses/"), { timeout: 15_000 });
 
     // Verifica barra lateral de módulos
     const sidebarTitle = page.locator("text=Módulos").or(page.locator("text=Conteúdo")).first();
@@ -126,7 +130,12 @@ test.describe("Fluxo Completo da Plataforma Aula (E2E)", () => {
     ]);
     await page.waitForURL((url) => !url.pathname.includes("/login"));
 
-    await page.goto(`/courses/${DEFAULT_COURSE_SLUG}`);
+    // Navega para /courses para abrir a sala do primeiro curso disponível
+    await page.goto("/courses");
+    const courseCard = page.locator('a[href^="/courses/"]').first();
+    await expect(courseCard).toBeVisible({ timeout: 10_000 });
+    await courseCard.click();
+    await page.waitForURL((url) => url.pathname.startsWith("/courses/"), { timeout: 15_000 });
 
     // Aguarda carregar os módulos e clica no primeiro item da barra lateral se necessário
     const firstMaterial = page
@@ -191,5 +200,54 @@ test.describe("Fluxo Completo da Plataforma Aula (E2E)", () => {
       .or(page.locator('button[title*="Curso BLOQUEADO"]'))
       .first();
     await expect(courseBadge).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("Cenário 6: Plataforma de Questões, Filtros, Resolução e Explicação", async ({ page }) => {
+    await page.goto("/login");
+    await page.fill('input[type="email"]', ADMIN_EMAIL);
+    await page.fill('input[type="password"]', ADMIN_PASS);
+    await Promise.all([
+      page.waitForResponse((res) => res.url().includes("/api/v1/sessions") && res.status() === 201),
+      page.click('button[type="submit"]'),
+    ]);
+    await page.waitForURL((url) => !url.pathname.includes("/login"));
+
+    // Navega para o Banco de Questões
+    await page.goto("/questions");
+    await expect(page.locator("text=Filtros de Questões")).toBeVisible({ timeout: 10_000 });
+
+    // Verifica que uma questão foi carregada
+    const questionStatement = page.locator("main").locator("p").first();
+    await expect(questionStatement).toBeVisible({ timeout: 10_000 });
+
+    // Seleciona a primeira alternativa
+    const firstAlternative = page.locator('main [class*="cursor-pointer"]').first();
+    await expect(firstAlternative).toBeVisible();
+    await firstAlternative.click();
+
+    // Marca opção de chute
+    const guessCheckbox = page.locator('label:has-text("Chutei esta questão") input[type="checkbox"]').first();
+    if (await guessCheckbox.isVisible()) {
+      await guessCheckbox.check();
+    }
+
+    // Clica para responder
+    const submitBtn = page.locator('button:has-text("Responder Questão")').first();
+    await expect(submitBtn).toBeVisible();
+    await Promise.all([
+      page.waitForResponse((res) => res.url().includes("/answers") && res.status() === 200),
+      submitBtn.click(),
+    ]);
+
+    // Verifica que o feedback de resultado apareceu (acerto ou erro)
+    const feedbackBanner = page
+      .locator("text=Parabéns! Você acertou a questão")
+      .or(page.locator("text=Resposta incorreta"))
+      .first();
+    await expect(feedbackBanner).toBeVisible({ timeout: 10_000 });
+
+    // Verifica que a explicação detalhada é exibida
+    const explanationHeading = page.locator("text=Explicação Detalhada do Gabarito Oficial");
+    await expect(explanationHeading).toBeVisible({ timeout: 10_000 });
   });
 });

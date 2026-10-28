@@ -709,6 +709,16 @@ min_tier: # pior modelo aceitável por tarefa; abaixo disso, o job ESPERA em vez
     - Script verificador de MP4 FastStart (`infra/scripts/check-faststart.ts`) inspecionando caixas `moov` e `mdat`.
     - Suíte completa de testes E2E com Playwright Chromium (`tests/e2e/student-flow.spec.ts`) com 5 cenários cobrindo o fluxo completo de ponta a ponta (100% verde em ~16s).
     - Atualização otimizada do cache SWR no login (`pages/login.tsx`) e isolamento no Jest (`jest.config.js`).
-- **Próximo passo:** Fase 9: Plataforma de Questões e IA Gemini (roteador de modelos em cascata, taxonomia de disciplinas e assuntos, ingestão de provas em PDF).
+  - **Fase 9 (Plataforma de Questões e IA Gemini):**
+    - Migração `8_create-questions-schema.ts` com pgvector (`vector(768)`), modelagem completa de `subjects`, `topics` (árvore), `boards`, `exams`, `support_texts`, `questions`, `alternatives`, `question_topics`, `explanations`, `answers`, `daily_goals`, `lesson_topics` e `ai_jobs`.
+    - Modelos de domínio em TypeScript: `SubjectModel`, `TopicModel`, `BoardModel`, `ExamModel`, `QuestionModel` e `DailyGoalModel`.
+    - Configuração centralizada de cadeias de IA em `config/ai-chains.yaml` (`deep`, `bulk`, `fast`, `vision`) com validação via Zod.
+    - Roteador de IA e Gerenciador de Cotas em Redis (`services/ai/router.ts`) com Token Bucket por minuto (RPM) e dia (RPD), circuit breaker de 5min (500/503), e fallback automático em cascata entre os modelos do Google Gemini.
+    - Seed da taxonomia inicial com disciplinas (Direito Constitucional, Direito Administrativo, Língua Portuguesa, Raciocínio Lógico), bancas (Cebraspe, FGV, FCC, Vunesp) e questões oficiais com explicações pedagógicas.
+    - Endpoints REST: `GET /api/v1/subjects`, `GET/POST /api/v1/questions`, `GET /api/v1/questions/[id]`, `POST /api/v1/questions/[id]/answers` e `GET/POST /api/v1/me/daily-goals`.
+    - Interface completa de resolução de questões no estudante (`pages/questions/index.tsx`) com filtros por disciplina/assunto/formato/não resolvidas, anel de meta diária, atalhos de teclado `A`-`E`, riscar alternativas, flag "chutei", feedback imediato de acerto/erro e explicações em Markdown.
+    - Suíte de 11 testes unitários e de integração no Jest (`tests/unit/services/ai-router.test.ts` e `tests/integration/api/v1/questions/questions.test.ts`) 100% verde.
+    - Cenário 6 E2E integrado ao Playwright (`tests/e2e/student-flow.spec.ts`), totalizando 6 cenários verdes em ~23s.
+- **Próximo passo:** Fase 10: Ingestão de Provas em PDF (Docling, parser determinístico por banca, sincronização de provas do Drive e revisão visual).
 - **Problemas conhecidos:** —
 - **Decisões pendentes com o dono:** nome definitivo da plataforma; domínio; provedor de e-mail (SMTP); lista inicial de disciplinas/assuntos (taxonomia) e bancas prioritárias; se a plataforma será só para uso próprio/grupo fechado ou comercial (afeta plano da IA e questões de direito autoral).

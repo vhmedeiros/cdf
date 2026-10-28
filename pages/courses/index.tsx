@@ -61,6 +61,12 @@ export default function CoursesListPage() {
               >
                 Cursos
               </Link>
+              <Link
+                href="/questions"
+                className="px-3 py-1.5 rounded-lg text-[#9a978f] hover:text-[#ece9e2] hover:bg-[#1b1b1e] transition"
+              >
+                Questões
+              </Link>
             </nav>
           </div>
 

@@ -1,0 +1,59 @@
+# Configuração de Cadeias de IA com Fallback e Limites de Cota
+# Validado via Zod em services/ai/router.ts
+
+deep:
+  - gemini-3.8-flash
+  - gemini-3.7-flash
+  - gemini-3.6-flash
+  - gemini-3-flash
+  - gemini-3.5-flash-lite
+
+bulk:
+  - gemini-3.5-flash-lite
+  - gemini-3.1-flash-lite
+  - gemma-4-31b
+  - local
+
+fast:
+  - gemini-3.1-flash-lite
+  - gemma-4-26b
+  - gemini-3.5-flash-lite
+  - local
+
+vision:
+  - gemini-3.5-flash-lite
+  - gemini-3-flash
+  - gemini-3.6-flash
+
+limits:
+  gemini-3.8-flash:
+    rpm: 5
+    rpd: 18
+  gemini-3.7-flash:
+    rpm: 5
+    rpd: 18
+  gemini-3.6-flash:
+    rpm: 5
+    rpd: 18
+  gemini-3-flash:
+    rpm: 5
+    rpd: 18
+  gemini-3.5-flash-lite:
+    rpm: 14
+    rpd: 450
+  gemini-3.1-flash-lite:
+    rpm: 14
+    rpd: 450
+  gemma-4-31b:
+    rpm: 28
+    rpd: 13000
+    tpm: 15000
+  gemma-4-26b:
+    rpm: 28
+    rpd: 13000
+    tpm: 15000
+
+min_tier:
+  question_explanation_hard: gemini-3-flash
+  coach_report: gemini-3.5-flash-lite
+  topic_classification: local

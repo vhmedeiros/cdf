@@ -15,6 +15,7 @@ import {
   X,
   Shield,
   Plus,
+  HelpCircle,
 } from "lucide-react";
 import { usePlayer } from "@/context/PlayerContext";
 import { useUser } from "@/hooks/useUser";
@@ -166,6 +167,15 @@ export default function CommandPalette() {
                     <GraduationCap className="w-4 h-4 text-[#d4af37]" />
                     <span className="font-medium">Meus Cursos</span>
                     <span className="text-[10px] text-[#9a978f] ml-auto">Todos os cursos</span>
+                  </Command.Item>
+
+                  <Command.Item
+                    onSelect={() => navigateTo("/questions")}
+                    className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#ece9e2] hover:bg-[#1b1b1e] hover:text-[#d4af37] cursor-pointer transition select-none"
+                  >
+                    <HelpCircle className="w-4 h-4 text-[#d4af37]" />
+                    <span className="font-medium">Banco de Questões</span>
+                    <span className="text-[10px] text-[#9a978f] ml-auto">Treino</span>
                   </Command.Item>
 
                   <Command.Item
