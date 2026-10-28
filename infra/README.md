@@ -175,7 +175,7 @@ O script cuidará de:
 Para criar o primeiro usuário admin com acesso à plataforma em produção:
 
 ```bash
-docker compose -f infra/compose.prod.yaml run --rm migrate npx tsx infra/scripts/seed.ts
+docker compose --env-file .env.production -f infra/compose.prod.yaml run --rm migrate npx tsx infra/scripts/seed.ts
 ```
 
 ---

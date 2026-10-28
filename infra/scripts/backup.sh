@@ -13,7 +13,7 @@ echo "📦 [$(date)] Iniciando backup do banco PostgreSQL..."
 mkdir -p "${BACKUP_DIR}"
 
 # Executa pg_dump dentro do container e compacta via gzip
-docker exec -t "${CONTAINER_NAME}" pg_dump -U "${POSTGRES_USER:-postgres}" "${POSTGRES_DB:-cdf_production}" | gzip -c > "${BACKUP_FILE}"
+docker exec -t "${CONTAINER_NAME}" pg_dump -U "${POSTGRES_USER:-cdf_prod_user}" "${POSTGRES_DB:-cdf_production}" | gzip -c > "${BACKUP_FILE}"
 
 FILESIZE=$(du -h "${BACKUP_FILE}" | cut -f1)
 echo "✅ [$(date)] Backup concluído com sucesso: ${BACKUP_FILE} (${FILESIZE})"

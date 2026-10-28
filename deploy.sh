@@ -13,7 +13,7 @@ if [ ! -f .env.production ]; then
   exit 1
 fi
 
-COMPOSE_FILE="infra/compose.prod.yaml"
+COMPOSE="docker compose --env-file .env.production -f infra/compose.prod.yaml"
 
 # 2. Atualiza o código do repositório
 echo "📥 1/6 Atualizando código via Git..."
@@ -21,26 +21,29 @@ git pull origin main
 
 # 3. Constrói as imagens locais (ARM64 nativo na VM)
 echo "🔨 2/6 Construindo imagens Docker da aplicação..."
-docker compose -f "${COMPOSE_FILE}" build
+${COMPOSE} build
 
 # 4. Sobe serviços de banco e cache e aguarda ficarem saudáveis
 echo "🗄️  3/6 Iniciando serviços de infraestrutura (PostgreSQL e Redis)..."
-docker compose -f "${COMPOSE_FILE}" up -d db redis
+${COMPOSE} up -d db redis
+
+DB_USER=$(grep -E '^POSTGRES_USER=' .env.production | cut -d '=' -f2- | tr -d ' "\r' || echo "cdf_prod_user")
+DB_NAME=$(grep -E '^POSTGRES_DB=' .env.production | cut -d '=' -f2- | tr -d ' "\r' || echo "cdf_production")
 
 echo "⏳ Aguardando banco de dados ficar saudável..."
-until docker compose -f "${COMPOSE_FILE}" exec -T db pg_isready -U "$(grep POSTGRES_USER .env.production | cut -d '=' -f2)" > /dev/null 2>&1; do
+until ${COMPOSE} exec -T db pg_isready -U "${DB_USER}" -d "${DB_NAME}" > /dev/null 2>&1; do
   sleep 2
 done
 echo "✅ Banco de dados pronto e operacional."
 
 # 5. Executa as migrações em container isolado
 echo "🔄 4/6 Executando migrações de banco de dados..."
-docker compose -f "${COMPOSE_FILE}" run --rm migrate
+${COMPOSE} run --rm migrate
 echo "✅ Migrações aplicadas com sucesso."
 
 # 6. Sobe web, worker e nginx
 echo "🚢 5/6 Inicializando aplicação Web, Worker BullMQ e Nginx..."
-docker compose -f "${COMPOSE_FILE}" up -d --remove-orphans web worker nginx
+${COMPOSE} up -d --remove-orphans web worker nginx
 
 # 7. Verificação de Saúde (Healthcheck)
 echo "🩺 6/6 Verificando status da aplicação..."
