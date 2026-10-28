@@ -17,6 +17,7 @@ import {
   SkipForward,
   Settings,
   StickyNote,
+  Loader2,
 } from "lucide-react";
 
 interface VideoPlayerProps {
@@ -58,6 +59,7 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
+  const [isBuffering, setIsBuffering] = useState(false);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const materialId = activeItem?.material.id;
@@ -163,9 +165,13 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
         ref={videoElementRef}
         src={streamSrc}
         playsInline
-        preload="metadata"
+        preload="auto"
         className="w-full h-full object-contain"
         onClick={togglePlay}
+        onWaiting={() => setIsBuffering(true)}
+        onPlaying={() => setIsBuffering(false)}
+        onCanPlay={() => setIsBuffering(false)}
+        onSeeked={() => setIsBuffering(false)}
         onTimeUpdate={(e) => {
           const target = e.currentTarget;
           if (target.currentTime > 0 || currentTime === 0) {
@@ -197,6 +203,16 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
           playNext();
         }}
       />
+
+      {/* Buffering Indicator */}
+      {isBuffering && isPlaying && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[1px] z-20 pointer-events-none gap-2">
+          <Loader2 className="w-9 h-9 text-[#d4af37] animate-spin" />
+          <span className="text-[11px] text-[#ece9e2] font-medium bg-black/70 px-3 py-1 rounded-full border border-[#2a2a2e] shadow-lg">
+            Carregando transmissão...
+          </span>
+        </div>
+      )}
 
       {/* Toast Retomando de onde parou */}
       {resumeToast?.visible && (

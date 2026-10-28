@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { usePlayer } from "@/context/PlayerContext";
 import { formatDuration } from "@/lib/utils";
 import { applyMediaVolume } from "@/lib/audioBooster";
@@ -13,6 +13,7 @@ import {
   VolumeX,
   SkipForward,
   SkipBack,
+  Loader2,
 } from "lucide-react";
 
 export default function AudioPlayer() {
@@ -40,6 +41,7 @@ export default function AudioPlayer() {
   } = usePlayer();
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isBuffering, setIsBuffering] = useState(false);
   const materialId = activeItem?.material.id;
   const streamSrc = materialId ? `/api/v1/stream/${materialId}` : "";
 
@@ -74,6 +76,11 @@ export default function AudioPlayer() {
       <audio
         ref={audioRef}
         src={streamSrc}
+        preload="auto"
+        onWaiting={() => setIsBuffering(true)}
+        onPlaying={() => setIsBuffering(false)}
+        onCanPlay={() => setIsBuffering(false)}
+        onSeeked={() => setIsBuffering(false)}
         onTimeUpdate={(e) => {
           const target = e.currentTarget;
           if (target.currentTime > 0 || currentTime === 0) {
@@ -108,7 +115,11 @@ export default function AudioPlayer() {
 
       {/* Audio Icon / Album Art */}
       <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gradient-to-br from-[#1b1b1e] to-[#0b0b0c] border border-[#2a2a2e] flex items-center justify-center shadow-lg mb-6 relative group">
-        <Headphones className="w-10 h-10 sm:w-12 sm:h-12 text-[#d4af37] animate-pulse" />
+        {isBuffering && isPlaying ? (
+          <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 text-[#d4af37] animate-spin" />
+        ) : (
+          <Headphones className="w-10 h-10 sm:w-12 sm:h-12 text-[#d4af37] animate-pulse" />
+        )}
         {activeItem?.material.kind === "video" && (
           <button
             onClick={toggleAudioMode}
