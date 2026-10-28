@@ -23,10 +23,12 @@ import {
   BookOpen,
   Target,
   X,
+  Shield,
 } from "lucide-react";
 import Link from "next/link";
 import PomodoroTimer from "@/components/player/PomodoroTimer";
 import NotesSection from "@/components/player/NotesSection";
+import { useUser } from "@/hooks/useUser";
 
 const VideoPlayer = dynamic(() => import("@/components/player/VideoPlayer"), {
   ssr: false,
@@ -58,6 +60,7 @@ const AudioPlayer = dynamic(() => import("@/components/player/AudioPlayer"), {
 export default function CourseClassroomPage() {
   const router = useRouter();
   const { slug } = router.query;
+  const { isAdmin } = useUser();
 
   const {
     course,
@@ -176,6 +179,18 @@ export default function CourseClassroomPage() {
 
             {/* Action buttons */}
             <div className="flex items-center gap-2">
+              {/* Painel Admin (apenas para administradores) */}
+              {isAdmin && (
+                <Link
+                  href="/admin/courses"
+                  className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#d4af37]/10 border border-[#d4af37]/40 text-[#d4af37] hover:bg-[#d4af37]/20 transition text-xs font-semibold shadow-sm"
+                  title="Painel Admin"
+                >
+                  <Shield className="w-3.5 h-3.5" />
+                  <span>Admin</span>
+                </Link>
+              )}
+
               {/* Pomodoro Timer */}
               <PomodoroTimer />
 

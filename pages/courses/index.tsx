@@ -3,7 +3,8 @@ import Head from "next/head";
 import Link from "next/link";
 import useSWR from "swr";
 import { formatDuration } from "@/lib/utils";
-import { Play, BookOpen, Clock, FileText } from "lucide-react";
+import { Play, BookOpen, Clock, FileText, Shield, Plus } from "lucide-react";
+import { useUser } from "@/hooks/useUser";
 import type { Course } from "@/models/course";
 
 // Deterministic gradient generator based on slug string
@@ -25,6 +26,7 @@ function getDeterministicGradient(slug: string) {
 
 export default function CoursesListPage() {
   const { data: courses, error, isLoading } = useSWR<Course[]>("/api/v1/courses");
+  const { isAdmin } = useUser();
 
   return (
     <>
@@ -34,15 +36,45 @@ export default function CoursesListPage() {
 
       <div className="min-h-screen bg-[#0b0b0c] text-[#ece9e2]">
         {/* Header */}
-        <header className="h-16 border-b border-[#2a2a2e] bg-[#131315]/90 backdrop-blur-md sticky top-0 z-30 px-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#d4af37] to-[#f5d76e] flex items-center justify-center font-bold text-black font-serif shadow-sm">
-              A
-            </span>
-            <span className="font-serif font-bold text-lg text-[#ece9e2] tracking-wide">Aula</span>
+        <header className="h-16 border-b border-[#2a2a2e] bg-[#131315]/90 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-6 flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <Link href="/" className="flex items-center gap-3 group">
+              <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#d4af37] to-[#f5d76e] flex items-center justify-center font-bold text-black font-serif shadow-sm group-hover:scale-105 transition">
+                A
+              </span>
+              <span className="font-serif font-bold text-lg text-[#ece9e2] tracking-wide">
+                Aula
+              </span>
+            </Link>
+
+            <nav className="hidden sm:flex items-center gap-1 text-xs">
+              <Link
+                href="/"
+                className="px-3 py-1.5 rounded-lg text-[#9a978f] hover:text-[#ece9e2] hover:bg-[#1b1b1e] transition"
+              >
+                Início
+              </Link>
+              <Link
+                href="/courses"
+                className="px-3 py-1.5 rounded-lg text-[#d4af37] bg-[#1b1b1e] font-medium"
+              >
+                Cursos
+              </Link>
+            </nav>
           </div>
 
-          <div className="text-xs text-[#9a978f]">Biblioteca Noturna</div>
+          <div className="flex items-center gap-3">
+            {isAdmin && (
+              <Link
+                href="/admin/courses"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#d4af37]/10 border border-[#d4af37]/40 text-[#d4af37] hover:bg-[#d4af37]/20 transition text-xs font-semibold shadow-sm"
+              >
+                <Shield className="w-4 h-4" />
+                <span>Painel Admin</span>
+              </Link>
+            )}
+            <div className="text-xs text-[#9a978f] hidden sm:block">Biblioteca Noturna</div>
+          </div>
         </header>
 
         {/* Content */}
@@ -134,12 +166,27 @@ export default function CoursesListPage() {
               })}
             </div>
           ) : (
-            <div className="p-12 rounded-2xl bg-[#131315] border border-[#2a2a2e] text-center space-y-3">
+            <div className="p-12 rounded-2xl bg-[#131315] border border-[#2a2a2e] text-center space-y-4">
               <BookOpen className="w-10 h-10 text-[#d4af37] mx-auto opacity-80" />
-              <h3 className="font-semibold text-base text-[#ece9e2]">Nenhum curso matriculado</h3>
+              <h3 className="font-semibold text-base text-[#ece9e2]">
+                {isAdmin ? "Nenhum curso cadastrado ainda" : "Nenhum curso matriculado"}
+              </h3>
               <p className="text-xs text-[#9a978f] max-w-sm mx-auto">
-                Você ainda não possui matrículas ativas. Entre em contato com seu administrador.
+                {isAdmin
+                  ? "Você está conectado como Administrador. Cadastre seu primeiro curso a partir de uma pasta do Google Drive."
+                  : "Você ainda não possui matrículas ativas. Entre em contato com seu administrador."}
               </p>
+              {isAdmin && (
+                <div className="pt-2">
+                  <Link
+                    href="/admin/courses/new"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#d4af37] to-[#f5d76e] text-black font-semibold text-xs rounded-xl hover:opacity-95 transition shadow-md"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Cadastrar Primeiro Curso</span>
+                  </Link>
+                </div>
+              )}
             </div>
           )}
         </main>

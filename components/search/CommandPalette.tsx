@@ -13,8 +13,11 @@ import {
   Sparkles,
   Clock,
   X,
+  Shield,
+  Plus,
 } from "lucide-react";
 import { usePlayer } from "@/context/PlayerContext";
+import { useUser } from "@/hooks/useUser";
 import type { SearchResults } from "@/models/search";
 
 export default function CommandPalette() {
@@ -29,6 +32,7 @@ export default function CommandPalette() {
 
   const router = useRouter();
   const { toggleFocusMode } = usePlayer();
+  const { isAdmin } = useUser();
 
   // Escuta atalhos Ctrl+K e Cmd+K
   useEffect(() => {
@@ -177,6 +181,37 @@ export default function CommandPalette() {
                       Shift+F
                     </kbd>
                   </Command.Item>
+
+                  {isAdmin && (
+                    <>
+                      <Command.Item
+                        onSelect={() => navigateTo("/admin/courses")}
+                        className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#ece9e2] hover:bg-[#1b1b1e] hover:text-[#d4af37] cursor-pointer transition select-none"
+                      >
+                        <Shield className="w-4 h-4 text-[#d4af37]" />
+                        <span className="font-medium">Painel Admin — Cursos</span>
+                        <span className="text-[10px] text-[#9a978f] ml-auto">Gerenciar</span>
+                      </Command.Item>
+
+                      <Command.Item
+                        onSelect={() => navigateTo("/admin/invites")}
+                        className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#ece9e2] hover:bg-[#1b1b1e] hover:text-[#d4af37] cursor-pointer transition select-none"
+                      >
+                        <Shield className="w-4 h-4 text-[#d4af37]" />
+                        <span className="font-medium">Painel Admin — Convites & Alunos</span>
+                        <span className="text-[10px] text-[#9a978f] ml-auto">Convidar</span>
+                      </Command.Item>
+
+                      <Command.Item
+                        onSelect={() => navigateTo("/admin/courses/new")}
+                        className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#ece9e2] hover:bg-[#1b1b1e] hover:text-[#d4af37] cursor-pointer transition select-none"
+                      >
+                        <Plus className="w-4 h-4 text-[#d4af37]" />
+                        <span className="font-medium">Cadastrar Novo Curso</span>
+                        <span className="text-[10px] text-[#9a978f] ml-auto">Google Drive</span>
+                      </Command.Item>
+                    </>
+                  )}
                 </div>
               </Command.Group>
             )}

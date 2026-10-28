@@ -13,6 +13,7 @@ import {
   Clock,
   Play,
   Layers,
+  Shield,
 } from "lucide-react";
 import HeroResume from "@/components/home/HeroResume";
 import StudyStreak from "@/components/home/StudyStreak";
@@ -45,6 +46,13 @@ export default function StudentDashboardPage() {
     display_name: string;
     features: string[];
   }>("/api/v1/user");
+
+  const isAdmin = Boolean(
+    user?.features &&
+      (user.features.includes("create:course") ||
+        user.features.includes("create:invite") ||
+        user.features.includes("read:course:all")),
+  );
 
   const { data: stats, mutate: mutateStats } = useSWR<UserStats>(user ? "/api/v1/me/stats" : null);
 
@@ -100,10 +108,30 @@ export default function StudentDashboardPage() {
               >
                 Cursos
               </Link>
+              {isAdmin && (
+                <Link
+                  href="/admin/courses"
+                  className="px-3 py-1.5 rounded-lg text-[#d4af37] hover:bg-[#d4af37]/10 transition flex items-center gap-1 font-medium border border-[#d4af37]/30"
+                >
+                  <Shield className="w-3.5 h-3.5" />
+                  <span>Admin</span>
+                </Link>
+              )}
             </nav>
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Botão Admin destacado */}
+            {isAdmin && (
+              <Link
+                href="/admin/courses"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#d4af37]/10 border border-[#d4af37]/40 text-[#d4af37] hover:bg-[#d4af37]/20 transition text-xs font-semibold shadow-sm"
+              >
+                <Shield className="w-4 h-4" />
+                <span className="hidden sm:inline">Painel Admin</span>
+              </Link>
+            )}
+
             {/* Botão de Busca / Command Palette */}
             <button
               onClick={openCommandPalette}

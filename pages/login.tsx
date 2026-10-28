@@ -5,8 +5,8 @@ import { Lock, Mail, ArrowRight, ShieldCheck } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("admin@aula.local");
-  const [password, setPassword] = useState("admin123456");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,7 +27,18 @@ export default function LoginPage() {
         throw new Error(data.message || "E-mail ou senha incorretos.");
       }
 
-      router.push("/courses");
+      const userData = await res.json().catch(() => ({}));
+      const isAdmin = Boolean(
+        userData?.features?.includes("create:course") ||
+          userData?.features?.includes("create:invite") ||
+          userData?.features?.includes("read:course:all"),
+      );
+
+      if (isAdmin) {
+        router.push("/admin/courses");
+      } else {
+        router.push("/courses");
+      }
     } catch (err: any) {
       setError(err.message || "Erro ao conectar com o servidor.");
     } finally {
@@ -112,16 +123,12 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Dica para desenvolvimento / testes */}
-          <div className="pt-4 border-t border-[#1b1b1e] text-center space-y-2">
+          {/* Rodapé discreto de segurança */}
+          <div className="pt-4 border-t border-[#1b1b1e] text-center">
             <div className="inline-flex items-center gap-1.5 text-[11px] text-[#9a978f]">
               <ShieldCheck className="w-3.5 h-3.5 text-[#d4af37]" />
-              <span>Ambiente de Estudos Local</span>
+              <span>Ambiente de Estudos Seguro</span>
             </div>
-            <p className="text-[10px] text-[#9a978f]/70">
-              Usuário do seed: <code className="text-[#ece9e2]">admin@aula.local</code> /{" "}
-              <code className="text-[#ece9e2]">admin123456</code>
-            </p>
           </div>
         </div>
       </div>
