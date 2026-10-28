@@ -10,6 +10,7 @@ const createJestConfig = nextJest({
 
 const customJestConfig = {
   moduleDirectories: ["node_modules", "<rootDir>/"],
+  modulePathIgnorePatterns: ["<rootDir>/.next/"],
   testTimeout: 60000,
 };
 

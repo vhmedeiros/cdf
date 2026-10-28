@@ -1,14 +1,21 @@
 import { Client, QueryResult, QueryResultRow } from "pg";
 
 async function getNewClient(): Promise<Client> {
-  const client = new Client({
-    host: process.env.POSTGRES_HOST,
-    port: Number(process.env.POSTGRES_PORT),
-    user: process.env.POSTGRES_USER,
-    database: process.env.POSTGRES_DB,
-    password: process.env.POSTGRES_PASSWORD,
-    ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
-  });
+  const useSsl = process.env.POSTGRES_SSL === "true";
+  const ssl = useSsl ? { rejectUnauthorized: false } : false;
+
+  const config = process.env.DATABASE_URL
+    ? { connectionString: process.env.DATABASE_URL, ssl }
+    : {
+        host: process.env.POSTGRES_HOST,
+        port: Number(process.env.POSTGRES_PORT || 5432),
+        user: process.env.POSTGRES_USER,
+        database: process.env.POSTGRES_DB,
+        password: process.env.POSTGRES_PASSWORD,
+        ssl,
+      };
+
+  const client = new Client(config);
 
   await client.connect();
   return client;
