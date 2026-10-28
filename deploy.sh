@@ -19,6 +19,9 @@ COMPOSE="docker compose --env-file .env.production -f infra/compose.prod.yaml"
 echo "📥 1/6 Atualizando código via Git..."
 git pull origin main
 
+# Garante que a rede externa 'web' exista (necessária para integração com Caddy)
+docker network inspect web >/dev/null 2>&1 || docker network create web
+
 # 3. Constrói as imagens locais (ARM64 nativo na VM)
 echo "🔨 2/6 Construindo imagens Docker da aplicação..."
 ${COMPOSE} build
