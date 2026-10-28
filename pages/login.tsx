@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
+import { useSWRConfig } from "swr";
 import { Lock, Mail, ArrowRight, ShieldCheck } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { mutate } = useSWRConfig();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,6 +30,10 @@ export default function LoginPage() {
       }
 
       const userData = await res.json().catch(() => ({}));
+
+      // Atualiza o cache do SWR imediatamente para evitar estados desatualizados
+      await mutate("/api/v1/user", userData, false);
+
       const isAdmin = Boolean(
         userData?.features?.includes("create:course") ||
           userData?.features?.includes("create:invite") ||

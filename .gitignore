@@ -37,3 +37,5 @@ Thumbs.db
 # Testing & Coverage
 coverage/
 .jest/
+test-results/
+playwright-report/

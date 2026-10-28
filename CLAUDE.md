@@ -656,7 +656,7 @@ min_tier: # pior modelo aceitável por tarefa; abaixo disso, o job ESPERA em vez
 
 ## 13. Estado atual
 
-- **Fase:** 7 (concluída)
+- **Fase:** 8 (concluída)
 - **Feito:**
   - **Fase 0 (Fundação):** Next.js 15, Node 24, TS strict, Docker Compose, migrações, `GET /api/v1/status`, orquestrador de testes e CI.
   - **Fase 1 (Contas e Autenticação):** users, sessions, invites, password_resets, rate-limiting, sliding sessions, middlewares `injectAnonymousOrUser` e `canRequest(feature)`.
@@ -700,6 +700,15 @@ min_tier: # pior modelo aceitável por tarefa; abaixo disso, o job ESPERA em vez
     - `infra/scripts/backup.sh` com backup diário comprimido do Postgres e retenção automática de 7 dias.
     - `deploy.sh` automatizado executando `git pull`, `build`, migrações pontuais com `run --rm migrate`, inicialização dos serviços e verificação de saúde HTTP.
     - `infra/README.md` com arquitetura de integração transparente com o proxy `lupa-caddy` e DNS do Registro.br.
-- **Próximo passo:** Fase 8: Endurecimento & Testes E2E com Playwright (ou Fase 9: Base de Questões e IA).
+  - **Fase 8 (Polimento, Hardening & Testes E2E):**
+    - Toggle interativo de cursos para alunos no painel de convites (`/admin/invites`) com badges verde (ativo) e vermelho (bloqueado), com persistência e preservação de histórico.
+    - Logout instantâneo com redirecionamento síncrono para `/login`.
+    - Volume Boost até 200% via Web Audio API (`AudioContext` + `GainNode`) nos players de vídeo e áudio, com atalhos de volume.
+    - Transferência sem interrupção de tempo na alternância dinâmica de modo Vídeo para Áudio e vice-versa.
+    - Política de segurança de disco LRU para o cache de mídia em SSD/disco da VM com limite seguro de 25GB e auto-limpeza em 80%.
+    - Script verificador de MP4 FastStart (`infra/scripts/check-faststart.ts`) inspecionando caixas `moov` e `mdat`.
+    - Suíte completa de testes E2E com Playwright Chromium (`tests/e2e/student-flow.spec.ts`) com 5 cenários cobrindo o fluxo completo de ponta a ponta (100% verde em ~16s).
+    - Atualização otimizada do cache SWR no login (`pages/login.tsx`) e isolamento no Jest (`jest.config.js`).
+- **Próximo passo:** Fase 9: Plataforma de Questões e IA Gemini (roteador de modelos em cascata, taxonomia de disciplinas e assuntos, ingestão de provas em PDF).
 - **Problemas conhecidos:** —
 - **Decisões pendentes com o dono:** nome definitivo da plataforma; domínio; provedor de e-mail (SMTP); lista inicial de disciplinas/assuntos (taxonomia) e bancas prioritárias; se a plataforma será só para uso próprio/grupo fechado ou comercial (afeta plano da IA e questões de direito autoral).
