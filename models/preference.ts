@@ -7,7 +7,7 @@ export const updatePreferencesSchema = z.object({
   pomodoro_long_break_minutes: z.number().int().min(1).max(60).optional(),
   pomodoro_sound_enabled: z.boolean().optional(),
   playback_rate: z.number().min(0.5).max(2.5).optional(),
-  volume: z.number().min(0).max(1).optional(),
+  volume: z.number().min(0).max(2).optional(),
   autoplay_next: z.boolean().optional(),
   theater_mode: z.boolean().optional(),
 });

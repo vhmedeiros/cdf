@@ -14,6 +14,8 @@ export function useShortcuts(handlers?: ShortcutHandlers) {
     playPrevious,
     playbackRate,
     setPlaybackRate,
+    volume,
+    setVolume,
     toggleTheater,
     toggleFocusMode,
     toggleMute,
@@ -56,6 +58,16 @@ export function useShortcuts(handlers?: ShortcutHandlers) {
         case "ArrowRight":
           event.preventDefault();
           seek(5);
+          break;
+
+        case "ArrowUp":
+          event.preventDefault();
+          setVolume(Math.min(2.0, Math.round((volume + 0.05) * 100) / 100));
+          break;
+
+        case "ArrowDown":
+          event.preventDefault();
+          setVolume(Math.max(0, Math.round((volume - 0.05) * 100) / 100));
           break;
 
         case "j":
@@ -149,6 +161,8 @@ export function useShortcuts(handlers?: ShortcutHandlers) {
     playPrevious,
     playbackRate,
     setPlaybackRate,
+    volume,
+    setVolume,
     toggleTheater,
     toggleFocusMode,
     toggleMute,

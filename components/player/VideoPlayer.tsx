@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import { usePlayer } from "@/context/PlayerContext";
 import { formatDuration } from "@/lib/utils";
+import { applyMediaVolume } from "@/lib/audioBooster";
 import { i18n } from "@/i18n/pt-BR";
 import {
   Play,
@@ -36,6 +37,7 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
     resumeToast,
     dismissResumeToast,
     playerRef,
+    pendingModeSwitchTimeRef,
     togglePlay,
     seek,
     seekTo,
@@ -61,15 +63,25 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
   const materialId = activeItem?.material.id;
   const streamSrc = materialId ? `/api/v1/stream/${materialId}` : "";
 
-  // Assign internal video ref to playerRef in context
+  // Assign internal video ref to playerRef in context and restore time if switching modes
   useEffect(() => {
     if (videoElementRef.current) {
       playerRef.current = videoElementRef.current;
       videoElementRef.current.playbackRate = playbackRate;
-      videoElementRef.current.volume = volume;
-      videoElementRef.current.muted = isMuted;
+      applyMediaVolume(videoElementRef.current, volume, isMuted);
+
+      // Se está vindo de alternância com o áudio, recupera imediatamente o timestamp
+      if (
+        pendingModeSwitchTimeRef.current !== null &&
+        pendingModeSwitchTimeRef.current > 0
+      ) {
+        videoElementRef.current.currentTime = pendingModeSwitchTimeRef.current;
+        pendingModeSwitchTimeRef.current = null;
+      } else if (currentTime > 0 && videoElementRef.current.currentTime === 0) {
+        videoElementRef.current.currentTime = currentTime;
+      }
     }
-  }, [playerRef, playbackRate, volume, isMuted]);
+  }, [playerRef, playbackRate, volume, isMuted, pendingModeSwitchTimeRef, currentTime]);
 
   // Autoplay when active item changes if playing was requested
   useEffect(() => {
@@ -156,12 +168,29 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
         onClick={togglePlay}
         onTimeUpdate={(e) => {
           const target = e.currentTarget;
-          onTimeProgress(target.currentTime, target.duration);
+          if (target.currentTime > 0 || currentTime === 0) {
+            onTimeProgress(target.currentTime, target.duration);
+          }
         }}
         onLoadedMetadata={(e) => {
           const target = e.currentTarget;
           target.playbackRate = playbackRate;
+          applyMediaVolume(target, volume, isMuted);
+
+          if (
+            pendingModeSwitchTimeRef.current !== null &&
+            pendingModeSwitchTimeRef.current > 0
+          ) {
+            target.currentTime = pendingModeSwitchTimeRef.current;
+            pendingModeSwitchTimeRef.current = null;
+          } else if (currentTime > 0 && target.currentTime === 0) {
+            target.currentTime = currentTime;
+          }
+
           onTimeProgress(target.currentTime, target.duration);
+          if (isPlaying) {
+            target.play().catch(() => {});
+          }
         }}
         onEnded={() => {
           // Trigger next lesson countdown if available
@@ -271,8 +300,8 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
               <RotateCw className="w-4 h-4" />
             </button>
 
-            {/* Volume */}
-            <div className="flex items-center gap-1 group/vol">
+            {/* Volume com Boost até 200% */}
+            <div className="flex items-center gap-1.5 group/vol">
               <button
                 onClick={toggleMute}
                 className="p-1.5 rounded-lg hover:bg-white/10 text-[#9a978f] hover:text-[#ece9e2] transition"
@@ -280,19 +309,36 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
               >
                 {isMuted || volume === 0 ? (
                   <VolumeX className="w-4 h-4 text-[#e5484d]" />
+                ) : volume > 1.0 ? (
+                  <div className="relative">
+                    <Volume2 className="w-4 h-4 text-[#d4af37]" />
+                    <span className="absolute -top-1.5 -right-2 text-[8px] font-bold text-[#d4af37] leading-none">
+                      +
+                    </span>
+                  </div>
                 ) : (
                   <Volume2 className="w-4 h-4" />
                 )}
               </button>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.05}
-                value={isMuted ? 0 : volume}
-                onChange={(e) => setVolume(parseFloat(e.target.value))}
-                className="w-16 h-1 bg-[#2a2a2e] accent-[#d4af37] rounded cursor-pointer hidden group-hover/vol:block transition"
-              />
+              <div className="hidden group-hover/vol:flex items-center gap-1.5">
+                <input
+                  type="range"
+                  min={0}
+                  max={2}
+                  step={0.05}
+                  value={isMuted ? 0 : volume}
+                  onChange={(e) => setVolume(parseFloat(e.target.value))}
+                  className="w-20 h-1.5 bg-[#2a2a2e] accent-[#d4af37] rounded cursor-pointer transition"
+                  title={`Volume: ${Math.round((isMuted ? 0 : volume) * 100)}%`}
+                />
+                <span
+                  className={`text-[10px] font-mono tabular-nums min-w-[34px] ${
+                    volume > 1.0 ? "text-[#d4af37] font-bold" : "text-[#9a978f]"
+                  }`}
+                >
+                  {Math.round((isMuted ? 0 : volume) * 100)}%
+                </span>
+              </div>
             </div>
 
             {/* Timers */}

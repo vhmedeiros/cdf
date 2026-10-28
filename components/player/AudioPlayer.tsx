@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import { usePlayer } from "@/context/PlayerContext";
 import { formatDuration } from "@/lib/utils";
+import { applyMediaVolume } from "@/lib/audioBooster";
 import {
   Play,
   Pause,
@@ -25,6 +26,7 @@ export default function AudioPlayer() {
     volume,
     isMuted,
     playerRef,
+    pendingModeSwitchTimeRef,
     togglePlay,
     seek,
     seekTo,
@@ -41,15 +43,25 @@ export default function AudioPlayer() {
   const materialId = activeItem?.material.id;
   const streamSrc = materialId ? `/api/v1/stream/${materialId}` : "";
 
-  // Assign internal audio ref to playerRef
+  // Assign internal audio ref to playerRef and restore exact playback timestamp
   useEffect(() => {
     if (audioRef.current) {
       playerRef.current = audioRef.current;
       audioRef.current.playbackRate = playbackRate;
-      audioRef.current.volume = volume;
-      audioRef.current.muted = isMuted;
+      applyMediaVolume(audioRef.current, volume, isMuted);
+
+      // Se está vindo de alternância com o vídeo, recupera imediatamente o timestamp
+      if (
+        pendingModeSwitchTimeRef.current !== null &&
+        pendingModeSwitchTimeRef.current > 0
+      ) {
+        audioRef.current.currentTime = pendingModeSwitchTimeRef.current;
+        pendingModeSwitchTimeRef.current = null;
+      } else if (currentTime > 0 && audioRef.current.currentTime === 0) {
+        audioRef.current.currentTime = currentTime;
+      }
     }
-  }, [playerRef, playbackRate, volume, isMuted]);
+  }, [playerRef, playbackRate, volume, isMuted, pendingModeSwitchTimeRef, currentTime]);
 
   useEffect(() => {
     if (audioRef.current && isPlaying) {
@@ -64,12 +76,29 @@ export default function AudioPlayer() {
         src={streamSrc}
         onTimeUpdate={(e) => {
           const target = e.currentTarget;
-          onTimeProgress(target.currentTime, target.duration);
+          if (target.currentTime > 0 || currentTime === 0) {
+            onTimeProgress(target.currentTime, target.duration);
+          }
         }}
         onLoadedMetadata={(e) => {
           const target = e.currentTarget;
           target.playbackRate = playbackRate;
+          applyMediaVolume(target, volume, isMuted);
+
+          if (
+            pendingModeSwitchTimeRef.current !== null &&
+            pendingModeSwitchTimeRef.current > 0
+          ) {
+            target.currentTime = pendingModeSwitchTimeRef.current;
+            pendingModeSwitchTimeRef.current = null;
+          } else if (currentTime > 0 && target.currentTime === 0) {
+            target.currentTime = currentTime;
+          }
+
           onTimeProgress(target.currentTime, target.duration);
+          if (isPlaying) {
+            target.play().catch(() => {});
+          }
         }}
         onEnded={playNext}
       />
@@ -173,10 +202,17 @@ export default function AudioPlayer() {
           {playbackRate}x
         </button>
 
-        <div className="flex items-center gap-1.5 text-[#9a978f]">
-          <button onClick={toggleMute} className="hover:text-[#ece9e2]">
+        <div className="flex items-center gap-2 text-[#9a978f]">
+          <button onClick={toggleMute} className="hover:text-[#ece9e2] p-1" title="Mudo (M)">
             {isMuted || volume === 0 ? (
-              <VolumeX className="w-4 h-4" />
+              <VolumeX className="w-4 h-4 text-[#e5484d]" />
+            ) : volume > 1.0 ? (
+              <div className="relative">
+                <Volume2 className="w-4 h-4 text-[#d4af37]" />
+                <span className="absolute -top-1 -right-1 text-[8px] font-bold text-[#d4af37] leading-none">
+                  +
+                </span>
+              </div>
             ) : (
               <Volume2 className="w-4 h-4" />
             )}
@@ -184,12 +220,20 @@ export default function AudioPlayer() {
           <input
             type="range"
             min={0}
-            max={1}
+            max={2}
             step={0.05}
             value={isMuted ? 0 : volume}
             onChange={(e) => setVolume(parseFloat(e.target.value))}
-            className="w-20 h-1 bg-[#2a2a2e] accent-[#d4af37] rounded"
+            className="w-24 h-1.5 bg-[#2a2a2e] accent-[#d4af37] rounded cursor-pointer"
+            title={`Volume: ${Math.round((isMuted ? 0 : volume) * 100)}%`}
           />
+          <span
+            className={`text-[11px] font-mono tabular-nums min-w-[36px] ${
+              volume > 1.0 ? "text-[#d4af37] font-bold" : "text-[#9a978f]"
+            }`}
+          >
+            {Math.round((isMuted ? 0 : volume) * 100)}%
+          </span>
         </div>
       </div>
     </div>

@@ -8,6 +8,7 @@ import React, {
   useRef,
 } from "react";
 import type { CourseTree } from "@/models/course";
+import { applyMediaVolume } from "@/lib/audioBooster";
 
 export type CourseTreeModule = CourseTree["modules"][number];
 export type CourseTreeLesson = CourseTreeModule["lessons"][number];
@@ -75,6 +76,7 @@ interface PlayerContextType {
 
   // Ref hook to video element/player instance
   playerRef: React.MutableRefObject<any>;
+  pendingModeSwitchTimeRef: React.MutableRefObject<number | null>;
 }
 
 const PlayerContext = createContext<PlayerContextType | null>(null);
@@ -98,6 +100,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [shortcutsModalOpen, setShortcutsModalOpen] = useState(false);
 
   const playerRef = useRef<any>(null);
+  const pendingModeSwitchTimeRef = useRef<number | null>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const pendingResumeTimeRef = useRef<number | null>(null);
   const lastHeartbeatTimeRef = useRef<number>(0);
@@ -421,31 +424,35 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   }, []);
 
-  const setVolume = useCallback((vol: number) => {
-    const clamped = Math.max(0, Math.min(1, vol));
-    setVolumeState(clamped);
-    if (playerRef.current) {
-      playerRef.current.volume = clamped;
-    }
-    try {
-      localStorage.setItem("cdf_volume", clamped.toString());
-      fetch("/api/v1/me/preferences", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ volume: clamped }),
-      }).catch(() => {});
-    } catch {}
-  }, []);
+  const setVolume = useCallback(
+    (vol: number) => {
+      // Suporta amplificação até 200% (2.0)
+      const clamped = Math.max(0, Math.min(2.0, Math.round(vol * 100) / 100));
+      setVolumeState(clamped);
+      if (playerRef.current) {
+        applyMediaVolume(playerRef.current, clamped, isMuted);
+      }
+      try {
+        localStorage.setItem("cdf_volume", clamped.toString());
+        fetch("/api/v1/me/preferences", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ volume: clamped }),
+        }).catch(() => {});
+      } catch {}
+    },
+    [isMuted],
+  );
 
   const toggleMute = useCallback(() => {
     setIsMuted((prev) => {
       const next = !prev;
       if (playerRef.current) {
-        playerRef.current.muted = next;
+        applyMediaVolume(playerRef.current, volume, next);
       }
       return next;
     });
-  }, []);
+  }, [volume]);
 
   const toggleTheater = useCallback(() => {
     setTheaterMode((prev) => {
@@ -467,8 +474,14 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const toggleAudioMode = useCallback(() => {
+    // Captura o segundo atual exato do player ativo antes de alternar para não reiniciar do zero
+    const currentPos =
+      playerRef.current?.currentTime ?? currentTimeRef.current ?? currentTime;
+    if (currentPos > 0) {
+      pendingModeSwitchTimeRef.current = currentPos;
+    }
     setAudioMode((prev) => !prev);
-  }, []);
+  }, [currentTime]);
 
   const setMiniPlayer = useCallback((active: boolean) => {
     setMiniPlayerState(active);
@@ -549,6 +562,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         dismissResumeToast,
         triggerCountdownTarget,
         playerRef,
+        pendingModeSwitchTimeRef,
       }}
     >
       {children}

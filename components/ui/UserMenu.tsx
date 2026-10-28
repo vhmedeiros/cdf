@@ -23,14 +23,11 @@ export default function UserMenu() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await fetch("/api/v1/sessions", { method: "DELETE" });
-      await mutate(undefined, { revalidate: false });
-      router.push("/login");
-    } catch {
-      router.push("/login");
-    }
+  const handleLogout = () => {
+    // Dispara a remoção de sessão sem travar a navegação
+    fetch("/api/v1/sessions", { method: "DELETE" }).catch(() => {});
+    mutate(undefined, { revalidate: false });
+    window.location.href = "/login";
   };
 
   if (isLoading) {
