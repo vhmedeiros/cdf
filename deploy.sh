@@ -41,9 +41,10 @@ echo "🔄 4/6 Executando migrações de banco de dados..."
 ${COMPOSE} run --rm migrate
 echo "✅ Migrações aplicadas com sucesso."
 
-# 6. Sobe web, worker e nginx
+# 6. Sobe web, worker e nginx com renovação do Nginx
 echo "🚢 5/6 Inicializando aplicação Web, Worker BullMQ e Nginx..."
-${COMPOSE} up -d --remove-orphans web worker nginx
+${COMPOSE} up -d --remove-orphans web worker
+${COMPOSE} up -d --force-recreate nginx
 
 # 7. Verificação de Saúde (Healthcheck)
 echo "🩺 6/6 Verificando status da aplicação..."
