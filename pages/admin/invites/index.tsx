@@ -13,8 +13,15 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
+  X,
 } from "lucide-react";
 import UserMenu from "@/components/ui/UserMenu";
+
+interface CourseItem {
+  id: string;
+  title: string;
+  slug: string;
+}
 
 interface InviteItem {
   id: string;
@@ -51,6 +58,52 @@ export default function AdminInvitesPage() {
     useSWR<InviteItem[]>("/api/v1/admin/invites");
   const { data: registeredStudents, mutate: mutateRegisteredStudents } =
     useSWR<RegisteredStudent[]>("/api/v1/admin/enrollments");
+  const { data: allCourses } = useSWR<CourseItem[]>("/api/v1/admin/courses");
+  const [togglingKey, setTogglingKey] = useState<string | null>(null);
+
+  async function handleToggleStudentCourse(
+    userId: string,
+    courseId: string,
+    currentEnrolled: boolean,
+  ) {
+    const key = `${userId}_${courseId}`;
+    setTogglingKey(key);
+
+    // Atualização otimista imediata na interface
+    const updatedStudents = registeredStudents?.map((s) => {
+      if (s.id !== userId) return s;
+      const courseObj = allCourses?.find((c) => c.id === courseId);
+      let newEnrolled = s.enrolled_courses ? [...s.enrolled_courses] : [];
+      if (currentEnrolled) {
+        newEnrolled = newEnrolled.filter((c) => c.id !== courseId);
+      } else if (courseObj) {
+        newEnrolled.push({ id: courseObj.id, title: courseObj.title, slug: courseObj.slug });
+      }
+      return { ...s, enrolled_courses: newEnrolled };
+    });
+
+    if (updatedStudents) {
+      mutateRegisteredStudents(updatedStudents, false);
+    }
+
+    try {
+      const res = await fetch("/api/v1/admin/enrollments", {
+        method: currentEnrolled ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId, course_id: courseId }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Erro ao alterar matrícula.");
+      }
+    } catch (err: any) {
+      alert(err.message || "Falha ao alterar matrícula do curso.");
+    } finally {
+      setTogglingKey(null);
+      mutateRegisteredStudents();
+    }
+  }
 
   async function handleCreateInvite(e: React.FormEvent) {
     e.preventDefault();
@@ -404,18 +457,26 @@ export default function AdminInvitesPage() {
 
           {/* Lista de Alunos e Cursos Ativos */}
           <div className="bg-[#131315] border border-[#2a2a2e] rounded-2xl p-6 sm:p-8 shadow-xl space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-[#2a2a2e]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#2a2a2e] gap-3">
               <div>
                 <h2 className="text-lg font-serif font-bold text-[#ece9e2]">
                   Alunos Cadastrados na Plataforma
                 </h2>
-                <p className="text-xs text-[#9a978f] mt-0.5">
-                  Veja quais cursos cada aluno possui, altere permissões ou remova usuários
-                </p>
+                <div className="flex flex-wrap items-center gap-3 text-xs text-[#9a978f] mt-1">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#6fbf73]" />
+                    <strong className="text-[#ece9e2]">Verde</strong> = Acesso Liberado
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#e5484d]" />
+                    <strong className="text-[#ece9e2]">Vermelho</strong> = Acesso Bloqueado
+                  </span>
+                  <span className="text-[#9a978f]/70 italic">(Clique no curso para alternar)</span>
+                </div>
               </div>
               <Link
                 href="/admin/courses"
-                className="px-3 py-1.5 rounded-xl bg-[#1b1b1e] border border-[#2a2a2e] hover:border-[#d4af37] text-xs font-semibold text-[#ece9e2] hover:text-[#d4af37] transition flex items-center gap-1.5"
+                className="px-3 py-1.5 rounded-xl bg-[#1b1b1e] border border-[#2a2a2e] hover:border-[#d4af37] text-xs font-semibold text-[#ece9e2] hover:text-[#d4af37] transition flex items-center gap-1.5 self-start sm:self-auto"
               >
                 <BookOpen className="w-3.5 h-3.5 text-[#d4af37]" />
                 <span>Gerenciar por Curso</span>
@@ -462,20 +523,56 @@ export default function AdminInvitesPage() {
                       </div>
 
                       {/* Cursos Matriculados e Ações */}
-                      <div className="flex flex-wrap items-center gap-2">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          {student.enrolled_courses && student.enrolled_courses.length > 0 ? (
-                            student.enrolled_courses.map((course) => (
-                              <span
-                                key={course.id}
-                                className="px-2 py-0.5 rounded-lg bg-[#d4af37]/10 border border-[#d4af37]/30 text-[#d4af37] text-[10px] font-medium"
-                              >
-                                {course.title}
-                              </span>
-                            ))
+                      <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-1.5 max-w-xl">
+                          {allCourses && allCourses.length > 0 ? (
+                            allCourses.map((course) => {
+                              const isEnrolled = student.enrolled_courses?.some(
+                                (ec) => ec.id === course.id,
+                              );
+                              const isToggling = togglingKey === `${student.id}_${course.id}`;
+
+                              return (
+                                <button
+                                  key={course.id}
+                                  type="button"
+                                  disabled={isToggling}
+                                  onClick={() =>
+                                    handleToggleStudentCourse(
+                                      student.id,
+                                      course.id,
+                                      !!isEnrolled,
+                                    )
+                                  }
+                                  className={`group px-2.5 py-1 rounded-lg text-xs font-medium border transition-all duration-150 flex items-center gap-1.5 cursor-pointer shadow-sm select-none ${
+                                    isEnrolled
+                                      ? "bg-[#6fbf73]/15 border-[#6fbf73]/40 text-[#6fbf73] hover:bg-[#e5484d]/15 hover:border-[#e5484d]/40 hover:text-[#e5484d]"
+                                      : "bg-[#e5484d]/10 border-[#e5484d]/30 text-[#e5484d] hover:bg-[#6fbf73]/15 hover:border-[#6fbf73]/40 hover:text-[#6fbf73]"
+                                  } ${isToggling ? "opacity-40 animate-pulse pointer-events-none" : ""}`}
+                                  title={
+                                    isEnrolled
+                                      ? `Curso ATIVO para ${student.display_name || student.email}. Clique para REMOVER o acesso a "${course.title}".`
+                                      : `Curso BLOQUEADO para ${student.display_name || student.email}. Clique para LIBERAR o acesso a "${course.title}".`
+                                  }
+                                >
+                                  {isEnrolled ? (
+                                    <>
+                                      <Check className="w-3.5 h-3.5 text-[#6fbf73] group-hover:hidden shrink-0" />
+                                      <X className="w-3.5 h-3.5 text-[#e5484d] hidden group-hover:inline shrink-0" />
+                                    </>
+                                  ) : (
+                                    <>
+                                      <X className="w-3.5 h-3.5 text-[#e5484d] group-hover:hidden shrink-0" />
+                                      <Check className="w-3.5 h-3.5 text-[#6fbf73] hidden group-hover:inline shrink-0" />
+                                    </>
+                                  )}
+                                  <span>{course.title}</span>
+                                </button>
+                              );
+                            })
                           ) : (
                             <span className="text-[11px] text-[#9a978f] italic">
-                              Nenhum curso liberado
+                              Nenhum curso cadastrado ainda
                             </span>
                           )}
                         </div>
