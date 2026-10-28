@@ -88,16 +88,13 @@ const IGNORED_FILENAMES = new Set([
 export function cleanTitle(rawName: string, isFolder: boolean = false): string {
   let name = rawName;
 
-  // Se não for pasta, remove extensão comum
+  // Se não for pasta, remove extensão comum de arquivo (.mp4, .pdf, .docx, etc.)
   if (!isFolder) {
     name = name.replace(/\.[a-zA-Z0-9]{2,5}$/, "");
   }
 
-  // Remove prefixos numéricos como "001. ", "01 - ", "1_", "01. "
-  name = name.replace(/^(\d+[\.\-_)\s]+)+/, "");
-
-  // Se o nome tiver mais de 2 pontos como separadores (ex: "Direito.Constitucional.Aula.01")
-  // substitui os pontos por espaços
+  // Se o nome tiver mais de 2 pontos como separadores entre palavras (ex: "Direito.Constitucional.Aula")
+  // substitui os pontos intermediários por espaços, preservando formatos como "01. Aula"
   if ((name.match(/\./g) || []).length >= 2) {
     name = name.replace(/\./g, " ");
   }
@@ -105,7 +102,7 @@ export function cleanTitle(rawName: string, isFolder: boolean = false): string {
   // Substitui múltiplos underlines por espaços
   name = name.replace(/_+/g, " ");
 
-  // Normaliza múltiplos espaços e limpa pontas
+  // Normaliza múltiplos espaços e limpa pontas, preservando números da sequência (ex: "001 Aula", "02 - Módulo")
   return name.replace(/\s+/g, " ").trim() || rawName;
 }
 

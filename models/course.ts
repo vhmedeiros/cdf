@@ -311,6 +311,11 @@ async function getEnrollmentsCount(courseId: string): Promise<number> {
   return parseInt(result.rows[0]?.count || "0", 10);
 }
 
+async function deleteCourse(id: string): Promise<boolean> {
+  const result = await database.query(`DELETE FROM courses WHERE id = $1`, [id]);
+  return (result.rowCount ?? 0) > 0;
+}
+
 const CourseModel = {
   create,
   findById,
@@ -321,6 +326,7 @@ const CourseModel = {
   syncTreeToDatabase,
   updateStatus,
   getEnrollmentsCount,
+  deleteCourse,
 };
 
 export default CourseModel;

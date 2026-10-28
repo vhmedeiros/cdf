@@ -58,5 +58,19 @@ async function markAsUsed(token: string): Promise<void> {
   ]);
 }
 
-const Invite = { create, findByToken, markAsUsed };
+async function findAll(): Promise<Invite[]> {
+  const result = await database.query<Invite>(
+    `SELECT id, email, token, features, expires_at, used_at, created_by, created_at, updated_at
+     FROM invites
+     ORDER BY created_at DESC`,
+  );
+  return result.rows;
+}
+
+async function deleteById(id: string): Promise<boolean> {
+  const result = await database.query(`DELETE FROM invites WHERE id = $1`, [id]);
+  return (result.rowCount ?? 0) > 0;
+}
+
+const Invite = { create, findByToken, markAsUsed, findAll, deleteById };
 export default Invite;

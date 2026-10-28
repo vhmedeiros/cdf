@@ -50,10 +50,15 @@ export function CourseSidebar({ isOpenMobile, onCloseMobile }: CourseSidebarProp
   const progressPercentage =
     totalMaterials > 0 ? Math.round((completedCount / totalMaterials) * 100) : 0;
 
+  // Verifica se todos os módulos estão recolhidos
+  const allCollapsed = useMemo(() => {
+    if (!course?.modules || course.modules.length === 0) return false;
+    return course.modules.every((m) => collapsedModules[m.id]);
+  }, [course?.modules, collapsedModules]);
+
   // Toggle collapse for all modules
   const toggleCollapseAll = () => {
     if (!course?.modules) return;
-    const allCollapsed = course.modules.every((m) => collapsedModules[m.id]);
     const newState: Record<string, boolean> = {};
     if (!allCollapsed) {
       course.modules.forEach((m) => {
@@ -126,16 +131,17 @@ export function CourseSidebar({ isOpenMobile, onCloseMobile }: CourseSidebarProp
       {/* Header & Overall Course Progress */}
       <div className="p-4 border-b border-[#2a2a2e] space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-sm tracking-wide uppercase text-[#9a978f]">
+          <h2 className="font-semibold text-xs tracking-wide uppercase text-[#9a978f]">
             {i18n.course.modules}
           </h2>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <button
               onClick={toggleCollapseAll}
-              title={i18n.common.expandAll}
-              className="p-1 rounded text-xs text-[#9a978f] hover:text-[#ece9e2] hover:bg-[#1b1b1e] transition"
+              className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-[#9a978f] hover:text-[#d4af37] hover:bg-[#1b1b1e] border border-[#2a2a2e] transition"
+              title={allCollapsed ? "Expandir todos os módulos" : "Recolher todos os módulos"}
             >
-              <ChevronsUpDown className="w-4 h-4" />
+              <ChevronsUpDown className="w-3.5 h-3.5 text-[#d4af37]" />
+              <span>{allCollapsed ? "Expandir Todos" : "Recolher Todos"}</span>
             </button>
             {onCloseMobile && (
               <button

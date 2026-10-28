@@ -20,6 +20,7 @@ import StudyStreak from "@/components/home/StudyStreak";
 import DueReviews from "@/components/home/DueReviews";
 import StudyHeatmap from "@/components/home/StudyHeatmap";
 import PomodoroTimer from "@/components/player/PomodoroTimer";
+import UserMenu from "@/components/ui/UserMenu";
 import type { UserStats } from "@/models/stats";
 import type { ReviewWithDetails } from "@/models/review";
 import type { Course } from "@/models/course";
@@ -151,24 +152,10 @@ export default function StudentDashboardPage() {
               <PomodoroTimer />
             </div>
 
-            {/* Perfil ou Login */}
-            {user ? (
-              <div className="flex items-center gap-2 pl-2 border-l border-[#2a2a2e]">
-                <div
-                  className="w-8 h-8 rounded-full bg-[#1b1b1e] border border-[#2a2a2e] flex items-center justify-center text-xs text-[#d4af37] font-semibold"
-                  title={user.display_name || user.email}
-                >
-                  {(user.display_name || user.email)[0].toUpperCase()}
-                </div>
-              </div>
-            ) : (
-              <Link
-                href="/login"
-                className="px-3.5 py-1.5 rounded-lg bg-[#d4af37] text-black font-semibold text-xs hover:bg-[#f5d76e] transition"
-              >
-                Entrar
-              </Link>
-            )}
+            {/* Menu do Usuário com Login, Logout e Alterar Senha */}
+            <div className="pl-2 border-l border-[#2a2a2e]">
+              <UserMenu />
+            </div>
           </div>
         </header>
 

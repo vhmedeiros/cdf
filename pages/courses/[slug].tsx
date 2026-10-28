@@ -28,6 +28,7 @@ import {
 import Link from "next/link";
 import PomodoroTimer from "@/components/player/PomodoroTimer";
 import NotesSection from "@/components/player/NotesSection";
+import UserMenu from "@/components/ui/UserMenu";
 import { useUser } from "@/hooks/useUser";
 
 const VideoPlayer = dynamic(() => import("@/components/player/VideoPlayer"), {
@@ -254,6 +255,10 @@ export default function CourseClassroomPage() {
               >
                 <Menu className="w-5 h-5" />
               </button>
+
+              <div className="pl-1 border-l border-[#2a2a2e]">
+                <UserMenu />
+              </div>
             </div>
           </header>
         )}

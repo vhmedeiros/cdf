@@ -10,9 +10,17 @@ const router = createRouter<NextApiRequest, NextApiResponse>();
 
 router.use(controller.injectAnonymousOrUser);
 
+// GET /api/v1/admin/invites — Admin lista todos os convites
+router.get(controller.canRequest("create:invite"), getHandler);
+
 // POST /api/v1/admin/invites — Admin cria um convite
 // Requer a feature "create:invite"
 router.post(controller.canRequest("create:invite"), postHandler);
+
+async function getHandler(req: NextApiRequest, res: NextApiResponse) {
+  const invites = await Invite.findAll();
+  return res.status(200).json(invites);
+}
 
 const CreateInviteSchema = z.object({
   email: z.string().email("E-mail inválido."),

@@ -5,6 +5,7 @@ import useSWR from "swr";
 import { formatDuration } from "@/lib/utils";
 import { Play, BookOpen, Clock, FileText, Shield, Plus } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
+import UserMenu from "@/components/ui/UserMenu";
 import type { Course } from "@/models/course";
 
 // Deterministic gradient generator based on slug string
@@ -73,7 +74,7 @@ export default function CoursesListPage() {
                 <span>Painel Admin</span>
               </Link>
             )}
-            <div className="text-xs text-[#9a978f] hidden sm:block">Plataforma Aula</div>
+            <UserMenu />
           </div>
         </header>
 

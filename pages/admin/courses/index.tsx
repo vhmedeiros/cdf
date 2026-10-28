@@ -21,8 +21,10 @@ import {
   Search,
   X,
   Check,
+  Trash2,
 } from "lucide-react";
 import { formatDuration } from "@/lib/utils";
+import UserMenu from "@/components/ui/UserMenu";
 
 interface CourseAdminItem {
   id: string;
@@ -139,6 +141,27 @@ export default function AdminCoursesPage() {
     }
   };
 
+  const handleDeleteCourse = async (course: CourseAdminItem) => {
+    const confirm = window.confirm(
+      `Tem certeza que deseja excluir o curso "${course.title}"?\n\nTodas as aulas, notas e matrículas deste curso serão removidas. Os arquivos no seu Google Drive NÃO serão apagados.`,
+    );
+    if (!confirm) return;
+
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    try {
+      const res = await fetch(`/api/v1/admin/courses/${course.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Erro ao excluir curso.");
+      setSuccessMsg(data.message || "Curso excluído com sucesso.");
+      await loadCourses();
+    } catch (err: any) {
+      setErrorMsg(err.message || "Falha ao excluir curso.");
+    }
+  };
+
   const openEnrollmentsModal = async (course: CourseAdminItem) => {
     setManagingCourse(course);
     setStudentsLoading(true);
@@ -243,13 +266,16 @@ export default function AdminCoursesPage() {
               </nav>
             </div>
 
-            <Link
-              href="/admin/courses/new"
-              className="px-4 py-2 rounded-xl bg-[#d4af37] text-black hover:bg-[#f5d76e] text-xs font-semibold transition flex items-center gap-1.5 shadow-md"
-            >
-              <Plus className="w-4 h-4" />
-              Cadastrar Novo Curso
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/admin/courses/new"
+                className="px-4 py-2 rounded-xl bg-[#d4af37] text-black hover:bg-[#f5d76e] text-xs font-semibold transition flex items-center gap-1.5 shadow-md"
+              >
+                <Plus className="w-4 h-4" />
+                Cadastrar Novo Curso
+              </Link>
+              <UserMenu />
+            </div>
           </div>
         </header>
 
@@ -407,6 +433,15 @@ export default function AdminCoursesPage() {
                           <span>Assistir</span>
                           <ChevronRight className="w-3.5 h-3.5" />
                         </Link>
+
+                        <button
+                          onClick={() => handleDeleteCourse(course)}
+                          className="p-1.5 px-2 rounded-xl bg-[#e5484d]/10 border border-[#e5484d]/30 text-[#e5484d] hover:bg-[#e5484d] hover:text-white transition text-xs font-semibold flex items-center gap-1"
+                          title="Excluir este curso permanentemente"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span className="hidden md:inline">Excluir</span>
+                        </button>
                       </div>
                     </div>
 

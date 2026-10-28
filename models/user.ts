@@ -131,5 +131,10 @@ async function authenticate(email: string, password: string): Promise<User> {
   return publicUser;
 }
 
-const User = { create, findByEmail, findById, updatePassword, authenticate };
+async function deleteUser(id: string): Promise<boolean> {
+  const result = await database.query(`DELETE FROM users WHERE id = $1`, [id]);
+  return (result.rowCount ?? 0) > 0;
+}
+
+const User = { create, findByEmail, findById, updatePassword, authenticate, deleteUser };
 export default User;
