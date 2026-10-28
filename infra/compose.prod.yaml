@@ -47,6 +47,8 @@ services:
     command: ["npx", "node-pg-migrate", "--migrations-dir", "infra/migrations", "up"]
     env_file:
       - ../.env.production
+    volumes:
+      - ./:/app/infra
     depends_on:
       db:
         condition: service_healthy
