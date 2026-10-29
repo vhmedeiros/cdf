@@ -39,3 +39,7 @@ coverage/
 .jest/
 test-results/
 playwright-report/
+
+# Data & Exam PDFs
+data/provas/
+*.pdf

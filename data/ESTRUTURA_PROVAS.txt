@@ -1,0 +1,90 @@
+================================================================================
+GUIA DE ESTRUTURAÇÃO DE PROVAS E GABARITOS (CDF - AULA)
+================================================================================
+
+Este guia explica como organizar os PDFs de provas anteriores e gabaritos
+na pasta "data/provas/" para que o importador automático consiga ler,
+fatiar as questões e cadastrar tudo na plataforma sem erros.
+
+--------------------------------------------------------------------------------
+1. HIERARQUIA DE PASTAS (3 NÍVEIS)
+--------------------------------------------------------------------------------
+
+A estrutura deve seguir o padrão:
+data/provas/[BANCA]/[ANO]/[ÓRGÃO - CARGO]/
+
+Exemplo prático de árvore:
+
+data/provas/
+│
+├── Cebraspe/
+│   ├── 2024/
+│   │   ├── Bacen - Analista de Tecnologia da Informacao/
+│   │   │   ├── prova.pdf
+│   │   │   └── gabarito.pdf
+│   │   │
+│   │   └── Caixa - Tecnico Bancario - TI/
+│   │       ├── prova.pdf
+│   │       └── gabarito.pdf
+│   │
+│   └── 2023/
+│       └── Dataprev - Analista de Tecnologia/
+│           ├── prova.pdf
+│           └── gabarito.pdf
+│
+└── FGV/
+    └── 2024/
+        └── TCU - Auditor Federal de Controle Externo - TI/
+            ├── prova.pdf
+            └── gabarito.pdf
+
+--------------------------------------------------------------------------------
+2. NOMENCLATURA DOS ARQUIVOS PDF
+--------------------------------------------------------------------------------
+
+Dentro de cada pasta [ÓRGÃO - CARGO], coloque apenas arquivos PDF:
+
+A) Caso padrão (Prova Única):
+   - prova.pdf
+   - gabarito.pdf
+
+B) Quando houver múltiplos cadernos (ex: Tipo 1, Tipo 2, Cores):
+   - prova-tipo-1.pdf
+   - gabarito-tipo-1.pdf
+   - prova-tipo-2.pdf
+   - gabarito-tipo-2.pdf
+   (Ou crie subpastas separadas para cada tipo)
+
+C) Quando houver turnos diferentes (Manhã e Tarde):
+   - Manhã: crie a pasta "[ÓRGÃO - CARGO - Manha]"
+   - Tarde: crie a pasta "[ÓRGÃO - CARGO - Tarde]"
+
+--------------------------------------------------------------------------------
+3. COMO O SISTEMA IDENTIFICA OS METADADOS AUTOMATICAMENTE
+--------------------------------------------------------------------------------
+
+O leitor extrai as informações diretamente do caminho dos arquivos:
+
+- Nível 1: BANCA (ex: Cebraspe, FGV, FCC, Vunesp, Cesgranrio)
+- Nível 2: ANO (ex: 2024, 2023, 2022)
+- Nível 3: ÓRGÃO e CARGO separados por traço " - "
+  Exemplo: "Bacen - Analista de TI"
+  -> Órgão: Bacen
+  -> Cargo: Analista de TI
+
+--------------------------------------------------------------------------------
+4. BOAS PRÁTICAS E DICAS
+--------------------------------------------------------------------------------
+
+1. PDFs Oficiais: Prefira sempre baixar os PDFs originais diretamente do site
+   da banca organizadora (eles possuem texto selecionável, o que agiliza e 
+   garante 100% de precisão na extração sem precisar de OCR).
+
+2. Gabarito Definitivo: Sempre que possível, utilize o Gabarito Definitivo
+   (pós-recursos), pois ele já traz as questões anuladas e alterações de gabarito.
+
+3. Evite Espaços Extras no final dos nomes de pastas.
+
+4. Não se preocupe com duplicação: O sistema calcula o código HASH (SHA-256)
+   do arquivo. Se você colocar a mesma prova novamente, ele detecta e não duplica.
+================================================================================
