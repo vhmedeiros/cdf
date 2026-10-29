@@ -220,4 +220,61 @@ describe("Questions & Taxonomy API (/api/v1/questions, /api/v1/subjects, /api/v1
     expect(goalsList[0].answered_today).toBe(0);
     expect(goalsList[0].completed_today).toBe(false);
   });
+
+  test("GET /api/v1/questions filtra questões por course_id e exibe nome do curso", async () => {
+    const { default: CourseModel } = await import("@/models/course");
+    const course = await CourseModel.create({
+      title: "Curso Java 10x",
+      slug: "curso-java-10x",
+      driveUrl: "https://drive.google.com/folder-java",
+      driveFolderId: "folder-java-id",
+    });
+
+    const subject = await SubjectModel.create({
+      name: "Java Backend",
+      slug: "java-backend",
+      course_id: course.id,
+    });
+
+    const qJava = await QuestionModel.create({
+      course_id: course.id,
+      number: 1,
+      statement: "No Java, Records são imutáveis?",
+      format: "true_false",
+      correct_answer: "C",
+      status: "published",
+      alternatives: [
+        { letter: "C", body: "Certo" },
+        { letter: "E", body: "Errado" },
+      ],
+    });
+
+    const qGeneral = await QuestionModel.create({
+      number: 2,
+      statement: "Questão de concurso geral sem vínculo com curso.",
+      format: "true_false",
+      correct_answer: "C",
+      status: "published",
+      alternatives: [
+        { letter: "C", body: "Certo" },
+        { letter: "E", body: "Errado" },
+      ],
+    });
+
+    // 1. Busca filtrando apenas o curso Java 10x
+    const resCourse = await fetch(`http://localhost:3000/api/v1/questions?course_id=${course.id}`);
+    expect(resCourse.status).toBe(200);
+    const dataCourse = await resCourse.json();
+    expect(dataCourse.total).toBe(1);
+    expect(dataCourse.questions[0].id).toBe(qJava.id);
+    expect(dataCourse.questions[0].course_title).toBe("Curso Java 10x");
+
+    // 2. Busca filtrando apenas concursos gerais (sem curso)
+    const resGeneral = await fetch(`http://localhost:3000/api/v1/questions?course_id=general`);
+    expect(resGeneral.status).toBe(200);
+    const dataGeneral = await resGeneral.json();
+    expect(dataGeneral.total).toBe(1);
+    expect(dataGeneral.questions[0].id).toBe(qGeneral.id);
+    expect(dataGeneral.questions[0].course_id).toBeNull();
+  });
 });

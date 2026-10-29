@@ -38,6 +38,8 @@ export interface QuestionExplanation {
 export interface Question {
   id: string;
   exam_id: string | null;
+  course_id?: string | null;
+  course_title?: string | null;
   number: number;
   statement: string;
   support_text_id: string | null;
@@ -75,6 +77,7 @@ export interface Question {
 
 export interface CreateQuestionInput {
   exam_id?: string | null;
+  course_id?: string | null;
   number: number;
   statement: string;
   support_text_id?: string | null;
@@ -94,6 +97,7 @@ export interface CreateQuestionInput {
 async function create(input: CreateQuestionInput): Promise<Question> {
   const {
     exam_id = null,
+    course_id = null,
     number,
     statement,
     support_text_id = null,
@@ -121,15 +125,16 @@ async function create(input: CreateQuestionInput): Promise<Question> {
   const insertQuestionQuery = {
     text: `
       INSERT INTO questions (
-        exam_id, number, statement, support_text_id, image_paths,
+        exam_id, course_id, number, statement, support_text_id, image_paths,
         format, correct_answer, status, is_annulled, origin,
         difficulty, ai_disagrees, extraction_confidence
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       RETURNING *;
     `,
     values: [
       exam_id,
+      course_id,
       number,
       statement.trim(),
       support_text_id,
@@ -186,6 +191,7 @@ async function findById(id: string, userId?: string): Promise<Question> {
     text: `
       SELECT 
         q.*,
+        c.title as course_title,
         row_to_json(e.*) as exam_json,
         row_to_json(b.*) as board_json,
         row_to_json(st.*) as support_text_json,
@@ -193,6 +199,7 @@ async function findById(id: string, userId?: string): Promise<Question> {
       FROM questions q
       LEFT JOIN exams e ON q.exam_id = e.id
       LEFT JOIN boards b ON e.board_id = b.id
+      LEFT JOIN courses c ON q.course_id = c.id
       LEFT JOIN support_texts st ON q.support_text_id = st.id
       LEFT JOIN explanations exp ON exp.question_id = q.id
       WHERE q.id = $1
@@ -257,6 +264,7 @@ async function findById(id: string, userId?: string): Promise<Question> {
 }
 
 export interface ListQuestionsFilter {
+  course_id?: string;
   subject_id?: string;
   topic_id?: string;
   board_id?: string;
@@ -273,6 +281,7 @@ export interface ListQuestionsFilter {
 
 async function list(filters: ListQuestionsFilter = {}): Promise<{ questions: Question[]; total: number }> {
   const {
+    course_id,
     subject_id,
     topic_id,
     board_id,
@@ -291,6 +300,14 @@ async function list(filters: ListQuestionsFilter = {}): Promise<{ questions: Que
   const values: any[] = [status];
   let paramIdx = 2;
 
+  if (course_id) {
+    if (course_id === "general") {
+      conditions.push("q.course_id IS NULL");
+    } else {
+      conditions.push(`q.course_id = $${paramIdx++}`);
+      values.push(course_id);
+    }
+  }
   if (origin) {
     conditions.push(`q.origin = $${paramIdx++}`);
     values.push(origin);
@@ -336,6 +353,7 @@ async function list(filters: ListQuestionsFilter = {}): Promise<{ questions: Que
       SELECT COUNT(DISTINCT q.id) as total
       FROM questions q
       LEFT JOIN exams e ON q.exam_id = e.id
+      LEFT JOIN courses c ON q.course_id = c.id
       ${whereClause};
     `,
     values,
@@ -348,11 +366,13 @@ async function list(filters: ListQuestionsFilter = {}): Promise<{ questions: Que
     text: `
       SELECT 
         q.*,
+        c.title as course_title,
         row_to_json(e.*) as exam_json,
         row_to_json(b.*) as board_json
       FROM questions q
       LEFT JOIN exams e ON q.exam_id = e.id
       LEFT JOIN boards b ON e.board_id = b.id
+      LEFT JOIN courses c ON q.course_id = c.id
       ${whereClause}
       ORDER BY q.created_at DESC
       LIMIT $${paramIdx++} OFFSET $${paramIdx++};

@@ -14,6 +14,7 @@ import {
   Play,
   Layers,
   Shield,
+  HelpCircle,
 } from "lucide-react";
 import HeroResume from "@/components/home/HeroResume";
 import StudyStreak from "@/components/home/StudyStreak";
@@ -111,9 +112,10 @@ export default function StudentDashboardPage() {
               </Link>
               <Link
                 href="/questions"
-                className="px-3 py-1.5 rounded-lg text-[#9a978f] hover:text-[#ece9e2] hover:bg-[#1b1b1e] transition"
+                className="px-3 py-1.5 rounded-lg text-[#9a978f] hover:text-[#ece9e2] hover:bg-[#1b1b1e] transition flex items-center gap-1.5"
               >
-                Questões
+                <HelpCircle className="w-3.5 h-3.5" />
+                <span>Questões</span>
               </Link>
               {isAdmin && (
                 <Link

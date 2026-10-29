@@ -250,4 +250,44 @@ test.describe("Fluxo Completo da Plataforma Aula (E2E)", () => {
     const explanationHeading = page.locator("text=Explicação Detalhada do Gabarito Oficial");
     await expect(explanationHeading).toBeVisible({ timeout: 10_000 });
   });
+
+  test("Cenário 7: Filtro por Curso (Java 10x) e Renderização de Código Markdown", async ({ page }) => {
+    await page.goto("/login");
+    await page.fill('input[type="email"]', ADMIN_EMAIL);
+    await page.fill('input[type="password"]', ADMIN_PASS);
+    await Promise.all([
+      page.waitForResponse((res) => res.url().includes("/api/v1/sessions") && res.status() === 201),
+      page.click('button[type="submit"]'),
+    ]);
+    await page.waitForURL((url) => !url.pathname.includes("/login"));
+
+    // Navega para o Banco de Questões
+    await page.goto("/questions");
+    await expect(page.locator("text=Filtros de Questões")).toBeVisible({ timeout: 10_000 });
+
+    // Aguarda carregar as opções de cursos no filtro
+    await expect(page.locator('select option:has-text("Java 10x — Do Zero ao Backend")').first()).toBeAttached({ timeout: 10_000 });
+
+    // Seleciona o curso Java 10x no filtro
+    const courseSelect = page.locator("select").first();
+    await courseSelect.selectOption({ label: "Java 10x — Do Zero ao Backend Profissional" });
+
+    // Aguarda o carregamento das questões do curso Java 10x
+    await page.waitForResponse((res) => res.url().includes("/api/v1/questions") && res.status() === 200);
+
+    // Verifica que o badge do curso Java 10x é exibido
+    await expect(page.locator("text=Curso: Java 10x — Do Zero ao Backend Profissional")).toBeVisible({ timeout: 10_000 });
+
+    // Verifica formatação Markdown na primeira questão (Records)
+    await expect(page.locator("main code:has-text('java.lang.Record')").first()).toBeVisible({ timeout: 10_000 });
+
+    // Navega para a próxima questão do curso (que contém o bloco de código Java pré-formatado)
+    const nextBtn = page.locator('button[title="Próxima questão"]');
+    await nextBtn.click();
+
+    // Verifica que o bloco de código Java formatado em Markdown (pre / code) está presente
+    const codeBlock = page.locator("pre code").first();
+    await expect(codeBlock).toBeVisible({ timeout: 10_000 });
+    await expect(codeBlock).toContainText("StreamFilterExample");
+  });
 });

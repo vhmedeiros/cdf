@@ -156,7 +156,7 @@ async function seed() {
       [les3Id],
     );
 
-    // 5. Matricula o Admin no Curso
+    // 5. Matricula o Admin no Curso de Direito
     await client.query(
       `INSERT INTO enrollments (user_id, course_id, granted_by)
        VALUES ($1, $2, $1)
@@ -164,6 +164,81 @@ async function seed() {
       [adminUser.id, course.id],
     );
     console.log(`✅ Admin matriculado no curso com sucesso.`);
+
+    // 5.1. Cria Curso 2: Java 10x — Programação e Arquitetura Avançada
+    const javaCourseRes = await client.query(
+      `INSERT INTO courses (
+        title, slug, description, drive_url, drive_folder_id, cover_url,
+        accent_color, status, lesson_strategy, sync_status, total_duration_seconds, materials_count
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      ON CONFLICT (slug) DO UPDATE SET
+        title = EXCLUDED.title,
+        status = 'published'
+      RETURNING id, title, slug`,
+      [
+        "Java 10x — Do Zero ao Backend Profissional",
+        "java-10x",
+        "Aprenda programação Java moderna, Orientação a Objetos, Streams, Coleções, Spring Boot e Concorrência de forma profunda e prática.",
+        "https://drive.google.com/drive/folders/sample-fake-java-folder",
+        "sample-fake-java-folder",
+        null,
+        "#f89820",
+        "published",
+        "auto",
+        "ok",
+        18000,
+        12,
+      ],
+    );
+    const javaCourse = javaCourseRes.rows[0];
+    console.log(`✅ Curso pronto: ${javaCourse.title} (slug: ${javaCourse.slug})`);
+
+    // Módulo Java
+    const modJavaRes = await client.query(
+      `INSERT INTO modules (course_id, drive_folder_id, raw_name, title, position, is_active)
+       VALUES ($1, $2, $3, $4, $5, true)
+       RETURNING id`,
+      [
+        javaCourse.id,
+        "folder-mod-java-1",
+        "001. Fundamentos e Stream API",
+        "Fundamentos e Stream API",
+        1,
+      ],
+    );
+    const modJavaId = modJavaRes.rows[0].id;
+
+    const lesJavaRes = await client.query(
+      `INSERT INTO lessons (module_id, drive_folder_id, raw_name, title, position, duration_seconds, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, true)
+       RETURNING id`,
+      [
+        modJavaId,
+        "folder-les-java-1",
+        "01. Stream API e Lambdas na Prática",
+        "Stream API e Lambdas na Prática",
+        1,
+        3600,
+      ],
+    );
+    const lesJavaId = lesJavaRes.rows[0].id;
+
+    await client.query(
+      `INSERT INTO materials (lesson_id, drive_file_id, raw_name, title, kind, mime, size_bytes, duration_seconds, position, is_active)
+       VALUES
+       ($1, 'fake-file-video-java-1', '001. Videoaula Streams.mp4', 'Videoaula Streams', 'video', 'video/mp4', 500000000, 3600, 1, true)
+       ON CONFLICT (drive_file_id) DO NOTHING`,
+      [lesJavaId],
+    );
+
+    // Matricula Admin no Java 10x
+    await client.query(
+      `INSERT INTO enrollments (user_id, course_id, granted_by)
+       VALUES ($1, $2, $1)
+       ON CONFLICT (user_id, course_id) DO NOTHING`,
+      [adminUser.id, javaCourse.id],
+    );
+    console.log(`✅ Admin matriculado no curso Java 10x.`);
 
     await client.query("COMMIT;");
 

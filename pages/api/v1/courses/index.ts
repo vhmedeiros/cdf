@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { createRouter } from "next-connect";
+import database from "@/infra/database";
 import controller from "@/infra/controller";
 import { UnauthorizedError } from "@/infra/errors";
 import CourseModel from "@/models/course";
@@ -14,6 +15,12 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse) {
   const user = req.context.user;
 
   if (("isAnonymous" in user && user.isAnonymous) || !user.id) {
+    if (req.query.public === "true") {
+      const publicCourses = await database.query(
+        "SELECT id, title, slug, accent_color FROM courses WHERE status = 'published' ORDER BY title ASC"
+      );
+      return res.status(200).json(publicCourses.rows);
+    }
     throw new UnauthorizedError();
   }
 

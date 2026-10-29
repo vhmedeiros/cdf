@@ -15,6 +15,7 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse) {
   const isUserAuthenticated = !("isAnonymous" in user && user.isAnonymous);
 
   const {
+    course_id,
     subject_id,
     topic_id,
     board_id,
@@ -29,6 +30,7 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse) {
   } = req.query;
 
   const result = await QuestionModel.list({
+    course_id: typeof course_id === "string" ? course_id : undefined,
     subject_id: typeof subject_id === "string" ? subject_id : undefined,
     topic_id: typeof topic_id === "string" ? topic_id : undefined,
     board_id: typeof board_id === "string" ? board_id : undefined,

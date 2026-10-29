@@ -272,6 +272,151 @@ export async function seedQuestionsTaxonomy(): Promise<void> {
     }
   }
 
+  // 5. Questões do Curso Java 10x (específicas para quem estuda linguagens de programação)
+  const javaCourseRes = await database.query({
+    text: "SELECT id, title FROM courses WHERE slug = 'java-10x' LIMIT 1;",
+  });
+
+  if (javaCourseRes.rowCount && javaCourseRes.rowCount > 0) {
+    const javaCourse = javaCourseRes.rows[0];
+
+    // Cria ou atualiza a disciplina de programação vinculada ao curso Java 10x
+    let javaSubject;
+    try {
+      javaSubject = await SubjectModel.create({
+        name: "Programação e Backend Java",
+        slug: "programacao-java",
+        color: "#f89820",
+        description: "Fundamentos de Java, POO, Coleções, Stream API, Records e Concorrência.",
+        course_id: javaCourse.id,
+      });
+    } catch {
+      javaSubject = await SubjectModel.findBySlug("programacao-java");
+    }
+
+    let topicStreams;
+    try {
+      topicStreams = await TopicModel.create({
+        subject_id: javaSubject.id,
+        name: "Stream API & Programação Funcional",
+        slug: "stream-api-lambdas",
+      });
+    } catch {
+      const allT = await TopicModel.listBySubject(javaSubject.id);
+      topicStreams = allT.find((t) => t.slug === "stream-api-lambdas");
+    }
+
+    let topicRecords;
+    try {
+      topicRecords = await TopicModel.create({
+        subject_id: javaSubject.id,
+        name: "Records e Imutabilidade no Java Moderno",
+        slug: "records-imutabilidade",
+      });
+    } catch {
+      const allT = await TopicModel.listBySubject(javaSubject.id);
+      topicRecords = allT.find((t) => t.slug === "records-imutabilidade");
+    }
+
+    // Questão Java 1: Stream API com bloco de código
+    const existingJavaQ1 = await database.query({
+      text: "SELECT id FROM questions WHERE statement ILIKE $1 LIMIT 1;",
+      values: ["%StreamFilterExample%"],
+    });
+
+    if (existingJavaQ1.rowCount === 0) {
+      const qJava1 = await QuestionModel.create({
+        course_id: javaCourse.id,
+        number: 1,
+        statement:
+          "Considere o seguinte trecho de código em **Java 21**:\n\n```java\nimport java.util.List;\n\npublic class StreamFilterExample {\n    public static void main(String[] args) {\n        List<String> frameworks = List.of(\"Spring Boot\", \"Quarkus\", \"Micronaut\", \"Jakarta EE\");\n\n        long count = frameworks.stream()\n            .filter(name -> name.startsWith(\"Q\") || name.length() > 9)\n            .map(String::toUpperCase)\n            .count();\n\n        System.out.println(\"Total: \" + count);\n    }\n}\n```\n\nAo executar o código acima, qual será a saída impressa no console?",
+        format: "multiple_choice",
+        correct_answer: "C",
+        status: "published",
+        origin: "official",
+        difficulty: 0.35,
+        topic_ids: topicStreams ? [topicStreams.id] : [],
+        alternatives: [
+          { letter: "A", body: "Total: 1" },
+          { letter: "B", body: "Total: 2" },
+          { letter: "C", body: "Total: 3" },
+          { letter: "D", body: "Total: 4" },
+          { letter: "E", body: "Total: 0" },
+        ],
+      });
+
+      await database.query({
+        text: `
+          INSERT INTO explanations (question_id, body, per_alternative, model, prompt_version)
+          VALUES ($1, $2, $3, $4, $5)
+          ON CONFLICT (question_id) DO NOTHING;
+        `,
+        values: [
+          qJava1.id,
+          "### Gabarito: C (Total: 3)\n\nVamos analisar a execução da **Stream API** passo a passo:\n\n1. A lista original contém 4 elementos: `[\"Spring Boot\", \"Quarkus\", \"Micronaut\", \"Jakarta EE\"]`.\n2. A operação intermediária `.filter(...)` avalia o predicado `name.startsWith(\"Q\") || name.length() > 9`:\n   - `\"Spring Boot\"`: tamanho = 11 (> 9) $\\rightarrow$ **Atende** ✅\n   - `\"Quarkus\"`: inicia com 'Q' $\\rightarrow$ **Atende** ✅\n   - `\"Micronaut\"`: tamanho = 9 (não é > 9 e não inicia com 'Q') $\\rightarrow$ **Filtrado** ❌\n   - `\"Jakarta EE\"`: tamanho = 10 (> 9) $\\rightarrow$ **Atende** ✅\n3. Três elementos passam no filtro: `\"Spring Boot\"`, `\"Quarkus\"` e `\"Jakarta EE\"`.\n4. A operação terminal `.count()` contabiliza os elementos restantes, resultando em **3**.\n\n> **Dica Java 10x:** Operações como `.filter()` e `.map()` são intermediárias (*lazy*) e só são processadas quando a operação terminal `.count()` é disparada.",
+          JSON.stringify({
+            A: "Incorreto. Mais de um elemento satisfaz a condição composta do predicado or (`||`).",
+            B: "Incorreto. Note que tanto 'Spring Boot' quanto 'Jakarta EE' possuem mais de 9 caracteres, além de 'Quarkus' que inicia com 'Q'.",
+            C: "Correto! Exatamente 3 frameworks passam pelo filtro: Spring Boot, Quarkus e Jakarta EE.",
+            D: "Incorreto. 'Micronaut' possui exatamente 9 caracteres (não satisfaz length > 9) e não inicia com 'Q'.",
+            E: "Incorreto. Vários elementos atendem às condições estabelecidas.",
+          }),
+          "gemini-3.8-flash",
+          "v1",
+        ],
+      });
+    }
+
+    // Questão Java 2: Records
+    const existingJavaQ2 = await database.query({
+      text: "SELECT id FROM questions WHERE statement ILIKE $1 LIMIT 1;",
+      values: ["%Records introduzidos de forma definitiva no ecossistema Java%"],
+    });
+
+    if (existingJavaQ2.rowCount === 0) {
+      const qJava2 = await QuestionModel.create({
+        course_id: javaCourse.id,
+        number: 2,
+        statement:
+          "Em relação aos **Records** introduzidos de forma definitiva no ecossistema Java, assinale a alternativa **correta**:",
+        format: "multiple_choice",
+        correct_answer: "B",
+        status: "published",
+        origin: "official",
+        difficulty: 0.28,
+        topic_ids: topicRecords ? [topicRecords.id] : [],
+        alternatives: [
+          { letter: "A", body: "Records são mutáveis por padrão e geram métodos setters públicos automaticamente." },
+          { letter: "B", body: "Records são implicitamente classes finais (`final`), herdam de `java.lang.Record` e possuem campos privados e finais para cada componente." },
+          { letter: "C", body: "Um Record pode herdar explicitamente de qualquer outra classe concreta através de `extends`." },
+          { letter: "D", body: "Não é permitido implementar interfaces nem definir métodos auxiliares dentro de um Record." },
+          { letter: "E", body: "Records não implementam automaticamente `equals()`, `hashCode()` nem `toString()`." },
+        ],
+      });
+
+      await database.query({
+        text: `
+          INSERT INTO explanations (question_id, body, per_alternative, model, prompt_version)
+          VALUES ($1, $2, $3, $4, $5)
+          ON CONFLICT (question_id) DO NOTHING;
+        `,
+        values: [
+          qJava2.id,
+          "### Gabarito: B\n\nOs **Records** em Java foram criados com o propósito de serem carreadores transparentes e imutáveis de dados (*data carriers*):\n\n- Toda classe record é implicitamente **`final`**, portanto não pode ser estendida;\n- Herda diretamente de `java.lang.Record` (e como o Java não possui herança múltipla de classes, records **não podem usar `extends`**);\n- Seus atributos gerados são **`private final`**;\n- Os métodos `equals()`, `hashCode()`, `toString()` e os métodos assessores (ex: `p.name()`) são criados de forma automática em tempo de compilação.\n\n> **Atenção:** Records **podem sim** implementar quantas interfaces desejarem (`implements Serializable`, etc.) e podem conter métodos de instância e estáticos customizados.",
+          JSON.stringify({
+            A: "Incorreto. Records são imutáveis e não possuem setters.",
+            B: "Correto! Trata-se da definição e arquitetura fundamental dos Records na JVM.",
+            C: "Incorreto. Records já herdam implicitamente de java.lang.Record e não podem estender outra classe.",
+            D: "Incorreto. Records podem implementar interfaces e declarar métodos auxiliares.",
+            E: "Incorreto. O compilador gera implementações canônicas completas de equals, hashCode e toString.",
+          }),
+          "gemini-3.8-flash",
+          "v1",
+        ],
+      });
+    }
+  }
+
   console.log("✅ Taxonomia de disciplinas, bancas e questões populada com sucesso!");
 }
 

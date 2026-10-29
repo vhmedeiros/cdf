@@ -24,6 +24,7 @@ import {
   Target,
   X,
   Shield,
+  HelpCircle,
 } from "lucide-react";
 import Link from "next/link";
 import PomodoroTimer from "@/components/player/PomodoroTimer";
@@ -213,6 +214,18 @@ export default function CourseClassroomPage() {
                 >
                   <BookOpen className="w-4 h-4" />
                   <span>Caderno</span>
+                </Link>
+              )}
+
+              {/* Link para o Banco de Questões do Curso */}
+              {course?.id && (
+                <Link
+                  href={`/questions?course_id=${course.id}`}
+                  className="hidden md:flex items-center gap-1.5 p-2 rounded-lg text-xs text-[#9a978f] hover:text-[#d4af37] hover:bg-[#1b1b1e] transition border border-transparent hover:border-[#2a2a2e]"
+                  title="Treinar questões deste curso"
+                >
+                  <HelpCircle className="w-4 h-4" />
+                  <span>Questões</span>
                 </Link>
               )}
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Head from "next/head";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import useSWR from "swr";
 import {
   HelpCircle,
@@ -22,8 +23,10 @@ import {
   Layers,
   Target,
   FileText,
+  GraduationCap,
 } from "lucide-react";
 import UserMenu from "@/components/ui/UserMenu";
+import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
 import { useUser } from "@/hooks/useUser";
 import type { Question, Alternative } from "@/models/question";
 import type { Subject } from "@/models/subject";
@@ -31,14 +34,23 @@ import type { TopicNode } from "@/models/topic";
 import type { DailyGoal } from "@/models/dailyGoal";
 
 export default function QuestionsPage() {
+  const router = useRouter();
   const { user, isAdmin } = useUser();
 
   // Filtros
+  const [selectedCourseId, setSelectedCourseId] = useState<string>("");
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>("");
   const [selectedTopicId, setSelectedTopicId] = useState<string>("");
   const [selectedFormat, setSelectedFormat] = useState<string>("");
   const [onlyUnanswered, setOnlyUnanswered] = useState<boolean>(false);
   const [showFiltersMobile, setShowFiltersMobile] = useState<boolean>(false);
+
+  // Sincroniza query param course_id da URL
+  useEffect(() => {
+    if (router.query.course_id && typeof router.query.course_id === "string") {
+      setSelectedCourseId(router.query.course_id);
+    }
+  }, [router.query.course_id]);
 
   // Navegação de questões
   const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -54,8 +66,16 @@ export default function QuestionsPage() {
     explanation?: any;
   } | null>(null);
 
-  // Carrega lista de disciplinas e assuntos
-  const { data: subjects } = useSWR<Array<Subject & { topics: TopicNode[] }>>("/api/v1/subjects");
+  // Carrega catálogo de cursos disponíveis para filtro
+  const { data: courses } = useSWR<Array<{ id: string; title: string; slug: string }>>(
+    "/api/v1/courses?public=true",
+  );
+
+  // Carrega lista de disciplinas (filtrada por curso se selecionado)
+  const subjectsUrl = selectedCourseId
+    ? `/api/v1/subjects?course_id=${selectedCourseId}`
+    : "/api/v1/subjects";
+  const { data: subjects } = useSWR<Array<Subject & { topics: TopicNode[] }>>(subjectsUrl);
 
   // Carrega metas diárias
   const { data: dailyGoals, mutate: mutateDailyGoals } = useSWR<DailyGoal[]>(
@@ -64,6 +84,7 @@ export default function QuestionsPage() {
 
   // Monta querystring de busca de questões
   const queryParams = new URLSearchParams();
+  if (selectedCourseId) queryParams.set("course_id", selectedCourseId);
   if (selectedSubjectId) queryParams.set("subject_id", selectedSubjectId);
   if (selectedTopicId) queryParams.set("topic_id", selectedTopicId);
   if (selectedFormat) queryParams.set("format", selectedFormat);
@@ -213,9 +234,10 @@ export default function QuestionsPage() {
               </Link>
               <Link
                 href="/questions"
-                className="px-3 py-1.5 rounded-lg text-[#d4af37] bg-[#1b1b1e] font-medium"
+                className="px-3 py-1.5 rounded-lg text-[#d4af37] bg-[#1b1b1e] font-semibold border border-[#d4af37]/30 flex items-center gap-1.5"
               >
-                Questões
+                <HelpCircle className="w-3.5 h-3.5" />
+                <span>Questões</span>
               </Link>
               {isAdmin && (
                 <Link
@@ -281,9 +303,10 @@ export default function QuestionsPage() {
                   <Filter className="w-4 h-4 text-[#d4af37]" />
                   <span>Filtros de Questões</span>
                 </div>
-                {(selectedSubjectId || selectedTopicId || selectedFormat || onlyUnanswered) && (
+                {(selectedCourseId || selectedSubjectId || selectedTopicId || selectedFormat || onlyUnanswered) && (
                   <button
                     onClick={() => {
+                      setSelectedCourseId("");
                       setSelectedSubjectId("");
                       setSelectedTopicId("");
                       setSelectedFormat("");
@@ -296,6 +319,48 @@ export default function QuestionsPage() {
                     Limpar
                   </button>
                 )}
+              </div>
+
+              {/* Filtro de Curso */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] text-[#9a978f] uppercase tracking-wider font-semibold flex items-center justify-between">
+                  <span>Curso</span>
+                  {selectedCourseId && (
+                    <button
+                      onClick={() => {
+                        setSelectedCourseId("");
+                        setSelectedSubjectId("");
+                        setSelectedTopicId("");
+                        setCurrentIndex(0);
+                      }}
+                      className="text-[10px] text-[#d4af37] hover:underline lowercase font-normal"
+                    >
+                      limpar
+                    </button>
+                  )}
+                </label>
+                <select
+                  value={selectedCourseId}
+                  onChange={(e) => {
+                    setSelectedCourseId(e.target.value);
+                    setSelectedSubjectId("");
+                    setSelectedTopicId("");
+                    setCurrentIndex(0);
+                  }}
+                  className="w-full bg-[#1b1b1e] border border-[#2a2a2e] rounded-xl px-3 py-2 text-xs text-[#ece9e2] focus:border-[#d4af37] outline-none"
+                >
+                  <option value="">Todos os cursos e concursos</option>
+                  <option value="general">Apenas Concursos Gerais</option>
+                  {courses && courses.length > 0 && (
+                    <optgroup label="Cursos da Plataforma">
+                      {courses.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.title}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                </select>
               </div>
 
               {/* Disciplina */}
@@ -399,10 +464,15 @@ export default function QuestionsPage() {
               </div>
             ) : currentQuestion ? (
               <div className="bg-[#131315] border border-[#2a2a2e] rounded-2xl p-6 sm:p-8 space-y-6 shadow-2xl relative">
-                {/* Metadados do Concurso / Prova */}
+                {/* Metadados do Concurso / Prova ou Curso */}
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2a2a2e] pb-4">
                   <div className="flex flex-wrap items-center gap-2 text-xs">
-                    {currentQuestion.exam && (
+                    {currentQuestion.course_title ? (
+                      <span className="px-2.5 py-1 rounded-md bg-[#d4af37]/15 text-[#d4af37] font-semibold border border-[#d4af37]/30 flex items-center gap-1.5">
+                        <BookOpen className="w-3.5 h-3.5" />
+                        <span>Curso: {currentQuestion.course_title}</span>
+                      </span>
+                    ) : currentQuestion.exam ? (
                       <>
                         <span className="px-2.5 py-1 rounded-md bg-[#d4af37]/10 text-[#d4af37] font-semibold border border-[#d4af37]/30">
                           {currentQuestion.exam.board_name}
@@ -415,10 +485,15 @@ export default function QuestionsPage() {
                           {currentQuestion.exam.position}
                         </span>
                       </>
+                    ) : (
+                      <span className="px-2.5 py-1 rounded-md bg-[#1b1b1e] text-[#9a978f] font-medium border border-[#2a2a2e]">
+                        Questão de Fixação
+                      </span>
                     )}
 
                     {currentQuestion.topics && currentQuestion.topics.length > 0 && (
                       <span className="px-2.5 py-0.5 rounded-full bg-[#1b1b1e] border border-[#2a2a2e] text-[11px] text-[#9a978f]">
+                        {currentQuestion.topics[0].subject_name ? `${currentQuestion.topics[0].subject_name} • ` : ""}
                         {currentQuestion.topics[0].name}
                       </span>
                     )}
@@ -439,13 +514,13 @@ export default function QuestionsPage() {
                       <FileText className="w-4 h-4" />
                       {currentQuestion.support_text.label}
                     </p>
-                    <p className="whitespace-pre-line">{currentQuestion.support_text.body}</p>
+                    <MarkdownRenderer content={currentQuestion.support_text.body} />
                   </div>
                 )}
 
                 {/* Enunciado da Questão */}
-                <div className="text-sm sm:text-base text-[#ece9e2] leading-relaxed font-sans font-medium space-y-2">
-                  <p className="whitespace-pre-line">{currentQuestion.statement}</p>
+                <div className="text-sm sm:text-base text-[#ece9e2] leading-relaxed font-sans font-medium">
+                  <MarkdownRenderer content={currentQuestion.statement} />
                 </div>
 
                 {/* Lista de Alternativas */}
@@ -495,7 +570,7 @@ export default function QuestionsPage() {
 
                         {/* Texto da Alternativa */}
                         <div className="flex-1 text-xs sm:text-sm text-[#ece9e2] leading-relaxed pt-0.5">
-                          {alt.body}
+                          <MarkdownRenderer content={alt.body} />
                         </div>
 
                         {/* Botão de Cortar/Riscar alternativa */}
@@ -542,6 +617,15 @@ export default function QuestionsPage() {
                       title="Questão anterior"
                     >
                       <ArrowLeft className="w-4 h-4" />
+                    </button>
+
+                    <button
+                      onClick={handleNext}
+                      disabled={currentIndex === questions.length - 1}
+                      className="p-2.5 rounded-xl bg-[#1b1b1e] border border-[#2a2a2e] text-[#9a978f] hover:text-[#ece9e2] disabled:opacity-30 transition"
+                      title="Próxima questão"
+                    >
+                      <ArrowRight className="w-4 h-4" />
                     </button>
 
                     {!answeredResult ? (
@@ -602,14 +686,39 @@ export default function QuestionsPage() {
 
                     {/* Explicação Pedagógica da Questão */}
                     {answeredResult.explanation ? (
-                      <div className="space-y-3 pt-2">
+                      <div className="space-y-4 pt-2">
                         <div className="flex items-center gap-2 text-xs font-semibold text-[#d4af37]">
                           <Sparkles className="w-4 h-4" />
                           <span>Explicação Detalhada do Gabarito Oficial</span>
                         </div>
-                        <div className="text-xs sm:text-sm text-[#ece9e2]/90 leading-relaxed bg-[#131315] border border-[#2a2a2e] rounded-xl p-4 whitespace-pre-line font-sans">
-                          {answeredResult.explanation.body}
+                        <div className="text-xs sm:text-sm text-[#ece9e2]/90 leading-relaxed bg-[#131315] border border-[#2a2a2e] rounded-xl p-5 font-sans">
+                          <MarkdownRenderer content={answeredResult.explanation.body} />
                         </div>
+
+                        {/* Comentário por alternativa se houver */}
+                        {answeredResult.explanation.per_alternative &&
+                          Object.keys(answeredResult.explanation.per_alternative).length > 0 && (
+                            <div className="space-y-2 pt-2">
+                              <p className="text-[11px] font-semibold text-[#9a978f] uppercase tracking-wider">
+                                Análise de Cada Alternativa
+                              </p>
+                              <div className="grid gap-2">
+                                {Object.entries(answeredResult.explanation.per_alternative).map(([letter, text]) => (
+                                  <div
+                                    key={letter}
+                                    className="p-3 rounded-lg bg-[#131315] border border-[#2a2a2e] flex items-start gap-2.5 text-xs"
+                                  >
+                                    <span className="w-5 h-5 shrink-0 rounded flex items-center justify-center font-bold text-[11px] bg-[#1b1b1e] border border-[#2a2a2e] text-[#d4af37]">
+                                      {letter}
+                                    </span>
+                                    <div className="flex-1 text-[#ece9e2]/90">
+                                      <MarkdownRenderer content={text as string} />
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                       </div>
                     ) : (
                       <div className="p-4 rounded-xl bg-[#131315] border border-[#2a2a2e] text-center text-xs text-[#9a978f]">

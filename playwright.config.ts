@@ -10,9 +10,9 @@ export default defineConfig({
   timeout: 45_000,
   use: {
     baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || "http://localhost:3000",
-    trace: "on-first-retry",
+    trace: "off",
     screenshot: "only-on-failure",
-    video: "retain-on-failure",
+    video: "off",
   },
   projects: [
     {

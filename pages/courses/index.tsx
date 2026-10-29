@@ -3,7 +3,7 @@ import Head from "next/head";
 import Link from "next/link";
 import useSWR from "swr";
 import { formatDuration } from "@/lib/utils";
-import { Play, BookOpen, Clock, FileText, Shield, Plus } from "lucide-react";
+import { Play, BookOpen, Clock, FileText, Shield, Plus, HelpCircle } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
 import UserMenu from "@/components/ui/UserMenu";
 import type { Course } from "@/models/course";
@@ -63,9 +63,10 @@ export default function CoursesListPage() {
               </Link>
               <Link
                 href="/questions"
-                className="px-3 py-1.5 rounded-lg text-[#9a978f] hover:text-[#ece9e2] hover:bg-[#1b1b1e] transition"
+                className="px-3 py-1.5 rounded-lg text-[#9a978f] hover:text-[#ece9e2] hover:bg-[#1b1b1e] transition flex items-center gap-1.5"
               >
-                Questões
+                <HelpCircle className="w-3.5 h-3.5" />
+                <span>Questões</span>
               </Link>
             </nav>
           </div>

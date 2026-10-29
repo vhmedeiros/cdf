@@ -10,7 +10,10 @@ router.use(controller.injectAnonymousOrUser);
 router.get(getHandler);
 
 async function getHandler(req: NextApiRequest, res: NextApiResponse) {
-  const subjects = await SubjectModel.listAll();
+  const { course_id } = req.query;
+  const subjects = await SubjectModel.listAll({
+    course_id: typeof course_id === "string" ? course_id : undefined,
+  });
 
   // Para cada disciplina, busca os tópicos e constrói a árvore
   const subjectsWithTopics = await Promise.all(
