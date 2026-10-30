@@ -11,7 +11,7 @@ describe("Student Dashboard Home Page (/)", () => {
 
     const html = await response.text();
     expect(html).toContain("Aula");
-    expect(html).toContain("Biblioteca Noturna");
+    expect(html).toContain("Meus Cursos em Andamento");
     expect(html).toContain("Revisões Espaçadas de Hoje");
     expect(html).toContain("Mapa de Calor de Estudos");
   });

@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test.describe("Fluxo Completo da Plataforma Aula (E2E)", () => {
   const ADMIN_EMAIL = "admin@aula.local";
   const ADMIN_PASS = "admin123456";
-  const DEFAULT_COURSE_SLUG = "77-melhores-livros-da-historia";
+  const DEFAULT_COURSE_SLUG = "direito-constitucional";
 
   test("Cenário 1: Autenticação, Rejeição de Senha Errada e Logout Imediato", async ({ page }) => {
     await page.goto("/login");
