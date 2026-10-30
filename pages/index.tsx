@@ -160,7 +160,7 @@ export default function StudentDashboardPage() {
         </header>
 
         {/* Dashboard Main Content */}
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-24 md:pb-8 space-y-8">
           {/* 1. Hero: Continuar de onde parou */}
           <HeroResume lastStudied={stats?.last_studied || null} />
 

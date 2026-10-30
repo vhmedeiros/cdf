@@ -280,7 +280,7 @@ export default function AdminCoursesPage() {
         </header>
 
         {/* Conteúdo Principal */}
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-24 md:pb-8 space-y-6">
           {/* Banner de Mensagens */}
           {errorMsg && (
             <div className="p-4 rounded-xl bg-[#e5484d]/10 border border-[#e5484d]/30 text-[#e5484d] text-xs flex items-center gap-2">

@@ -71,7 +71,7 @@ export default function CoursesListPage() {
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#d4af37]/10 border border-[#d4af37]/40 text-[#d4af37] hover:bg-[#d4af37]/20 transition text-xs font-semibold shadow-sm"
               >
                 <Shield className="w-4 h-4" />
-                <span>Painel Admin</span>
+                <span className="hidden sm:inline">Painel Admin</span>
               </Link>
             )}
             <UserMenu />
@@ -79,7 +79,7 @@ export default function CoursesListPage() {
         </header>
 
         {/* Content */}
-        <main className="max-w-6xl mx-auto px-6 py-10 space-y-8">
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-24 md:pb-10 space-y-8">
           <div>
             <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#ece9e2]">
               Meus Cursos

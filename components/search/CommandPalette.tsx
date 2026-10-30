@@ -41,6 +41,9 @@ export default function CommandPalette() {
         e.preventDefault();
         setOpen((prev) => !prev);
       }
+      if (e.key === "Escape") {
+        setOpen(false);
+      }
     };
 
     const handleCustomOpen = () => setOpen(true);
@@ -121,6 +124,14 @@ export default function CommandPalette() {
             <kbd className="hidden sm:inline-flex items-center px-2 py-0.5 text-[10px] font-mono text-[#9a978f] bg-[#2a2a2e] rounded">
               ESC
             </kbd>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="p-1.5 rounded-lg text-[#9a978f] hover:text-[#ece9e2] hover:bg-[#2a2a2e] transition"
+              title="Fechar (ESC)"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
 
           {/* Lista de resultados */}

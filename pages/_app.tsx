@@ -5,6 +5,7 @@ import { PlayerProvider } from "@/context/PlayerContext";
 import { GlobalMiniPlayer } from "@/components/player/GlobalMiniPlayer";
 import { KeyboardShortcutsModal } from "@/components/ui/KeyboardShortcutsModal";
 import CommandPalette from "@/components/search/CommandPalette";
+import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import "@/styles/globals.css";
 
 const fetcher = async (url: string) => {
@@ -39,6 +40,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <GlobalMiniPlayer />
         <KeyboardShortcutsModal />
         <CommandPalette />
+        <MobileBottomNav />
       </PlayerProvider>
     </SWRConfig>
   );

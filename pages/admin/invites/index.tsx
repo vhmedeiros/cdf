@@ -248,7 +248,7 @@ export default function AdminInvitesPage() {
         </header>
 
         {/* Content */}
-        <main className="max-w-4xl mx-auto px-6 py-10 space-y-8">
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-6 pb-24 md:pb-10 space-y-8">
           <div>
             <h1 className="text-2xl font-serif font-bold text-[#ece9e2]">Convites & Alunos</h1>
             <p className="text-xs text-[#9a978f] mt-1">

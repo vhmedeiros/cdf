@@ -27,7 +27,7 @@ export function GlobalMiniPlayer() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 w-80 rounded-2xl bg-[#131315]/95 border border-[#2a2a2e] shadow-2xl backdrop-blur-md overflow-hidden animate-in slide-in-from-bottom-5 duration-300">
+    <div className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-50 w-[calc(100vw-2rem)] sm:w-80 max-w-sm rounded-2xl bg-[#131315]/95 border border-[#2a2a2e] shadow-2xl backdrop-blur-md overflow-hidden animate-in slide-in-from-bottom-5 duration-300">
       {/* Video preview / compact bar */}
       <div className="relative aspect-video bg-black flex items-center justify-center group">
         <video
