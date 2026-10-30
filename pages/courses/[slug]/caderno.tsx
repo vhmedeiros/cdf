@@ -38,6 +38,7 @@ export default function CourseNotebookPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [onlyImportant, setOnlyImportant] = useState(false);
+  const [selectedModule, setSelectedModule] = useState<string>("all");
 
   // Carrega dados do curso e anotações
   useEffect(() => {
@@ -65,10 +66,24 @@ export default function CourseNotebookPage() {
       });
   }, [slug]);
 
+  // Lista de módulos com anotações disponíveis
+  const availableModules = useMemo(() => {
+    const list: string[] = [];
+    for (const n of notes) {
+      const mod = n.module_title || "Módulo Geral";
+      if (!list.includes(mod)) list.push(mod);
+    }
+    return list;
+  }, [notes]);
+
   // Filtra as anotações
   const filteredNotes = useMemo(() => {
     return notes.filter((n) => {
       if (onlyImportant && !n.is_important) return false;
+      if (selectedModule !== "all") {
+        const mod = n.module_title || "Módulo Geral";
+        if (mod !== selectedModule) return false;
+      }
       if (search.trim()) {
         const q = search.toLowerCase();
         const matchesBody = n.body.toLowerCase().includes(q);
@@ -154,7 +169,8 @@ export default function CourseNotebookPage() {
                 className="p-2 rounded-xl bg-[#1b1b1e] hover:bg-[#2a2a2e] text-[#9a978f] hover:text-[#ece9e2] transition flex items-center gap-1.5 text-xs font-medium"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Voltar à Sala de Aula
+                <span className="hidden sm:inline">Voltar à Sala de Aula</span>
+                <span className="sm:hidden">Voltar</span>
               </Link>
 
               <div className="h-4 w-px bg-[#2a2a2e]" />
@@ -174,7 +190,8 @@ export default function CourseNotebookPage() {
               className="px-3.5 py-1.5 rounded-xl bg-[#1b1b1e] border border-[#2a2a2e] hover:border-[#d4af37] text-xs font-semibold text-[#ece9e2] hover:text-[#d4af37] transition flex items-center gap-1.5 disabled:opacity-40 shadow-sm"
             >
               <Download className="w-3.5 h-3.5" />
-              Exportar Markdown (.md)
+              <span className="hidden sm:inline">Exportar Markdown (.md)</span>
+              <span className="sm:hidden">Exportar</span>
             </button>
           </div>
         </header>
@@ -182,7 +199,7 @@ export default function CourseNotebookPage() {
         {/* Conteúdo principal */}
         <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 pb-24 md:pb-8 space-y-6">
           {/* Título e estatísticas */}
-          <div className="bg-[#131315] border border-[#2a2a2e] rounded-2xl p-6 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="bg-[#131315] border border-[#2a2a2e] rounded-2xl p-4 sm:p-6 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-xl sm:text-2xl font-bold font-serif text-[#ece9e2] mb-1">
                 Caderno de Estudos Digital
@@ -206,30 +223,45 @@ export default function CourseNotebookPage() {
             </div>
           </div>
 
-          {/* Filtros e Busca */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-[#131315] border border-[#2a2a2e] p-3 rounded-xl">
+          {/* Filtros e Busca Responsivos */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3 bg-[#131315] border border-[#2a2a2e] p-3 rounded-xl">
             <div className="relative flex-1">
               <Search className="w-4 h-4 text-[#9a978f] absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar em todas as anotações, aulas e módulos..."
+                placeholder="Buscar em anotações, aulas..."
                 className="w-full bg-[#1b1b1e] border border-[#2a2a2e] rounded-lg pl-9 pr-3 py-2 text-xs text-[#ece9e2] placeholder-[#9a978f]/60 focus:border-[#d4af37] outline-none transition"
               />
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+              {/* Dropdown de Módulos (Substitui barra lateral no mobile) */}
+              <select
+                value={selectedModule}
+                onChange={(e) => setSelectedModule(e.target.value)}
+                className="flex-1 sm:flex-initial bg-[#1b1b1e] border border-[#2a2a2e] rounded-lg px-2.5 py-2 text-xs text-[#ece9e2] focus:border-[#d4af37] outline-none transition cursor-pointer max-w-full sm:max-w-[200px] truncate"
+                aria-label="Filtrar por Módulo"
+              >
+                <option value="all">Todos os Módulos ({notes.length})</option>
+                {availableModules.map((mod) => (
+                  <option key={mod} value={mod}>
+                    {mod}
+                  </option>
+                ))}
+              </select>
+
               <button
                 onClick={() => setOnlyImportant((prev) => !prev)}
-                className={`px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition border ${
+                className={`flex-1 sm:flex-initial justify-center px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition border min-h-[36px] ${
                   onlyImportant
                     ? "bg-[#d4af37] text-black border-[#d4af37]"
                     : "bg-[#1b1b1e] text-[#9a978f] border-[#2a2a2e] hover:text-[#ece9e2]"
                 }`}
               >
                 <Star className={`w-3.5 h-3.5 ${onlyImportant ? "fill-black" : ""}`} />
-                Apenas Importantes
+                <span>Importantes</span>
               </button>
             </div>
           </div>

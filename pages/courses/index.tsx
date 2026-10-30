@@ -127,7 +127,7 @@ export default function CoursesListPage() {
                   >
                     {/* Course Cover Card */}
                     <div
-                      className={`h-40 bg-gradient-to-br ${gradient} p-6 flex flex-col justify-between relative overflow-hidden border-b border-[#2a2a2e]`}
+                      className={`h-36 sm:h-40 bg-gradient-to-br ${gradient} p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden border-b border-[#2a2a2e]`}
                     >
                       <div className="flex justify-between items-start">
                         <span className="px-2.5 py-1 rounded-full bg-black/50 border border-white/10 text-[10px] font-mono font-medium text-[#d4af37] backdrop-blur-sm">
@@ -144,7 +144,7 @@ export default function CoursesListPage() {
                     </div>
 
                     {/* Course Details */}
-                    <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                    <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3 sm:space-y-4">
                       <p className="text-xs text-[#9a978f] line-clamp-2 leading-relaxed">
                         {c.description || "Sem descrição informada."}
                       </p>

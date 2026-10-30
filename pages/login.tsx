@@ -93,7 +93,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="seu@email.com"
-                  className="w-full pl-9 pr-3 py-2 text-xs bg-[#1b1b1e] border border-[#2a2a2e] rounded-lg text-[#ece9e2] placeholder-[#9a978f] focus:outline-none focus:border-[#d4af37]"
+                  className="w-full pl-9 pr-3 py-2.5 sm:py-2 text-base sm:text-xs bg-[#1b1b1e] border border-[#2a2a2e] rounded-lg text-[#ece9e2] placeholder-[#9a978f] focus:outline-none focus:border-[#d4af37]"
                 />
               </div>
             </div>
@@ -108,7 +108,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-9 pr-3 py-2 text-xs bg-[#1b1b1e] border border-[#2a2a2e] rounded-lg text-[#ece9e2] placeholder-[#9a978f] focus:outline-none focus:border-[#d4af37]"
+                  className="w-full pl-9 pr-3 py-2.5 sm:py-2 text-base sm:text-xs bg-[#1b1b1e] border border-[#2a2a2e] rounded-lg text-[#ece9e2] placeholder-[#9a978f] focus:outline-none focus:border-[#d4af37]"
                 />
               </div>
             </div>
@@ -116,7 +116,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 px-4 bg-gradient-to-r from-[#d4af37] to-[#f5d76e] text-black font-semibold text-xs rounded-lg hover:opacity-95 transition flex items-center justify-center gap-2 shadow-md disabled:opacity-50"
+              className="w-full py-3 px-4 min-h-[44px] bg-gradient-to-r from-[#d4af37] to-[#f5d76e] text-black font-semibold text-sm sm:text-xs rounded-xl hover:opacity-95 transition flex items-center justify-center gap-2 shadow-md disabled:opacity-50"
             >
               {loading ? (
                 "Entrando..."

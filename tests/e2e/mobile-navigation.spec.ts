@@ -181,4 +181,50 @@ test.describe("Experiência Mobile (E2E) — Viewport Smartphone 390x844", () =>
     const coursesSection = page.locator("text=Meus Cursos em Andamento").first();
     await expect(coursesSection).toBeVisible();
   });
+  test("Cenário Mobile 4: Telas Secundárias (Catálogo de Cursos, Login Touch e Caderno de Estudos com Filtro)", async ({
+    page,
+  }) => {
+    // 1. Acesso à tela de Login em viewport smartphone e validação de touch target
+    await page.goto("/login");
+    const submitBtn = page.locator('button[type="submit"]');
+    await expect(submitBtn).toBeVisible();
+
+    await page.fill('input[type="email"]', ADMIN_EMAIL);
+    await page.fill('input[type="password"]', ADMIN_PASS);
+    await Promise.all([
+      page.waitForResponse((res) => res.url().includes("/api/v1/sessions") && res.status() === 201),
+      submitBtn.click(),
+    ]);
+    await page.waitForURL((url) => !url.pathname.includes("/login"));
+    await page.addStyleTag({ content: "nextjs-portal { display: none !important; }" });
+
+    // 2. Catálogo de Cursos no Mobile
+    await page.goto("/courses");
+    await page.addStyleTag({ content: "nextjs-portal { display: none !important; }" });
+    const courseCard = page.locator('main a[href*="/courses/"]').first();
+    await expect(courseCard).toBeVisible({ timeout: 10_000 });
+
+    // 3. Caderno de Estudos do Curso no Mobile
+    await page.goto(`/courses/${DEFAULT_COURSE_SLUG}/caderno`);
+    await page.addStyleTag({ content: "nextjs-portal { display: none !important; }" });
+
+    // Cabeçalho adaptado com botão de voltar compacto
+    const voltarBtn = page.locator('header a[href*="/courses/"]').first();
+    await expect(voltarBtn).toBeVisible({ timeout: 10_000 });
+
+    // Seletor Dropdown de Módulos (Mobile)
+    const moduleSelect = page.locator('select[aria-label="Filtrar por Módulo"]');
+    await expect(moduleSelect).toBeVisible();
+
+    // Filtro de Importantes
+    const importantToggle = page.locator('button:has-text("Importantes")');
+    await expect(importantToggle).toBeVisible();
+    await importantToggle.click();
+    await page.waitForTimeout(300);
+    await importantToggle.click();
+
+    // Exportar Markdown
+    const exportBtn = page.locator('button:has-text("Exportar")');
+    await expect(exportBtn).toBeVisible();
+  });
 });
