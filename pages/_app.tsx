@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import type { AppProps } from "next/app";
+import Head from "next/head";
 import { SWRConfig } from "swr";
 import { PlayerProvider } from "@/context/PlayerContext";
 import { GlobalMiniPlayer } from "@/components/player/GlobalMiniPlayer";
@@ -35,6 +36,9 @@ export default function App({ Component, pageProps }: AppProps) {
         shouldRetryOnError: false,
       }}
     >
+      <Head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+      </Head>
       <PlayerProvider>
         <Component {...pageProps} />
         <GlobalMiniPlayer />
