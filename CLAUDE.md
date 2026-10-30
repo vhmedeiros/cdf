@@ -457,6 +457,7 @@ Cada fase termina com: testes passando, lint limpo, `npm run dev` funcionando, e
 | 6. Engajamento         | Home "Continuar", paleta `Ctrl+K`, busca full-text, streak/heatmap, revisão espaçada, modo foco, modo áudio, PWA                                                                                     | Busca acha nota por palavra sem acento; revisões aparecem nos dias certos (testes com relógio falso do Jest)                                                                          |
 | 7. Deploy              | `compose.prod.yaml`, nginx + TLS, backups, `deploy.sh`                                                                                                                                               | HTTPS A+ no SSL Labs; restauração de backup testada; reboot da VM volta tudo sozinho                                                                                                  |
 | 8. Endurecimento       | Sentry (opcional), 2FA opcional, cache LRU de vídeos (opcional), detector de faststart, e2e com Playwright                                                                                           | Fluxo login → curso → assistir → nota → concluir passa no e2e                                                                                                                         |
+| 8.1. Mobile & Telas     | Layout responsivo (360px–430px), bottom dock navigation, sala de aula adaptativa (player 16:9 + abas tátil), heatmap sem overflow, touch targets ≥ 44px                                              | Navegar, assistir aula e tomar nota perfeitamente no celular; testes E2E mobile passando                                                                                              |
 | 9. Questões: base      | Tabelas do §12.2, taxonomia, `services/ai` com roteador de cota, importação manual e por JSON                                                                                                        | Testes com Gemini mockado: nunca passa do RPD; 429 diário pula para o próximo modelo; 503 abre o circuit breaker; `min_tier` faz o job esperar; ID inexistente é desativado na subida |
 | 10. Ingestão de provas | Pipeline §12.3 (PDF → questões → gabarito → classificação → embedding → dedupe → revisão)                                                                                                            | Prova real de teste importada com ≥ 95% das questões corretas; fila de revisão funcional                                                                                              |
 | 11. Resolver           | Tela de resolução (A–E e Certo/Errado), filtros, explicação pós-resposta, "chutei", reportar erro, metas diárias                                                                                     | Responder → ver gabarito + explicação; meta de 20 por disciplina contabiliza certo                                                                                                    |
@@ -709,6 +710,76 @@ min_tier: # pior modelo aceitável por tarefa; abaixo disso, o job ESPERA em vez
     - Script verificador de MP4 FastStart (`infra/scripts/check-faststart.ts`) inspecionando caixas `moov` e `mdat`.
     - Suíte completa de testes E2E com Playwright Chromium (`tests/e2e/student-flow.spec.ts`) com 5 cenários cobrindo o fluxo completo de ponta a ponta (100% verde em ~16s).
     - Atualização otimizada do cache SWR no login (`pages/login.tsx`) e isolamento no Jest (`jest.config.js`).
-- **Próximo passo:** Fase 9: Plataforma de Questões e IA Gemini (roteador de modelos em cascata, taxonomia de disciplinas e assuntos, ingestão de provas em PDF).
+- **Estratégia de Branches & Foco Atual:**
+  - Branch `main`: Alinhada estritamente com o deploy em produção na VM Oracle (`7f8235d`).
+  - Branch `feat/questions`: Salva e versionada no GitHub com todo o módulo de questões desenvolvido (Fase 9 & 10).
+  - Branch ativa: `feat/mobile-responsive` (foco total na experiência e usabilidade em celulares).
+- **Próximo passo:** Fase 8.1: Implementação da Responsividade Mobile (Etapa 1: Mobile Bottom Nav e Header Adaptativo).
 - **Problemas conhecidos:** —
+- **Decisões pendentes com o dono:** nome definitivo da plataforma; domínio; provedor de e-mail (SMTP); lista inicial de disciplinas/assuntos (taxonomia) e bancas prioritárias; se a plataforma será só para uso próprio/grupo fechado ou comercial (afeta plano da IA e questões de direito autoral).
+
+---
+
+## 14. Plano de Implementação: Frontend Mobile & Responsividade Completa
+
+> Este plano guia o desenvolvimento na branch `feat/mobile-responsive`, garantindo que a plataforma seja tão agradável e fluida no smartphone quanto no desktop.
+
+### 14.1 Princípios e Resoluções-Alvo
+- **Viewports de referência:** 360px (Galaxy S pequeno), 390px (iPhone 13/14/15 padrão), 412px (Pixel), até 768px (tablets em modo retrato).
+- **Mobile First / Thumb-Friendly:** Ações primárias no alcance do polegar (zona inferior da tela). Área mínima de toque de 44x44px em botões e links.
+- **Safe Areas:** Respeito a entalhes e barras de gestos (`pb-[env(safe-area-inset-bottom)]`).
+- **PWA Experience:** Sensação de aplicativo nativo sem barras de rolagem horizontais indesejadas (`overflow-x: hidden`).
+
+### 14.2 Etapas de Execução
+
+#### Etapa 1: Fundação do Layout Mobile & Navegação Inferior (Mobile Bottom Dock)
+- Criar `components/layout/MobileBottomNav.tsx`:
+  - Barra de navegação fixa inferior (`fixed bottom-0 left-0 right-0 z-40`) com fundo escuro e vidro (`bg-[#131315]/95 backdrop-blur-md border-t border-[#2a2a2e]`).
+  - Itens táteis com ícones Lucide:
+    - 🏠 **Início** (`/`)
+    - 📚 **Cursos** (`/courses`)
+    - 🔍 **Buscar** (dispara `CommandPalette`)
+    - 👤 **Menu/Perfil** (abre modal/drawer com opções de conta, atalhos e logout)
+  - Indicador ativo com brilho sutil em dourado (`#d4af37`).
+  - Visível exclusivamente no celular (`md:hidden`).
+- Header Global:
+  - Ocultar navegação de texto redundante em telas menores que `sm`.
+  - Adicionar espaçamento inferior (`pb-20 md:pb-6`) em todas as páginas para o conteúdo não ficar sob o dock.
+
+#### Etapa 2: Sala de Aula e Player no Celular (`pages/courses/[slug].tsx`)
+- **Player de Vídeo/Áudio:**
+  - Largura total (`w-full`) com proporção 16:9 (`aspect-video`) fixa no topo da visualização.
+  - Alternância rápida para modo áudio em 1 toque.
+- **Sistema de Abas Tácteis Inferiores ao Player:**
+  - Em desktop: mantém a barra lateral direita (`CourseSidebar`).
+  - Em mobile: substitui a coluna lateral por abas organizadas:
+    - **[ 📋 Aulas ]:** Lista modular expansível de aulas com status de progresso, duração e toque direto para troca imediata de aula.
+    - **[ ✍️ Anotações ]:** Área de notas com campo de edição adaptado para não ser coberto pelo teclado virtual do celular.
+    - **[ 📄 Materiais ]:** Acesso a PDFs e anexos da aula com leitor embutido ou download rápido.
+- Botão/Barra de Aula Atual para avançar para a próxima aula com conforto.
+
+#### Etapa 3: Dashboard do Estudante Responsivo (`pages/index.tsx`)
+- **Card Hero "Continuar Assistindo":**
+  - Layout empilhado (`flex-col sm:flex-row`), botão de play em largura total no mobile.
+- **Mapa de Calor de Estudos (`StudyHeatmap.tsx`):**
+  - Adicionar container com rolagem horizontal suave (`overflow-x-auto`) e foco automático no final da grade (semanas recentes), eliminando quebra de largura.
+- **Sequência de Estudos e Revisões de Hoje (`StudyStreak.tsx` e `DueReviews.tsx`):**
+  - Tipografia fluida e cards de revisão confortáveis para toque.
+
+#### Etapa 4: Caderno de Estudos e Telas Secundárias
+- **Caderno de Estudos (`/caderno`):**
+  - Seletor de módulo em dropdown responsivo em vez de sidebar fixa.
+  - Cartões de anotações com visual limpo e botões de ação com espaçamento tátil.
+- **Catálogo de Cursos (`/courses`):**
+  - Cards de cursos em 1 coluna no mobile (`grid-cols-1 sm:grid-cols-2`).
+- **Tela de Login (`/login`):**
+  - Centralização vertical com margens confortáveis no mobile (`px-4`).
+
+#### Etapa 5: Suíte de Testes E2E Mobile no Playwright & Validação Visual
+- Adicionar projeto de teste mobile no `playwright.config.ts` com perfil `Pixel 7` ou `iPhone 14`.
+- Criar cenário de teste E2E mobile:
+  - Login em tela 390px.
+  - Navegação via Bottom Nav.
+  - Troca de aula e leitura de anotações na Sala de Aula mobile.
+- Garantir 100% dos testes verdes sem quebras de layout.
 - **Decisões pendentes com o dono:** nome definitivo da plataforma; domínio; provedor de e-mail (SMTP); lista inicial de disciplinas/assuntos (taxonomia) e bancas prioritárias; se a plataforma será só para uso próprio/grupo fechado ou comercial (afeta plano da IA e questões de direito autoral).
