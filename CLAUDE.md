@@ -714,7 +714,7 @@ min_tier: # pior modelo aceitável por tarefa; abaixo disso, o job ESPERA em vez
   - Branch `main`: Alinhada estritamente com o deploy em produção na VM Oracle (`7f8235d`).
   - Branch `feat/questions`: Salva e versionada no GitHub com todo o módulo de questões desenvolvido (Fase 9 & 10).
   - Branch ativa: `feat/mobile-responsive` (foco total na experiência e usabilidade em celulares).
-- **Próximo passo:** Fase 8.1: Etapa 3 — Dashboard do Estudante Responsivo (Hero, Heatmap com scroll suave e Streak). [Etapas 1 e 2 concluídas com 100% de testes E2E verdes].
+- **Próximo passo:** Fase 8.1: Etapa 4 — Caderno de Estudos e Telas Secundárias (/caderno, /courses, /login). [Etapas 1, 2 e 3 concluídas com 100% de testes E2E verdes].
 - **Problemas conhecidos:** —
 - **Decisões pendentes com o dono:** nome definitivo da plataforma; domínio; provedor de e-mail (SMTP); lista inicial de disciplinas/assuntos (taxonomia) e bancas prioritárias; se a plataforma será só para uso próprio/grupo fechado ou comercial (afeta plano da IA e questões de direito autoral).
 
