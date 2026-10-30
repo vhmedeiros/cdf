@@ -34,7 +34,7 @@ export default function DueReviews({ reviews, onReviewCompleted }: DueReviewsPro
   };
 
   return (
-    <div className="bg-[#131315] border border-[#2a2a2e] rounded-2xl p-5 sm:p-6 space-y-4">
+    <div className="bg-[#131315] border border-[#2a2a2e] rounded-2xl p-4 sm:p-6 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <RotateCw className="w-5 h-5 text-[#d4af37]" />
@@ -88,10 +88,10 @@ export default function DueReviews({ reviews, onReviewCompleted }: DueReviewsPro
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 w-full sm:w-auto pt-1 sm:pt-0">
                   <Link
                     href={`/courses/${rev.course_slug}?material=${rev.material_id}`}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1b1b1e] border border-[#2a2a2e] text-xs text-[#ece9e2] hover:text-[#d4af37] hover:border-[#d4af37] transition"
+                    className="flex-1 sm:flex-initial justify-center inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#1b1b1e] border border-[#2a2a2e] text-xs text-[#ece9e2] hover:text-[#d4af37] hover:border-[#d4af37] transition min-h-[38px]"
                   >
                     <Play className="w-3.5 h-3.5" />
                     <span>Revisar</span>
@@ -100,7 +100,7 @@ export default function DueReviews({ reviews, onReviewCompleted }: DueReviewsPro
                   <button
                     onClick={() => handleComplete(rev.id)}
                     disabled={isCompleting}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#6fbf73]/10 border border-[#6fbf73]/30 text-xs text-[#6fbf73] hover:bg-[#6fbf73]/20 transition disabled:opacity-50"
+                    className="flex-1 sm:flex-initial justify-center inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#6fbf73]/10 border border-[#6fbf73]/30 text-xs text-[#6fbf73] hover:bg-[#6fbf73]/20 transition disabled:opacity-50 min-h-[38px]"
                     title="Marcar como revisada"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />

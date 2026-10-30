@@ -17,9 +17,9 @@ export default function StudyStreak({ stats }: StudyStreakProps) {
   const minutes = Math.floor((totalSeconds % 3600) / 60);
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
       {/* 1. Ofensiva Atual */}
-      <div className="bg-[#131315] border border-[#2a2a2e] hover:border-[#d4af37]/40 p-4 rounded-2xl transition space-y-2 group">
+      <div className="bg-[#131315] border border-[#2a2a2e] hover:border-[#d4af37]/40 p-3.5 sm:p-4 rounded-2xl transition space-y-2 group">
         <div className="flex items-center justify-between text-[#9a978f]">
           <span className="text-xs font-medium">Ofensiva</span>
           <Flame
@@ -32,53 +32,53 @@ export default function StudyStreak({ stats }: StudyStreakProps) {
         </div>
         <div>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl sm:text-3xl font-serif font-bold text-[#ece9e2]">
+            <span className="text-xl sm:text-3xl font-serif font-bold text-[#ece9e2]">
               {currentStreak}
             </span>
             <span className="text-xs text-[#9a978f]">dias</span>
           </div>
-          <p className="text-[11px] text-[#9a978f] mt-1 flex items-center gap-1">
-            <Trophy className="w-3 h-3 text-[#d4af37]" />
-            Recorde: {longestStreak} dias
+          <p className="text-[10px] sm:text-[11px] text-[#9a978f] mt-1 flex items-center gap-1 truncate">
+            <Trophy className="w-3 h-3 text-[#d4af37] shrink-0" />
+            <span>Recorde: {longestStreak}d</span>
           </p>
         </div>
       </div>
 
       {/* 2. Tempo de Estudo */}
-      <div className="bg-[#131315] border border-[#2a2a2e] hover:border-[#d4af37]/40 p-4 rounded-2xl transition space-y-2 group">
+      <div className="bg-[#131315] border border-[#2a2a2e] hover:border-[#d4af37]/40 p-3.5 sm:p-4 rounded-2xl transition space-y-2 group">
         <div className="flex items-center justify-between text-[#9a978f]">
           <span className="text-xs font-medium">Tempo Estudado</span>
           <Clock className="w-4 h-4 text-[#9a978f] group-hover:text-[#d4af37] transition" />
         </div>
         <div>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl sm:text-3xl font-serif font-bold text-[#ece9e2]">
+            <span className="text-xl sm:text-3xl font-serif font-bold text-[#ece9e2]">
               {hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`}
             </span>
           </div>
-          <p className="text-[11px] text-[#9a978f] mt-1">Horas dedicadas</p>
+          <p className="text-[10px] sm:text-[11px] text-[#9a978f] mt-1 truncate">Horas dedicadas</p>
         </div>
       </div>
 
       {/* 3. Aulas Concluídas */}
-      <div className="bg-[#131315] border border-[#2a2a2e] hover:border-[#d4af37]/40 p-4 rounded-2xl transition space-y-2 group">
+      <div className="bg-[#131315] border border-[#2a2a2e] hover:border-[#d4af37]/40 p-3.5 sm:p-4 rounded-2xl transition space-y-2 group">
         <div className="flex items-center justify-between text-[#9a978f]">
-          <span className="text-xs font-medium">Aulas Concluídas</span>
+          <span className="text-xs font-medium">Concluídas</span>
           <CheckCircle2 className="w-4 h-4 text-[#6fbf73] group-hover:scale-110 transition" />
         </div>
         <div>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl sm:text-3xl font-serif font-bold text-[#ece9e2]">
+            <span className="text-xl sm:text-3xl font-serif font-bold text-[#ece9e2]">
               {completedCount}
             </span>
             <span className="text-xs text-[#9a978f]">aulas</span>
           </div>
-          <p className="text-[11px] text-[#9a978f] mt-1">Passos para aprovação</p>
+          <p className="text-[10px] sm:text-[11px] text-[#9a978f] mt-1 truncate">Passos dados</p>
         </div>
       </div>
 
       {/* 4. Revisões de Hoje */}
-      <div className="bg-[#131315] border border-[#2a2a2e] hover:border-[#d4af37]/40 p-4 rounded-2xl transition space-y-2 group">
+      <div className="bg-[#131315] border border-[#2a2a2e] hover:border-[#d4af37]/40 p-3.5 sm:p-4 rounded-2xl transition space-y-2 group">
         <div className="flex items-center justify-between text-[#9a978f]">
           <span className="text-xs font-medium">Revisões Hoje</span>
           <RotateCw
@@ -90,7 +90,7 @@ export default function StudyStreak({ stats }: StudyStreakProps) {
         <div>
           <div className="flex items-baseline gap-1.5">
             <span
-              className={`text-2xl sm:text-3xl font-serif font-bold ${
+              className={`text-xl sm:text-3xl font-serif font-bold ${
                 pendingReviews > 0 ? "text-[#f5d76e]" : "text-[#ece9e2]"
               }`}
             >
@@ -98,7 +98,7 @@ export default function StudyStreak({ stats }: StudyStreakProps) {
             </span>
             <span className="text-xs text-[#9a978f]">pendentes</span>
           </div>
-          <p className="text-[11px] text-[#9a978f] mt-1">
+          <p className="text-[10px] sm:text-[11px] text-[#9a978f] mt-1 truncate">
             {pendingReviews > 0 ? "Revisão espaçada ativa" : "Tudo em dia!"}
           </p>
         </div>

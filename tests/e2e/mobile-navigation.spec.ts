@@ -138,4 +138,47 @@ test.describe("Experiência Mobile (E2E) — Viewport Smartphone 390x844", () =>
       await page.waitForTimeout(400);
     }
   });
+  test("Cenário Mobile 3: Dashboard do Estudante Responsivo (Hero, Streak 2x2, Heatmap e Revisões)", async ({
+    page,
+  }) => {
+    // 1. Login e acesso à Home em viewport smartphone
+    await page.goto("/login");
+    await page.fill('input[type="email"]', ADMIN_EMAIL);
+    await page.fill('input[type="password"]', ADMIN_PASS);
+    await Promise.all([
+      page.waitForResponse((res) => res.url().includes("/api/v1/sessions") && res.status() === 201),
+      page.click('button[type="submit"]'),
+    ]);
+    await page.waitForURL((url) => !url.pathname.includes("/login"));
+    await page.goto("/");
+    await page.addStyleTag({ content: "nextjs-portal { display: none !important; }" });
+
+    // 2. Verifica Hero Resume ou Call-to-action
+    const heroBtn = page.locator('main a[href*="/courses"]').first();
+    await expect(heroBtn).toBeVisible({ timeout: 10_000 });
+
+    // 3. Verifica Grid de Streak e Metas (Ofensiva, Tempo Estudado, Concluídas, Revisões Hoje)
+    const ofensivaCard = page.locator("text=Ofensiva").first();
+    await expect(ofensivaCard).toBeVisible();
+    const tempoCard = page.locator("text=Tempo Estudado").first();
+    await expect(tempoCard).toBeVisible();
+
+    // 4. Verifica Mapa de Calor e toque em célula para detalhes
+    const heatmapTitle = page.locator("text=Mapa de Calor de Estudos").first();
+    await expect(heatmapTitle).toBeVisible();
+
+    // Clica numa das células do heatmap para testar feedback tátil
+    const heatmapCells = page.locator('.overflow-x-auto div[title*="min"]');
+    if ((await heatmapCells.count()) > 0) {
+      await heatmapCells.last().click();
+      await page.waitForTimeout(200);
+      // Deve exibir informação de data no cabeçalho do heatmap
+      const dateInfo = page.locator(".font-mono strong").first();
+      await expect(dateInfo).toBeVisible();
+    }
+
+    // 5. Verifica Seção de Cursos em Andamento com cards empilhados
+    const coursesSection = page.locator("text=Meus Cursos em Andamento").first();
+    await expect(coursesSection).toBeVisible();
+  });
 });

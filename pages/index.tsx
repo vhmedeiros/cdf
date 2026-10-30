@@ -136,7 +136,7 @@ export default function StudentDashboardPage() {
             {/* Botão de Busca / Command Palette */}
             <button
               onClick={openCommandPalette}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#1b1b1e] border border-[#2a2a2e] text-xs text-[#9a978f] hover:text-[#ece9e2] hover:border-[#d4af37] transition shadow-inner"
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#1b1b1e] border border-[#2a2a2e] text-xs text-[#9a978f] hover:text-[#ece9e2] hover:border-[#d4af37] transition shadow-inner"
               title="Buscar (Ctrl+K)"
             >
               <Search className="w-3.5 h-3.5" />

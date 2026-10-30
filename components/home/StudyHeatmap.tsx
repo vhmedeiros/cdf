@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 import { Calendar, Flame } from "lucide-react";
 import type { DailyActivity } from "@/models/stats";
 
@@ -12,6 +12,15 @@ export default function StudyHeatmap({ activity }: StudyHeatmapProps) {
     minutes: number;
     completed: number;
   } | null>(null);
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll para o final (semanas mais recentes) em viewports estreitos
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollLeft = scrollContainerRef.current.scrollWidth;
+    }
+  }, []);
 
   // Mapeia data string -> minutos estudados
   const activityMap = useMemo(() => {
@@ -79,7 +88,7 @@ export default function StudyHeatmap({ activity }: StudyHeatmapProps) {
   }
 
   return (
-    <div className="bg-[#131315] border border-[#2a2a2e] rounded-2xl p-5 sm:p-6 space-y-4">
+    <div className="bg-[#131315] border border-[#2a2a2e] rounded-2xl p-4 sm:p-6 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Calendar className="w-5 h-5 text-[#d4af37]" />
@@ -88,7 +97,7 @@ export default function StudyHeatmap({ activity }: StudyHeatmapProps) {
           </h3>
         </div>
 
-        {/* Status do hover ou dica */}
+        {/* Status do hover/tap ou dica */}
         <div className="text-xs text-[#9a978f] min-h-[1.25rem]">
           {hoveredDay ? (
             <span className="text-[#ece9e2] font-mono">
@@ -97,13 +106,16 @@ export default function StudyHeatmap({ activity }: StudyHeatmapProps) {
               {hoveredDay.completed > 0 ? `, ${hoveredDay.completed} aulas concluídas` : ""}
             </span>
           ) : (
-            <span>Passe o mouse sobre os dias para ver detalhes</span>
+            <span className="hidden sm:inline">Passe o mouse sobre os dias para ver detalhes</span>
           )}
         </div>
       </div>
 
-      {/* Grid de semanas */}
-      <div className="overflow-x-auto pb-2 scrollbar-thin">
+      {/* Grid de semanas com rolagem horizontal suave e foco no presente */}
+      <div
+        ref={scrollContainerRef}
+        className="overflow-x-auto pb-2 scrollbar-thin select-none"
+      >
         <div className="inline-flex gap-1.5 min-w-full justify-start sm:justify-center">
           {/* Rótulos dos dias da semana */}
           <div className="flex flex-col justify-between py-0.5 text-[9px] text-[#9a978f] font-mono pr-1 select-none">
@@ -124,9 +136,10 @@ export default function StudyHeatmap({ activity }: StudyHeatmapProps) {
                   key={day.date}
                   onMouseEnter={() => setHoveredDay(day)}
                   onMouseLeave={() => setHoveredDay(null)}
+                  onClick={() => setHoveredDay(day)}
                   className={`w-3.5 h-3.5 rounded-sm border transition-all cursor-pointer ${getColor(
                     day.minutes,
-                  )} hover:scale-125 hover:z-10`}
+                  )} hover:scale-125 hover:z-10 active:scale-110`}
                   title={`${formatDateBR(day.date)}: ${day.minutes} min`}
                 />
               ))}
@@ -136,13 +149,18 @@ export default function StudyHeatmap({ activity }: StudyHeatmapProps) {
       </div>
 
       {/* Legenda */}
-      <div className="flex items-center justify-end gap-2 text-[11px] text-[#9a978f] pt-1">
-        <span>Menos</span>
-        <div className="w-3 h-3 rounded-sm bg-[#1b1b1e] border border-[#2a2a2e]" />
-        <div className="w-3 h-3 rounded-sm bg-[#5a4613] border-[#7d6118]" />
-        <div className="w-3 h-3 rounded-sm bg-[#a8892c] border-[#c4a133]" />
-        <div className="w-3 h-3 rounded-sm bg-[#f5d76e] border-[#fde48b]" />
-        <span>Mais</span>
+      <div className="flex items-center justify-between text-[11px] text-[#9a978f] pt-1">
+        <span className="sm:hidden text-[10px] text-[#9a978f]/80">
+          Toque no dia para ver detalhes
+        </span>
+        <div className="flex items-center gap-1.5 ml-auto">
+          <span>Menos</span>
+          <div className="w-3 h-3 rounded-sm bg-[#1b1b1e] border border-[#2a2a2e]" />
+          <div className="w-3 h-3 rounded-sm bg-[#5a4613] border-[#7d6118]" />
+          <div className="w-3 h-3 rounded-sm bg-[#a8892c] border-[#c4a133]" />
+          <div className="w-3 h-3 rounded-sm bg-[#f5d76e] border-[#fde48b]" />
+          <span>Mais</span>
+        </div>
       </div>
     </div>
   );
