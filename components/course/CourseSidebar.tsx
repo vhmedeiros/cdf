@@ -21,9 +21,14 @@ import Link from "next/link";
 interface CourseSidebarProps {
   isOpenMobile?: boolean;
   onCloseMobile?: () => void;
+  variant?: "sidebar" | "inline";
 }
 
-export function CourseSidebar({ isOpenMobile, onCloseMobile }: CourseSidebarProps) {
+export function CourseSidebar({
+  isOpenMobile,
+  onCloseMobile,
+  variant = "sidebar",
+}: CourseSidebarProps) {
   const { course, activeItem, flatItems, completedIds, selectMaterial, toggleCompleted } =
     usePlayer();
 
@@ -319,6 +324,14 @@ export function CourseSidebar({ isOpenMobile, onCloseMobile }: CourseSidebarProp
       </div>
     </div>
   );
+
+  if (variant === "inline") {
+    return (
+      <div className="bg-[#131315] border border-[#2a2a2e] rounded-2xl overflow-hidden shadow-xl max-h-[70vh] flex flex-col">
+        {content}
+      </div>
+    );
+  }
 
   return (
     <>

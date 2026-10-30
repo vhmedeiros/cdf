@@ -24,6 +24,10 @@ import {
   Target,
   X,
   Shield,
+  Headphones,
+  Video,
+  StickyNote,
+  PlayCircle,
 } from "lucide-react";
 import Link from "next/link";
 import PomodoroTimer from "@/components/player/PomodoroTimer";
@@ -77,6 +81,7 @@ export default function CourseClassroomPage() {
     setCourse,
     activeItem,
     audioMode,
+    toggleAudioMode,
     theaterMode,
     toggleTheater,
     focusMode,
@@ -90,6 +95,7 @@ export default function CourseClassroomPage() {
 
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "materials">("overview");
+  const [mobileTab, setMobileTab] = useState<"lessons" | "notes" | "materials">("lessons");
 
   // Fetch course tree
   const { data, error, isLoading } = useSWR<CourseTree>(slug ? `/api/v1/courses/${slug}` : null);
@@ -353,11 +359,120 @@ export default function CourseClassroomPage() {
                     >
                       <ChevronRight className="w-4 h-4" />
                     </button>
+                    {/* Alternância de Áudio/Vídeo rápida */}
+                    <button
+                      onClick={toggleAudioMode}
+                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition ${audioMode ? "bg-[#d4af37]/15 border-[#d4af37]/40 text-[#d4af37]" : "bg-[#1b1b1e] border-[#2a2a2e] text-[#9a978f] hover:text-[#ece9e2] hover:border-[#d4af37]"}`}
+                      title={audioMode ? "Voltar ao Vídeo (A)" : "Modo Áudio (A)"}
+                    >
+                      {audioMode ? (
+                        <>
+                          <Video className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Voltar ao Vídeo</span>
+                        </>
+                      ) : (
+                        <>
+                          <Headphones className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Modo Áudio</span>
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
 
-                {/* Tabs */}
-                <div className="space-y-4 pt-2">
+                {/* Mobile Tabs Controller (Visível em smartphones < md) */}
+                <div className="md:hidden space-y-4 pt-2">
+                  <div className="flex bg-[#131315] border border-[#2a2a2e] rounded-xl p-1 gap-1 shadow-inner">
+                    <button
+                      type="button"
+                      onClick={() => setMobileTab("lessons")}
+                      className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition ${
+                        mobileTab === "lessons"
+                          ? "bg-[#1b1b1e] text-[#d4af37] shadow-sm border border-[#d4af37]/30"
+                          : "text-[#9a978f] hover:text-[#ece9e2]"
+                      }`}
+                    >
+                      <PlayCircle className="w-3.5 h-3.5" />
+                      <span>Aulas</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMobileTab("notes")}
+                      className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition ${
+                        mobileTab === "notes"
+                          ? "bg-[#1b1b1e] text-[#d4af37] shadow-sm border border-[#d4af37]/30"
+                          : "text-[#9a978f] hover:text-[#ece9e2]"
+                      }`}
+                    >
+                      <StickyNote className="w-3.5 h-3.5" />
+                      <span>Anotações</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMobileTab("materials")}
+                      className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition ${
+                        mobileTab === "materials"
+                          ? "bg-[#1b1b1e] text-[#d4af37] shadow-sm border border-[#d4af37]/30"
+                          : "text-[#9a978f] hover:text-[#ece9e2]"
+                      }`}
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Materiais ({activeItem.lesson.materials.length})</span>
+                    </button>
+                  </div>
+
+                  {/* Aba Mobile: Grade de Aulas do Curso */}
+                  {mobileTab === "lessons" && (
+                    <div className="animate-in fade-in duration-200">
+                      <CourseSidebar variant="inline" />
+                    </div>
+                  )}
+
+                  {/* Aba Mobile: Anotações com Timestamp */}
+                  {mobileTab === "notes" && (
+                    <div className="animate-in fade-in duration-200">
+                      <NotesSection />
+                    </div>
+                  )}
+
+                  {/* Aba Mobile: Materiais de Apoio e Downloads */}
+                  {mobileTab === "materials" && (
+                    <div className="space-y-3 animate-in fade-in duration-200">
+                      <div className="grid grid-cols-1 gap-2">
+                        {activeItem.lesson.materials.map((m) => (
+                          <div
+                            key={m.id}
+                            className="flex items-center justify-between p-3.5 rounded-xl bg-[#131315] border border-[#2a2a2e]"
+                          >
+                            <div className="min-w-0 pr-2">
+                              <p className="text-xs font-medium text-[#ece9e2] truncate">{m.title}</p>
+                              <span className="text-[10px] uppercase font-mono text-[#9a978f]">
+                                {m.kind}
+                              </span>
+                            </div>
+                            <a
+                              href={`/api/v1/stream/${m.id}`}
+                              download
+                              className="p-2 rounded-lg bg-[#1b1b1e] border border-[#2a2a2e] text-[#9a978f] hover:text-[#d4af37] transition"
+                              title="Baixar material"
+                            >
+                              <Download className="w-4 h-4" />
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                      {course?.description && (
+                        <div className="p-4 rounded-xl bg-[#131315] border border-[#2a2a2e] text-xs text-[#9a978f] leading-relaxed">
+                          <p className="font-semibold text-[#ece9e2] mb-1">Sobre o curso:</p>
+                          <p>{course.description}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Desktop Tabs & Notes Section (Visível apenas em md+) */}
+                <div className="hidden md:block space-y-4 pt-2">
                   <div className="flex gap-4 border-b border-[#2a2a2e]">
                     <button
                       onClick={() => setActiveTab("overview")}
@@ -416,11 +531,11 @@ export default function CourseClassroomPage() {
                       ))}
                     </div>
                   )}
-                </div>
 
-                {/* Seção de Anotações com Timestamp */}
-                <div className="pt-4">
-                  <NotesSection />
+                  {/* Seção de Anotações com Timestamp */}
+                  <div className="pt-4">
+                    <NotesSection />
+                  </div>
                 </div>
               </div>
             )}

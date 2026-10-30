@@ -3,6 +3,7 @@ import { test, expect } from "@playwright/test";
 test.describe("Experiência Mobile (E2E) — Viewport Smartphone 390x844", () => {
   const ADMIN_EMAIL = "admin@aula.local";
   const ADMIN_PASS = "admin123456";
+  const DEFAULT_COURSE_SLUG = "direito-constitucional";
 
   test.use({
     viewport: { width: 390, height: 844 },
@@ -75,5 +76,66 @@ test.describe("Experiência Mobile (E2E) — Viewport Smartphone 390x844", () =>
     const inicioLink = bottomNav.locator('a[href="/"]');
     await inicioLink.click();
     await expect(page).toHaveURL(/\/$/);
+  });
+
+  test("Cenário Mobile 2: Sala de Aula, Player e Abas Táteis (Aulas, Anotações, Materiais, Áudio)", async ({
+    page,
+  }) => {
+    // 1. Login e navegação direta para a sala de aula do curso
+    await page.goto("/login");
+    await page.fill('input[type="email"]', ADMIN_EMAIL);
+    await page.fill('input[type="password"]', ADMIN_PASS);
+    await Promise.all([
+      page.waitForResponse((res) => res.url().includes("/api/v1/sessions") && res.status() === 201),
+      page.click('button[type="submit"]'),
+    ]);
+    await page.waitForURL((url) => !url.pathname.includes("/login"));
+
+    // Oculta badge de dev do Next.js
+    await page.addStyleTag({ content: "nextjs-portal { display: none !important; }" });
+
+    // 2. Acessa a sala de aula do curso em viewport mobile
+    await page.goto(`/courses/${DEFAULT_COURSE_SLUG}`);
+    await page.addStyleTag({ content: "nextjs-portal { display: none !important; }" });
+
+    // Aguarda o título da aula e os seletores de abas mobile
+    const mobileTabsBar = page.locator(".md\\:hidden button:has-text('Aulas')");
+    await expect(mobileTabsBar).toBeVisible({ timeout: 15_000 });
+
+    // 3. Testa Aba "Aulas" (renderiza a árvore de módulos inline abaixo do vídeo)
+    const aulasTabBtn = page.locator(".md\\:hidden button:has-text('Aulas')");
+    await aulasTabBtn.click();
+    // A grade inline de módulos deve estar visível
+    const modulesHeader = page.locator("text=Módulos").or(page.locator("text=Conteúdo")).first();
+    await expect(modulesHeader).toBeVisible();
+
+    // 4. Testa Aba "Anotações"
+    const notesTabBtn = page.locator(".md\\:hidden button:has-text('Anotações')");
+    await notesTabBtn.click();
+    // Deve renderizar o bloco de anotações da aula
+    const notesHeading = page.getByRole("heading", { name: "Anotações desta Aula" }).first();
+    await expect(notesHeading).toBeVisible({ timeout: 5000 });
+
+    // 5. Testa Aba "Materiais"
+    const materialsTabBtn = page.locator(".md\\:hidden button:has-text('Materiais')");
+    await materialsTabBtn.click();
+    // Deve renderizar materiais ou informações da aula
+    const materialsSection = page.locator('a[title="Baixar material"]').or(page.locator("text=Sobre o curso"));
+    await expect(materialsSection.first()).toBeVisible({ timeout: 5000 });
+
+    // 6. Testa Alternância de Áudio na barra de ações mobile
+    const audioToggleBtn = page.locator('button[title*="Áudio"]').first();
+    if (await audioToggleBtn.isVisible()) {
+      await audioToggleBtn.click();
+      await page.waitForTimeout(400);
+
+      // Deve exibir botão para retornar ao vídeo
+      const backToVideoBtn = page.locator('button[title*="Vídeo"]').or(page.locator("text=Voltar ao Vídeo")).first();
+      await expect(backToVideoBtn).toBeVisible({ timeout: 5000 });
+
+      // Retorna ao modo vídeo
+      await backToVideoBtn.click();
+      await page.waitForTimeout(400);
+    }
   });
 });

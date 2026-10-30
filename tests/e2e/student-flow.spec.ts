@@ -89,7 +89,7 @@ test.describe("Fluxo Completo da Plataforma Aula (E2E)", () => {
 
     // Testa botão de Expandir / Recolher Todos os cards de aulas
     const toggleCollapseBtn = page
-      .locator("button", { hasText: /Expandir Todos|Recolher Todos/i })
+      .locator("button:visible", { hasText: /Expandir Todos|Recolher Todos/i })
       .first();
     if (await toggleCollapseBtn.isVisible()) {
       await toggleCollapseBtn.click();
@@ -99,8 +99,7 @@ test.describe("Fluxo Completo da Plataforma Aula (E2E)", () => {
 
     // Alternância de Vídeo para Áudio via botão
     const audioToggleBtn = page
-      .locator('button[title*="Modo Áudio"]')
-      .or(page.locator('button[title*="Áudio"]'))
+      .locator('button:visible[title*="Modo Áudio"], button:visible[title*="Áudio"]')
       .first();
     if (await audioToggleBtn.isVisible()) {
       await audioToggleBtn.click();
