@@ -53,10 +53,7 @@ export default function AudioPlayer() {
       applyMediaVolume(audioRef.current, volume, isMuted);
 
       // Se está vindo de alternância com o vídeo, recupera imediatamente o timestamp
-      if (
-        pendingModeSwitchTimeRef.current !== null &&
-        pendingModeSwitchTimeRef.current > 0
-      ) {
+      if (pendingModeSwitchTimeRef.current !== null && pendingModeSwitchTimeRef.current > 0) {
         audioRef.current.currentTime = pendingModeSwitchTimeRef.current;
         pendingModeSwitchTimeRef.current = null;
       } else if (currentTime > 0 && audioRef.current.currentTime === 0) {
@@ -92,10 +89,7 @@ export default function AudioPlayer() {
           target.playbackRate = playbackRate;
           applyMediaVolume(target, volume, isMuted);
 
-          if (
-            pendingModeSwitchTimeRef.current !== null &&
-            pendingModeSwitchTimeRef.current > 0
-          ) {
+          if (pendingModeSwitchTimeRef.current !== null && pendingModeSwitchTimeRef.current > 0) {
             target.currentTime = pendingModeSwitchTimeRef.current;
             pendingModeSwitchTimeRef.current = null;
           } else if (currentTime > 0 && target.currentTime === 0) {

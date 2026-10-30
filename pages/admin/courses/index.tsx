@@ -524,11 +524,10 @@ export default function AdminCoursesPage() {
               {/* Header do Modal */}
               <div className="flex items-center justify-between p-5 border-b border-[#2a2a2e] bg-[#1b1b1e]">
                 <div>
-                  <h3 className="font-serif font-bold text-base text-[#ece9e2]">
-                    Alunos do Curso
-                  </h3>
+                  <h3 className="font-serif font-bold text-base text-[#ece9e2]">Alunos do Curso</h3>
                   <p className="text-xs text-[#9a978f] mt-0.5">
-                    Curso: <span className="text-[#d4af37] font-semibold">{managingCourse.title}</span>
+                    Curso:{" "}
+                    <span className="text-[#d4af37] font-semibold">{managingCourse.title}</span>
                   </p>
                 </div>
                 <button
@@ -554,7 +553,8 @@ export default function AdminCoursesPage() {
 
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-[#9a978f]">
-                    {students.filter((s) => s.is_enrolled).length} de {students.length} alunos matriculados
+                    {students.filter((s) => s.is_enrolled).length} de {students.length} alunos
+                    matriculados
                   </span>
                   <div className="flex items-center gap-2">
                     <button

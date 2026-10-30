@@ -475,8 +475,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
   const toggleAudioMode = useCallback(() => {
     // Captura o segundo atual exato do player ativo antes de alternar para não reiniciar do zero
-    const currentPos =
-      playerRef.current?.currentTime ?? currentTimeRef.current ?? currentTime;
+    const currentPos = playerRef.current?.currentTime ?? currentTimeRef.current ?? currentTime;
     if (currentPos > 0) {
       pendingModeSwitchTimeRef.current = currentPos;
     }

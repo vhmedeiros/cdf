@@ -56,8 +56,9 @@ export default function AdminInvitesPage() {
   const { data: user } = useSWR<{ id?: string; features: string[] }>("/api/v1/user");
   const { data: invitesList, mutate: mutateInvites } =
     useSWR<InviteItem[]>("/api/v1/admin/invites");
-  const { data: registeredStudents, mutate: mutateRegisteredStudents } =
-    useSWR<RegisteredStudent[]>("/api/v1/admin/enrollments");
+  const { data: registeredStudents, mutate: mutateRegisteredStudents } = useSWR<
+    RegisteredStudent[]
+  >("/api/v1/admin/enrollments");
   const { data: allCourses } = useSWR<CourseItem[]>("/api/v1/admin/courses");
   const [togglingKey, setTogglingKey] = useState<string | null>(null);
 
@@ -409,7 +410,9 @@ export default function AdminInvitesPage() {
                         </div>
 
                         <p className="text-[11px] text-[#9a978f] mt-1 flex items-center gap-2">
-                          <span>Criado em: {new Date(inv.created_at).toLocaleDateString("pt-BR")}</span>
+                          <span>
+                            Criado em: {new Date(inv.created_at).toLocaleDateString("pt-BR")}
+                          </span>
                           <span>&bull;</span>
                           <span>
                             {isUsed
@@ -538,11 +541,7 @@ export default function AdminInvitesPage() {
                                   type="button"
                                   disabled={isToggling}
                                   onClick={() =>
-                                    handleToggleStudentCourse(
-                                      student.id,
-                                      course.id,
-                                      !!isEnrolled,
-                                    )
+                                    handleToggleStudentCourse(student.id, course.id, !!isEnrolled)
                                   }
                                   className={`group px-2.5 py-1 rounded-lg text-xs font-medium border transition-all duration-150 flex items-center gap-1.5 cursor-pointer shadow-sm select-none ${
                                     isEnrolled

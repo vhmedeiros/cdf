@@ -11,7 +11,7 @@ describe("Pages /courses and /courses/[slug]", () => {
 
     const html = await response.text();
     expect(html).toContain("Meus Cursos");
-    expect(html).toContain("Biblioteca Noturna");
+    expect(html).toContain("Aula");
   });
 
   test("GET /courses/[slug] renders the classroom page shell (HTTP 200)", async () => {

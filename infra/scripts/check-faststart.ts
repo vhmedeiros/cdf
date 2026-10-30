@@ -88,8 +88,12 @@ if (require.main === module) {
     console.log(`   - moov atom no byte: ${result.moovOffset}`);
     console.log(`   - mdat atom no byte: ${result.mdatOffset}`);
   } else {
-    console.warn(`⚠️ [ATENÇÃO] O vídeo NÃO possui FastStart (o 'moov atom' está após os dados de mídia).`);
+    console.warn(
+      `⚠️ [ATENÇÃO] O vídeo NÃO possui FastStart (o 'moov atom' está após os dados de mídia).`,
+    );
     console.warn(`   Para corrigir e acelerar o streaming no Google Drive, execute:`);
-    console.warn(`   ffmpeg -i "${path.basename(fullPath)}" -c copy -movflags +faststart "otimizado-${path.basename(fullPath)}"`);
+    console.warn(
+      `   ffmpeg -i "${path.basename(fullPath)}" -c copy -movflags +faststart "otimizado-${path.basename(fullPath)}"`,
+    );
   }
 }

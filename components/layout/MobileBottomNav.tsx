@@ -1,17 +1,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import {
-  Home,
-  BookOpen,
-  Search,
-  User,
-  LogIn,
-  LogOut,
-  KeyRound,
-  Shield,
-  X,
-} from "lucide-react";
+import { Home, BookOpen, Search, User, LogIn, LogOut, KeyRound, Shield, X } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
 import ChangePasswordModal from "@/components/ui/ChangePasswordModal";
 
@@ -218,10 +208,7 @@ export default function MobileBottomNav() {
       )}
 
       {/* Modal de Alteração de Senha */}
-      <ChangePasswordModal
-        isOpen={passwordModalOpen}
-        onClose={() => setPasswordModalOpen(false)}
-      />
+      <ChangePasswordModal isOpen={passwordModalOpen} onClose={() => setPasswordModalOpen(false)} />
     </>
   );
 }

@@ -6,8 +6,7 @@ import { getAccessToken } from "./client";
 const CACHE_DIR = path.join(process.cwd(), ".cache", "media");
 
 // Limite máximo de armazenamento do cache local em disco (padrão 25 GB)
-const MAX_CACHE_SIZE_BYTES =
-  (Number(process.env.MEDIA_CACHE_MAX_GB) || 25) * 1024 * 1024 * 1024;
+const MAX_CACHE_SIZE_BYTES = (Number(process.env.MEDIA_CACHE_MAX_GB) || 25) * 1024 * 1024 * 1024;
 
 // Mapeia downloads em andamento para não duplicar requisições para o mesmo arquivo
 const activeDownloads = new Map<string, Promise<string>>();

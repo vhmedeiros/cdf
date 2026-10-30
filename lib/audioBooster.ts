@@ -35,7 +35,8 @@ export function applyMediaVolume(
   try {
     if (!sharedAudioCtx) {
       const AudioCtxClass =
-        window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (AudioCtxClass) {
         sharedAudioCtx = new AudioCtxClass();
       }

@@ -73,10 +73,7 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
       applyMediaVolume(videoElementRef.current, volume, isMuted);
 
       // Se está vindo de alternância com o áudio, recupera imediatamente o timestamp
-      if (
-        pendingModeSwitchTimeRef.current !== null &&
-        pendingModeSwitchTimeRef.current > 0
-      ) {
+      if (pendingModeSwitchTimeRef.current !== null && pendingModeSwitchTimeRef.current > 0) {
         videoElementRef.current.currentTime = pendingModeSwitchTimeRef.current;
         pendingModeSwitchTimeRef.current = null;
       } else if (currentTime > 0 && videoElementRef.current.currentTime === 0) {
@@ -183,10 +180,7 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
           target.playbackRate = playbackRate;
           applyMediaVolume(target, volume, isMuted);
 
-          if (
-            pendingModeSwitchTimeRef.current !== null &&
-            pendingModeSwitchTimeRef.current > 0
-          ) {
+          if (pendingModeSwitchTimeRef.current !== null && pendingModeSwitchTimeRef.current > 0) {
             target.currentTime = pendingModeSwitchTimeRef.current;
             pendingModeSwitchTimeRef.current = null;
           } else if (currentTime > 0 && target.currentTime === 0) {

@@ -445,7 +445,9 @@ export default function CourseClassroomPage() {
                             className="flex items-center justify-between p-3.5 rounded-xl bg-[#131315] border border-[#2a2a2e]"
                           >
                             <div className="min-w-0 pr-2">
-                              <p className="text-xs font-medium text-[#ece9e2] truncate">{m.title}</p>
+                              <p className="text-xs font-medium text-[#ece9e2] truncate">
+                                {m.title}
+                              </p>
                               <span className="text-[10px] uppercase font-mono text-[#9a978f]">
                                 {m.kind}
                               </span>

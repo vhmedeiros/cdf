@@ -120,7 +120,9 @@ test.describe("Experiência Mobile (E2E) — Viewport Smartphone 390x844", () =>
     const materialsTabBtn = page.locator(".md\\:hidden button:has-text('Materiais')");
     await materialsTabBtn.click();
     // Deve renderizar materiais ou informações da aula
-    const materialsSection = page.locator('a[title="Baixar material"]').or(page.locator("text=Sobre o curso"));
+    const materialsSection = page
+      .locator('a[title="Baixar material"]')
+      .or(page.locator("text=Sobre o curso"));
     await expect(materialsSection.first()).toBeVisible({ timeout: 5000 });
 
     // 6. Testa Alternância de Áudio na barra de ações mobile
@@ -130,7 +132,10 @@ test.describe("Experiência Mobile (E2E) — Viewport Smartphone 390x844", () =>
       await page.waitForTimeout(400);
 
       // Deve exibir botão para retornar ao vídeo
-      const backToVideoBtn = page.locator('button[title*="Vídeo"]').or(page.locator("text=Voltar ao Vídeo")).first();
+      const backToVideoBtn = page
+        .locator('button[title*="Vídeo"]')
+        .or(page.locator("text=Voltar ao Vídeo"))
+        .first();
       await expect(backToVideoBtn).toBeVisible({ timeout: 5000 });
 
       // Retorna ao modo vídeo

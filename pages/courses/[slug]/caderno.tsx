@@ -93,7 +93,7 @@ export default function CourseNotebookPage() {
       }
       return true;
     });
-  }, [notes, onlyImportant, search]);
+  }, [notes, onlyImportant, search, selectedModule]);
 
   // Agrupa anotações por módulo e aula
   const groupedNotes = useMemo(() => {

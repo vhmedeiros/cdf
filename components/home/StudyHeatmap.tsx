@@ -112,10 +112,7 @@ export default function StudyHeatmap({ activity }: StudyHeatmapProps) {
       </div>
 
       {/* Grid de semanas com rolagem horizontal suave e foco no presente */}
-      <div
-        ref={scrollContainerRef}
-        className="overflow-x-auto pb-2 scrollbar-thin select-none"
-      >
+      <div ref={scrollContainerRef} className="overflow-x-auto pb-2 scrollbar-thin select-none">
         <div className="inline-flex gap-1.5 min-w-full justify-start sm:justify-center">
           {/* Rótulos dos dias da semana */}
           <div className="flex flex-col justify-between py-0.5 text-[9px] text-[#9a978f] font-mono pr-1 select-none">

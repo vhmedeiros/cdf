@@ -79,7 +79,9 @@ export default function HeroResume({ lastStudied }: HeroResumeProps) {
             <h2 className="text-xl sm:text-2xl font-serif font-bold text-[#ece9e2] group-hover:text-[#f5d76e] transition leading-snug">
               {material_title}
             </h2>
-            <p className="text-xs sm:text-sm text-[#9a978f] mt-0.5 truncate">Aula: {lesson_title}</p>
+            <p className="text-xs sm:text-sm text-[#9a978f] mt-0.5 truncate">
+              Aula: {lesson_title}
+            </p>
           </div>
 
           {/* Barra de progresso */}

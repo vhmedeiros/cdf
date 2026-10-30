@@ -123,10 +123,7 @@ export default function UserMenu() {
       </div>
 
       {/* Modal de Alteração de Senha */}
-      <ChangePasswordModal
-        isOpen={passwordModalOpen}
-        onClose={() => setPasswordModalOpen(false)}
-      />
+      <ChangePasswordModal isOpen={passwordModalOpen} onClose={() => setPasswordModalOpen(false)} />
     </>
   );
 }

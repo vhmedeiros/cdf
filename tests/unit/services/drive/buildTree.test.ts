@@ -2,10 +2,10 @@ import { buildTree, cleanTitle, DriveItem, FilesManifest } from "@/services/driv
 
 describe("buildTree pure function", () => {
   describe("cleanTitle", () => {
-    test("removes extensions and numeric prefixes", () => {
-      expect(cleanTitle("001. Introdução ao Curso.mp4")).toBe("Introdução ao Curso");
-      expect(cleanTitle("02 - Conceitos Básicos.pdf")).toBe("Conceitos Básicos");
-      expect(cleanTitle("1_Primeiros_Passos.mp4")).toBe("Primeiros Passos");
+    test("removes extensions and preserves sequence numbers", () => {
+      expect(cleanTitle("001. Introdução ao Curso.mp4")).toBe("001. Introdução ao Curso");
+      expect(cleanTitle("02 - Conceitos Básicos.pdf")).toBe("02 - Conceitos Básicos");
+      expect(cleanTitle("1_Primeiros_Passos.mp4")).toBe("1 Primeiros Passos");
     });
 
     test("normalizes dotted words into spaced titles", () => {
@@ -15,7 +15,7 @@ describe("buildTree pure function", () => {
     });
 
     test("preserves folder titles correctly", () => {
-      expect(cleanTitle("001. Módulo 01 - Fundamentos", true)).toBe("Módulo 01 - Fundamentos");
+      expect(cleanTitle("001. Módulo 01 - Fundamentos", true)).toBe("001. Módulo 01 - Fundamentos");
     });
   });
 
@@ -59,11 +59,11 @@ describe("buildTree pure function", () => {
 
       expect(tree.modules).toHaveLength(1);
       const mod = tree.modules[0];
-      expect(mod.title).toBe("Módulo Inicial");
+      expect(mod.title).toBe("001. Módulo Inicial");
       expect(mod.lessons).toHaveLength(2);
 
       // Aula 1: Boas-vindas
-      expect(mod.lessons[0].title).toBe("Boas-vindas");
+      expect(mod.lessons[0].title).toBe("01. Boas-vindas");
       expect(mod.lessons[0].materials).toHaveLength(1);
       expect(mod.lessons[0].materials[0].kind).toBe("video");
       expect(mod.lessons[0].materials[0].durationSeconds).toBe(120);
@@ -129,10 +129,10 @@ describe("buildTree pure function", () => {
       expect(mod.lessons[0].title).toBe("Introdução");
       expect(mod.lessons[0].materials).toHaveLength(1);
 
-      expect(mod.lessons[1].title).toBe("Aula 01");
+      expect(mod.lessons[1].title).toBe("001. Aula 01");
       expect(mod.lessons[1].materials).toHaveLength(2); // video + slides
 
-      expect(mod.lessons[2].title).toBe("Aula 02");
+      expect(mod.lessons[2].title).toBe("003. Aula 02");
       expect(mod.lessons[2].materials).toHaveLength(1);
 
       expect(tree.totalDurationSeconds).toBe(150); // 60 + 90
@@ -210,7 +210,7 @@ describe("buildTree pure function", () => {
 
       const tree = buildTree(items, { rootFolderId: "root" });
       expect(tree.modules).toHaveLength(1);
-      expect(tree.modules[0].title).toBe("Módulo Real");
+      expect(tree.modules[0].title).toBe("01. Módulo Real");
     });
 
     test("Uses manifest as optional duration hint when metadata is missing", () => {

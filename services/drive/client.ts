@@ -75,7 +75,10 @@ export async function getAccessToken(): Promise<string | null> {
     const tokenResponse = await client.getAccessToken();
     return tokenResponse.token || null;
   } catch (error: any) {
-    console.error("❌ [GoogleDrive] Erro ao obter access token do Google:", error?.message || error);
+    console.error(
+      "❌ [GoogleDrive] Erro ao obter access token do Google:",
+      error?.message || error,
+    );
     return null;
   }
 }

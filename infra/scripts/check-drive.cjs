@@ -41,7 +41,9 @@ try {
 }
 
 if (!creds.client_email || !creds.private_key) {
-  console.error("❌ O JSON não parece ser uma Service Account válida do Google (falta client_email ou private_key).");
+  console.error(
+    "❌ O JSON não parece ser uma Service Account válida do Google (falta client_email ou private_key).",
+  );
   process.exit(1);
 }
 
