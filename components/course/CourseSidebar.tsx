@@ -33,10 +33,25 @@ export function CourseSidebar({
     usePlayer();
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [collapsedModules, setCollapsedModules] = useState<Record<string, boolean>>({});
+  // Modules start collapsed: only ids present here (with `true`) are open.
+  const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
   const activeItemRef = useRef<HTMLButtonElement | null>(null);
 
-  // Auto-scroll to active item when it changes
+  const activeModuleId = activeItem?.module.id;
+  const isSearching = searchTerm.trim().length > 0;
+
+  // Opens the module of the lesson being played, so the user can find it in the tree.
+  // Other modules keep whatever state the user chose.
+  useEffect(() => {
+    if (!activeModuleId) return;
+    setExpandedModules((prev) =>
+      prev[activeModuleId] ? prev : { ...prev, [activeModuleId]: true },
+    );
+  }, [activeModuleId]);
+
+  const isActiveModuleOpen = Boolean(activeModuleId && expandedModules[activeModuleId]);
+
+  // Auto-scroll to active item when it changes (or once its module has been opened)
   useEffect(() => {
     if (activeItemRef.current) {
       activeItemRef.current.scrollIntoView({
@@ -44,7 +59,7 @@ export function CourseSidebar({
         block: "nearest",
       });
     }
-  }, [activeItem?.material.id]);
+  }, [activeItem?.material.id, isActiveModuleOpen]);
 
   // Overall progress calculation
   const totalMaterials = flatItems.length;
@@ -55,26 +70,26 @@ export function CourseSidebar({
   const progressPercentage =
     totalMaterials > 0 ? Math.round((completedCount / totalMaterials) * 100) : 0;
 
-  // Verifica se todos os módulos estão recolhidos
-  const allCollapsed = useMemo(() => {
+  // Verifica se todos os módulos estão abertos
+  const allExpanded = useMemo(() => {
     if (!course?.modules || course.modules.length === 0) return false;
-    return course.modules.every((m) => collapsedModules[m.id]);
-  }, [course?.modules, collapsedModules]);
+    return course.modules.every((m) => expandedModules[m.id]);
+  }, [course?.modules, expandedModules]);
 
-  // Toggle collapse for all modules
-  const toggleCollapseAll = () => {
+  // "Expandir Todos" opens every module; "Recolher Todos" closes every module
+  const toggleExpandAll = () => {
     if (!course?.modules) return;
     const newState: Record<string, boolean> = {};
-    if (!allCollapsed) {
+    if (!allExpanded) {
       course.modules.forEach((m) => {
         newState[m.id] = true;
       });
     }
-    setCollapsedModules(newState);
+    setExpandedModules(newState);
   };
 
   const toggleModule = (moduleId: string) => {
-    setCollapsedModules((prev) => ({
+    setExpandedModules((prev) => ({
       ...prev,
       [moduleId]: !prev[moduleId],
     }));
@@ -141,12 +156,13 @@ export function CourseSidebar({
           </h2>
           <div className="flex items-center gap-1.5">
             <button
-              onClick={toggleCollapseAll}
+              onClick={toggleExpandAll}
               className="flex items-center gap-1 px-2.5 py-2 md:px-2 md:py-1 rounded-md text-[11px] font-medium text-[#9a978f] hover:text-[#d4af37] hover:bg-[#1b1b1e] border border-[#2a2a2e] transition"
-              title={allCollapsed ? "Expandir todos os módulos" : "Recolher todos os módulos"}
+              title={allExpanded ? "Recolher todos os módulos" : "Expandir todos os módulos"}
+              aria-pressed={allExpanded}
             >
               <ChevronsUpDown className="w-3.5 h-3.5 text-[#d4af37]" />
-              <span>{allCollapsed ? "Expandir Todos" : "Recolher Todos"}</span>
+              <span>{allExpanded ? "Recolher Todos" : "Expandir Todos"}</span>
             </button>
             {onCloseMobile && (
               <button
@@ -205,7 +221,8 @@ export function CourseSidebar({
           <div className="p-6 text-center text-xs text-[#9a978f]">{i18n.course.noLessonsFound}</div>
         ) : (
           filteredModules.map((mod) => {
-            const isCollapsed = collapsedModules[mod.id];
+            // While searching, every matching module is shown open so results are visible
+            const isCollapsed = !isSearching && !expandedModules[mod.id];
             // Module progress
             const modMaterials = mod.lessons.flatMap((l) => l.materials);
             const modCompleted = modMaterials.filter((m) => completedIds.includes(m.id)).length;
@@ -216,6 +233,7 @@ export function CourseSidebar({
                 {/* Module Header Button */}
                 <button
                   onClick={() => toggleModule(mod.id)}
+                  aria-expanded={!isCollapsed}
                   className="w-full flex items-center justify-between p-3.5 text-left hover:bg-[#1b1b1e]/50 transition group-hover:text-[#d4af37]"
                 >
                   <div className="flex items-center gap-2 min-w-0 pr-2">
