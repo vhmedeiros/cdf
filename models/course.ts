@@ -206,9 +206,25 @@ async function getTree(courseId: string): Promise<CourseTree | null> {
 
 /**
  * Aplica o resultado da função pura buildTree ao banco de dados dentro de uma transação.
- * Idempotente com soft delete.
+ *
+ * Idempotente: rodar o sync N vezes sobre a mesma pasta deixa o banco igual.
+ * - Módulo é reconhecido por (course_id, drive_folder_id).
+ * - Aula é reconhecida por drive_folder_id (estratégia 'folders') ou, quando não tem pasta
+ *   própria (estratégia 'files', "Introdução", "Materiais do módulo"), por raw_name no módulo.
+ * - Material é reconhecido por drive_file_id (único).
+ * - Tudo que não apareceu nesta leitura recebe soft delete (is_active = false). Nada é
+ *   apagado, então progresso e notas (que apontam para materials) são preservados, e um
+ *   arquivo que reaparece no Drive é reativado.
  */
 async function syncTreeToDatabase(courseId: string, tree: ParsedTree): Promise<void> {
+  // Proteção: uma leitura vazia (ex.: credencial do Drive ausente, pasta sem permissão)
+  // desativaria o curso inteiro. Melhor falhar e manter o conteúdo atual.
+  if (tree.materialsCount === 0) {
+    throw new Error(
+      "A leitura da pasta do Drive não retornou nenhum material. Sincronização cancelada para não desativar o conteúdo atual.",
+    );
+  }
+
   const client = await database.getNewClient();
 
   try {
@@ -227,34 +243,75 @@ async function syncTreeToDatabase(courseId: string, tree: ParsedTree): Promise<v
       [tree.totalDurationSeconds || 0, tree.materialsCount || 0, courseId],
     );
 
-    // 2. Itera sobre módulos, aulas e materiais inserindo / atualizando
+    const seenModuleIds: string[] = [];
+    const seenLessonIds: string[] = [];
+    const seenDriveFileIds: string[] = [];
+
+    // 2. Upsert de módulos, aulas e materiais
     for (const mod of tree.modules) {
-      const modRes = await client.query(
-        `INSERT INTO modules (course_id, drive_folder_id, raw_name, title, position, is_active)
-         VALUES ($1, $2, $3, $4, $5, true)
-         ON CONFLICT (id) DO NOTHING
-         RETURNING id`,
-        [courseId, mod.driveFolderId, mod.rawName, mod.title, mod.position],
+      // Se houver duplicatas antigas, reaproveita a mais antiga (ignora as já usadas neste sync)
+      const existingMod = await client.query<{ id: string }>(
+        `SELECT id FROM modules
+         WHERE course_id = $1 AND drive_folder_id = $2 AND NOT (id = ANY($3::uuid[]))
+         ORDER BY created_at ASC
+         LIMIT 1`,
+        [courseId, mod.driveFolderId ?? null, seenModuleIds],
       );
 
-      // Se já existia ou novo, busca o id
-      let moduleId = modRes.rows[0]?.id;
-      if (!moduleId) {
-        const findMod = await client.query(
-          `SELECT id FROM modules WHERE course_id = $1 AND raw_name = $2 LIMIT 1`,
-          [courseId, mod.rawName],
+      let moduleId = existingMod.rows[0]?.id;
+      if (moduleId) {
+        await client.query(
+          `UPDATE modules
+           SET raw_name = $1, title = $2, position = $3, is_active = true, updated_at = now()
+           WHERE id = $4`,
+          [mod.rawName, mod.title, mod.position, moduleId],
         );
-        moduleId = findMod.rows[0]?.id;
+      } else {
+        const inserted = await client.query<{ id: string }>(
+          `INSERT INTO modules (course_id, drive_folder_id, raw_name, title, position, is_active)
+           VALUES ($1, $2, $3, $4, $5, true)
+           RETURNING id`,
+          [courseId, mod.driveFolderId ?? null, mod.rawName, mod.title, mod.position],
+        );
+        moduleId = inserted.rows[0].id;
       }
+      seenModuleIds.push(moduleId);
 
       for (const les of mod.lessons) {
-        const lesRes = await client.query(
-          `INSERT INTO lessons (module_id, drive_folder_id, raw_name, title, position, duration_seconds, is_active)
-           VALUES ($1, $2, $3, $4, $5, $6, true)
-           RETURNING id`,
-          [moduleId, les.driveFolderId, les.rawName, les.title, les.position, les.durationSeconds],
+        const driveFolderId = les.driveFolderId ?? null;
+        const existingLes = await client.query<{ id: string }>(
+          driveFolderId
+            ? `SELECT id FROM lessons
+               WHERE module_id = $1 AND drive_folder_id = $2 AND NOT (id = ANY($3::uuid[]))
+               ORDER BY created_at ASC
+               LIMIT 1`
+            : `SELECT id FROM lessons
+               WHERE module_id = $1 AND drive_folder_id IS NULL AND raw_name = $2
+                 AND NOT (id = ANY($3::uuid[]))
+               ORDER BY created_at ASC
+               LIMIT 1`,
+          [moduleId, driveFolderId ?? les.rawName, seenLessonIds],
         );
-        const lessonId = lesRes.rows[0]?.id;
+
+        let lessonId = existingLes.rows[0]?.id;
+        if (lessonId) {
+          await client.query(
+            `UPDATE lessons
+             SET raw_name = $1, title = $2, position = $3, duration_seconds = $4,
+                 is_active = true, updated_at = now()
+             WHERE id = $5`,
+            [les.rawName, les.title, les.position, les.durationSeconds, lessonId],
+          );
+        } else {
+          const inserted = await client.query<{ id: string }>(
+            `INSERT INTO lessons (module_id, drive_folder_id, raw_name, title, position, duration_seconds, is_active)
+             VALUES ($1, $2, $3, $4, $5, $6, true)
+             RETURNING id`,
+            [moduleId, driveFolderId, les.rawName, les.title, les.position, les.durationSeconds],
+          );
+          lessonId = inserted.rows[0].id;
+        }
+        seenLessonIds.push(lessonId);
 
         for (const mat of les.materials) {
           await client.query(
@@ -263,9 +320,15 @@ async function syncTreeToDatabase(courseId: string, tree: ParsedTree): Promise<v
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, true)
             ON CONFLICT (drive_file_id) DO UPDATE SET
               lesson_id = EXCLUDED.lesson_id,
+              raw_name = EXCLUDED.raw_name,
               title = EXCLUDED.title,
+              kind = EXCLUDED.kind,
+              mime = EXCLUDED.mime,
+              size_bytes = EXCLUDED.size_bytes,
               position = EXCLUDED.position,
               duration_seconds = EXCLUDED.duration_seconds,
+              md5 = EXCLUDED.md5,
+              drive_modified_time = EXCLUDED.drive_modified_time,
               is_active = true,
               updated_at = now()`,
             [
@@ -282,9 +345,43 @@ async function syncTreeToDatabase(courseId: string, tree: ParsedTree): Promise<v
               mat.position,
             ],
           );
+          seenDriveFileIds.push(mat.driveFileId);
         }
       }
     }
+
+    // 3. Soft delete do que sumiu do Drive (ou de duplicatas criadas por syncs antigos)
+    await client.query(
+      `UPDATE materials m
+       SET is_active = false, updated_at = now()
+       FROM lessons l
+       JOIN modules mo ON mo.id = l.module_id
+       WHERE m.lesson_id = l.id
+         AND mo.course_id = $1
+         AND m.is_active = true
+         AND NOT (m.drive_file_id = ANY($2::text[]))`,
+      [courseId, seenDriveFileIds],
+    );
+
+    await client.query(
+      `UPDATE lessons l
+       SET is_active = false, updated_at = now()
+       FROM modules mo
+       WHERE l.module_id = mo.id
+         AND mo.course_id = $1
+         AND l.is_active = true
+         AND NOT (l.id = ANY($2::uuid[]))`,
+      [courseId, seenLessonIds],
+    );
+
+    await client.query(
+      `UPDATE modules
+       SET is_active = false, updated_at = now()
+       WHERE course_id = $1
+         AND is_active = true
+         AND NOT (id = ANY($2::uuid[]))`,
+      [courseId, seenModuleIds],
+    );
 
     await client.query("COMMIT;");
   } catch (error) {

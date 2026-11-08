@@ -11,6 +11,26 @@ body {
   overflow-x: hidden;
 }
 
+/* Stops mobile browsers from inflating font sizes on their own (Android/iOS text autosizing). */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/*
+ * iOS Safari zooms in when a field with font-size < 16px gets focus, and does not zoom back
+ * out. Forcing 16px on small screens removes the cause instead of disabling pinch-zoom
+ * (user-scalable=no), which would hurt accessibility. This rule lives outside any @layer,
+ * so it wins over Tailwind utilities such as `text-xs` without needing !important.
+ */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
 /* Custom scrollbars with library night aesthetic */
 ::-webkit-scrollbar {
   width: 6px;

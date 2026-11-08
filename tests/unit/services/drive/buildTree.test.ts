@@ -166,6 +166,120 @@ describe("buildTree pure function", () => {
     });
   });
 
+  describe("Files directly in the course root folder", () => {
+    test("Flat course (no subfolders): root files become a single 'Aulas' module", () => {
+      const items: DriveItem[] = [
+        {
+          id: "file-pdf-intro",
+          name: "000. Cronograma.pdf",
+          mimeType: "application/pdf",
+          parents: ["root"],
+        },
+        {
+          id: "file-vid-2",
+          name: "aula2.mp4",
+          mimeType: "video/mp4",
+          parents: ["root"],
+          videoMediaMetadata: { durationMillis: "60000" },
+        },
+        {
+          id: "file-vid-10",
+          name: "aula10.mp4",
+          mimeType: "video/mp4",
+          parents: ["root"],
+          videoMediaMetadata: { durationMillis: "30000" },
+        },
+        {
+          id: "file-vid-1",
+          name: "aula1.mp4",
+          mimeType: "video/mp4",
+          parents: ["root"],
+          videoMediaMetadata: { durationMillis: "90000" },
+        },
+        {
+          id: "file-pdf-1",
+          name: "aula1.pdf",
+          mimeType: "application/pdf",
+          parents: ["root"],
+        },
+      ];
+
+      const tree = buildTree(items, { rootFolderId: "root", strategy: "auto" });
+
+      expect(tree.modules).toHaveLength(1);
+      const mod = tree.modules[0];
+      expect(mod.title).toBe("Aulas");
+      expect(mod.position).toBe(1);
+      // A pasta do curso é a chave estável do módulo nos syncs
+      expect(mod.driveFolderId).toBe("root");
+
+      // Ordenação natural: aula1.mp4 < aula1.pdf < aula2 < aula10
+      expect(mod.lessons.map((l) => l.title)).toEqual(["Introdução", "aula1", "aula2", "aula10"]);
+      expect(mod.lessons.map((l) => l.position)).toEqual([1, 2, 3, 4]);
+      expect(mod.lessons[0].materials.map((m) => m.driveFileId)).toEqual(["file-pdf-intro"]);
+      expect(mod.lessons[1].materials.map((m) => m.driveFileId)).toEqual([
+        "file-vid-1",
+        "file-pdf-1",
+      ]);
+
+      expect(tree.materialsCount).toBe(5);
+      expect(tree.totalDurationSeconds).toBe(180);
+    });
+
+    test("Root files are grouped by video even when strategy is forced to 'folders'", () => {
+      const items: DriveItem[] = [
+        { id: "v1", name: "01. Aula.mp4", mimeType: "video/mp4", parents: ["root"] },
+        { id: "v2", name: "02. Aula.mp4", mimeType: "video/mp4", parents: ["root"] },
+      ];
+
+      const tree = buildTree(items, { rootFolderId: "root", strategy: "folders" });
+
+      expect(tree.modules).toHaveLength(1);
+      expect(tree.modules[0].lessons).toHaveLength(2);
+    });
+
+    test("Mixed course: loose root files become a 'Materiais do curso' module placed first", () => {
+      const items: DriveItem[] = [
+        {
+          id: "folder-mod-1",
+          name: "001. Módulo 1",
+          mimeType: "application/vnd.google-apps.folder",
+          parents: ["root"],
+        },
+        { id: "v-mod", name: "01. Aula.mp4", mimeType: "video/mp4", parents: ["folder-mod-1"] },
+        { id: "edital", name: "Edital.pdf", mimeType: "application/pdf", parents: ["root"] },
+      ];
+
+      const tree = buildTree(items, { rootFolderId: "root", strategy: "auto" });
+
+      expect(tree.modules.map((m) => m.title)).toEqual(["Materiais do curso", "001. Módulo 1"]);
+      expect(tree.modules.map((m) => m.position)).toEqual([1, 2]);
+      expect(tree.modules[0].lessons[0].materials[0].driveFileId).toBe("edital");
+      expect(tree.materialsCount).toBe(2);
+    });
+
+    test("Root with only legacy player or system files does not create a root module", () => {
+      const items: DriveItem[] = [
+        {
+          id: "folder-mod-1",
+          name: "001. Módulo 1",
+          mimeType: "application/vnd.google-apps.folder",
+          parents: ["root"],
+        },
+        { id: "v-mod", name: "01. Aula.mp4", mimeType: "video/mp4", parents: ["folder-mod-1"] },
+        { id: "idx", name: "index.html", mimeType: "text/html", parents: ["root"] },
+        { id: "mf", name: "files_manifest.json", mimeType: "application/json", parents: ["root"] },
+        { id: "ini", name: "desktop.ini", mimeType: "text/plain", parents: ["root"] },
+        { id: "ds", name: ".DS_Store", mimeType: "application/octet-stream", parents: ["root"] },
+      ];
+
+      const tree = buildTree(items, { rootFolderId: "root", strategy: "auto" });
+
+      expect(tree.modules.map((m) => m.title)).toEqual(["001. Módulo 1"]);
+      expect(tree.materialsCount).toBe(1);
+    });
+  });
+
   describe("Legacy files & manifest support", () => {
     test("Ignores legacy player files and folders containing only them", () => {
       const items: DriveItem[] = [

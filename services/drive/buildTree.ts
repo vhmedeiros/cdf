@@ -77,12 +77,20 @@ export type BuildTreeOptions = {
 const FOLDER_MIME = "application/vnd.google-apps.folder";
 const SHORTCUT_MIME = "application/vnd.google-apps.shortcut";
 
+// Nome do módulo criado para os arquivos soltos na raiz da pasta do curso
+const ROOT_MODULE_FLAT = "Aulas"; // curso sem nenhuma subpasta
+const ROOT_MODULE_MIXED = "Materiais do curso"; // curso com subpastas + arquivos soltos
+
 const IGNORED_FILENAMES = new Set([
   "index.html",
   "script.js",
   "style.css",
   "files_manifest.json",
   "player.html",
+  // Arquivos de sistema que o Windows/macOS deixam nas pastas sincronizadas
+  "desktop.ini",
+  "thumbs.db",
+  ".ds_store",
 ]);
 
 export function cleanTitle(rawName: string, isFolder: boolean = false): string {
@@ -170,12 +178,6 @@ export function buildTree(items: DriveItem[], options: BuildTreeOptions): Parsed
     itemsByParent.get(parentId)!.push(item);
   }
 
-  // 3. Módulos são as subpastas diretas do rootFolderId
-  const directChildren = itemsByParent.get(rootFolderId) || [];
-  const moduleFolders = directChildren
-    .filter((it) => it.mimeType === FOLDER_MIME)
-    .sort((a, b) => naturalSortCompare(a.name, b.name));
-
   // Mapa de durações opcionais extraídas do manifest
   const manifestDurations = new Map<string, number>();
   if (manifest?.modules) {
@@ -190,12 +192,39 @@ export function buildTree(items: DriveItem[], options: BuildTreeOptions): Parsed
     }
   }
 
-  const parsedModules: ParsedModule[] = [];
-  let totalDurationSeconds = 0;
-  let materialsCount = 0;
+  const ctx: BuildContext = { itemsByParent, manifestDurations };
 
-  for (let modIdx = 0; modIdx < moduleFolders.length; modIdx++) {
-    const modFolder = moduleFolders[modIdx];
+  // 3. Módulos são as subpastas diretas do rootFolderId
+  const directChildren = itemsByParent.get(rootFolderId) || [];
+  const moduleFolders = directChildren
+    .filter((it) => it.mimeType === FOLDER_MIME)
+    .sort((a, b) => naturalSortCompare(a.name, b.name));
+
+  // Arquivos soltos na raiz do curso (ex.: "curso/aula1.mp4", "curso/edital.pdf").
+  // Antes eram descartados; agora viram um módulo próprio, montado com a estratégia
+  // 'files' (cada vídeo inicia uma aula), já que as subpastas da raiz já são módulos.
+  const rootFiles = directChildren.filter((it) => it.mimeType !== FOLDER_MIME);
+
+  const parsedModules: ParsedModule[] = [];
+
+  if (rootFiles.length > 0) {
+    const rootLessons = buildLessonsFromFiles(rootFiles, ctx);
+    if (rootLessons.length > 0) {
+      // Curso "plano" (só arquivos) → módulo "Aulas".
+      // Curso com pastas + arquivos soltos → os soltos vão para "Materiais do curso", no topo.
+      const rootModuleName = moduleFolders.length > 0 ? ROOT_MODULE_MIXED : ROOT_MODULE_FLAT;
+      parsedModules.push({
+        // A própria pasta do curso identifica este módulo (chave estável entre syncs)
+        driveFolderId: rootFolderId,
+        rawName: rootModuleName,
+        title: rootModuleName,
+        position: 1,
+        lessons: rootLessons,
+      });
+    }
+  }
+
+  for (const modFolder of moduleFolders) {
     const moduleChildren = itemsByParent.get(modFolder.id) || [];
 
     // Se a pasta só tem itens que foram ignorados (ex: pasta "player"), descarta
@@ -210,174 +239,10 @@ export function buildTree(items: DriveItem[], options: BuildTreeOptions): Parsed
     const currentStrategy =
       strategy === "auto" ? (subFolders.length > 0 ? "folders" : "files") : strategy;
 
-    const parsedLessons: ParsedLesson[] = [];
-
-    if (currentStrategy === "folders") {
-      // Estratégia 'folders': cada subpasta vira uma aula
-      const sortedSubFolders = subFolders.sort((a, b) => naturalSortCompare(a.name, b.name));
-
-      for (let lesIdx = 0; lesIdx < sortedSubFolders.length; lesIdx++) {
-        const subF = sortedSubFolders[lesIdx];
-        const rawFiles = getAllFilesInFolderRecursive(subF.id, itemsByParent);
-        const sortedFiles = rawFiles.sort((a, b) => naturalSortCompare(a.name, b.name));
-
-        const materials: ParsedMaterial[] = [];
-        let lessonDuration = 0;
-
-        for (let matIdx = 0; matIdx < sortedFiles.length; matIdx++) {
-          const file = sortedFiles[matIdx];
-          const kind = detectKind(file.mimeType);
-
-          let duration = 0;
-          if (file.videoMediaMetadata?.durationMillis) {
-            duration = Math.round(Number(file.videoMediaMetadata.durationMillis) / 1000);
-          } else if (manifestDurations.has(file.id)) {
-            duration = manifestDurations.get(file.id)!;
-          }
-
-          lessonDuration += duration;
-          materialsCount++;
-
-          const cleanedTitle = cleanTitle(file.name);
-          const lowerTitle = cleanedTitle.toLowerCase();
-          const displayTitle =
-            lowerTitle === "ext" && kind === "video"
-              ? "Vídeo da Aula"
-              : lowerTitle === "content"
-                ? "Conteúdo da Aula"
-                : cleanedTitle;
-
-          materials.push({
-            driveFileId: file.id,
-            rawName: file.name,
-            title: displayTitle,
-            kind,
-            mime: file.mimeType,
-            sizeBytes: file.size ? Number(file.size) : 0,
-            durationSeconds: duration,
-            md5: file.md5Checksum,
-            driveModifiedTime: file.modifiedTime,
-            position: matIdx + 1,
-          });
-        }
-
-        totalDurationSeconds += lessonDuration;
-
-        parsedLessons.push({
-          driveFolderId: subF.id,
-          rawName: subF.name,
-          title: cleanTitle(subF.name, true),
-          position: lesIdx + 1,
-          durationSeconds: lessonDuration,
-          materials,
-        });
-      }
-
-      // Arquivos soltos no módulo vão para uma aula "Materiais do módulo"
-      if (directFiles.length > 0) {
-        const sortedDirect = directFiles.sort((a, b) => naturalSortCompare(a.name, b.name));
-        const extraMaterials: ParsedMaterial[] = sortedDirect.map((file, idx) => {
-          materialsCount++;
-          return {
-            driveFileId: file.id,
-            rawName: file.name,
-            title: cleanTitle(file.name),
-            kind: detectKind(file.mimeType),
-            mime: file.mimeType,
-            sizeBytes: file.size ? Number(file.size) : 0,
-            durationSeconds: 0,
-            md5: file.md5Checksum,
-            driveModifiedTime: file.modifiedTime,
-            position: idx + 1,
-          };
-        });
-
-        parsedLessons.push({
-          driveFolderId: null,
-          rawName: "Materiais do módulo",
-          title: "Materiais do módulo",
-          position: parsedLessons.length + 1,
-          durationSeconds: 0,
-          materials: extraMaterials,
-        });
-      }
-    } else {
-      // Estratégia 'files': cada vídeo inicia uma aula
-      const sortedFiles = directFiles.sort((a, b) => naturalSortCompare(a.name, b.name));
-
-      let currentLesson: ParsedLesson | null = null;
-      let lessonPosition = 0;
-
-      for (const file of sortedFiles) {
-        const kind = detectKind(file.mimeType);
-
-        let duration = 0;
-        if (file.videoMediaMetadata?.durationMillis) {
-          duration = Math.round(Number(file.videoMediaMetadata.durationMillis) / 1000);
-        } else if (manifestDurations.has(file.id)) {
-          duration = manifestDurations.get(file.id)!;
-        }
-
-        if (kind === "video") {
-          // Inicia uma nova aula com este vídeo
-          lessonPosition++;
-          currentLesson = {
-            driveFolderId: null,
-            rawName: file.name,
-            title: cleanTitle(file.name),
-            position: lessonPosition,
-            durationSeconds: duration,
-            materials: [
-              {
-                driveFileId: file.id,
-                rawName: file.name,
-                title: cleanTitle(file.name),
-                kind: "video",
-                mime: file.mimeType,
-                sizeBytes: file.size ? Number(file.size) : 0,
-                durationSeconds: duration,
-                md5: file.md5Checksum,
-                driveModifiedTime: file.modifiedTime,
-                position: 1,
-              },
-            ],
-          };
-          materialsCount++;
-          totalDurationSeconds += duration;
-          parsedLessons.push(currentLesson);
-        } else {
-          // Material anexado à aula atual (ou aula 'Introdução' se for antes do 1º vídeo)
-          materialsCount++;
-          if (!currentLesson) {
-            lessonPosition++;
-            currentLesson = {
-              driveFolderId: null,
-              rawName: "Introdução",
-              title: "Introdução",
-              position: lessonPosition,
-              durationSeconds: 0,
-              materials: [],
-            };
-            parsedLessons.push(currentLesson);
-          }
-
-          currentLesson.materials.push({
-            driveFileId: file.id,
-            rawName: file.name,
-            title: cleanTitle(file.name),
-            kind,
-            mime: file.mimeType,
-            sizeBytes: file.size ? Number(file.size) : 0,
-            durationSeconds: duration,
-            md5: file.md5Checksum,
-            driveModifiedTime: file.modifiedTime,
-            position: currentLesson.materials.length + 1,
-          });
-          currentLesson.durationSeconds += duration;
-          totalDurationSeconds += duration;
-        }
-      }
-    }
+    const parsedLessons =
+      currentStrategy === "folders"
+        ? buildLessonsFromFolders(subFolders, directFiles, ctx)
+        : buildLessonsFromFiles(directFiles, ctx);
 
     if (parsedLessons.length > 0) {
       parsedModules.push({
@@ -390,11 +255,154 @@ export function buildTree(items: DriveItem[], options: BuildTreeOptions): Parsed
     }
   }
 
+  // Totais calculados a partir da árvore final (uma única fonte de verdade)
+  let totalDurationSeconds = 0;
+  let materialsCount = 0;
+  for (const mod of parsedModules) {
+    for (const les of mod.lessons) {
+      totalDurationSeconds += les.durationSeconds;
+      materialsCount += les.materials.length;
+    }
+  }
+
   return {
     modules: parsedModules,
     totalDurationSeconds,
     materialsCount,
   };
+}
+
+type BuildContext = {
+  itemsByParent: Map<string, DriveItem[]>;
+  manifestDurations: Map<string, number>;
+};
+
+function getDuration(file: DriveItem, ctx: BuildContext): number {
+  if (file.videoMediaMetadata?.durationMillis) {
+    return Math.round(Number(file.videoMediaMetadata.durationMillis) / 1000);
+  }
+  return ctx.manifestDurations.get(file.id) ?? 0;
+}
+
+function toMaterial(
+  file: DriveItem,
+  ctx: BuildContext,
+  position: number,
+  title: string = cleanTitle(file.name),
+): ParsedMaterial {
+  return {
+    driveFileId: file.id,
+    rawName: file.name,
+    title,
+    kind: detectKind(file.mimeType),
+    mime: file.mimeType,
+    sizeBytes: file.size ? Number(file.size) : 0,
+    durationSeconds: getDuration(file, ctx),
+    md5: file.md5Checksum,
+    driveModifiedTime: file.modifiedTime,
+    position,
+  };
+}
+
+/**
+ * Estratégia 'folders': cada subpasta vira uma aula (com subpastas internas achatadas);
+ * arquivos soltos no módulo vão para uma aula "Materiais do módulo".
+ */
+function buildLessonsFromFolders(
+  subFolders: DriveItem[],
+  directFiles: DriveItem[],
+  ctx: BuildContext,
+): ParsedLesson[] {
+  const lessons: ParsedLesson[] = [];
+  const sortedSubFolders = [...subFolders].sort((a, b) => naturalSortCompare(a.name, b.name));
+
+  for (const subF of sortedSubFolders) {
+    const sortedFiles = getAllFilesInFolderRecursive(subF.id, ctx.itemsByParent).sort((a, b) =>
+      naturalSortCompare(a.name, b.name),
+    );
+
+    const materials = sortedFiles.map((file, idx) => {
+      const kind = detectKind(file.mimeType);
+      const cleanedTitle = cleanTitle(file.name);
+      const lowerTitle = cleanedTitle.toLowerCase();
+      const displayTitle =
+        lowerTitle === "ext" && kind === "video"
+          ? "Vídeo da Aula"
+          : lowerTitle === "content"
+            ? "Conteúdo da Aula"
+            : cleanedTitle;
+      return toMaterial(file, ctx, idx + 1, displayTitle);
+    });
+
+    lessons.push({
+      driveFolderId: subF.id,
+      rawName: subF.name,
+      title: cleanTitle(subF.name, true),
+      position: lessons.length + 1,
+      durationSeconds: materials.reduce((sum, m) => sum + m.durationSeconds, 0),
+      materials,
+    });
+  }
+
+  if (directFiles.length > 0) {
+    const sortedDirect = [...directFiles].sort((a, b) => naturalSortCompare(a.name, b.name));
+    const materials = sortedDirect.map((file, idx) => toMaterial(file, ctx, idx + 1));
+
+    lessons.push({
+      driveFolderId: null,
+      rawName: "Materiais do módulo",
+      title: "Materiais do módulo",
+      position: lessons.length + 1,
+      durationSeconds: materials.reduce((sum, m) => sum + m.durationSeconds, 0),
+      materials,
+    });
+  }
+
+  return lessons;
+}
+
+/**
+ * Estratégia 'files': cada vídeo inicia uma aula; arquivos não-vídeo seguintes são anexados
+ * a ela. Arquivos antes do primeiro vídeo formam a aula "Introdução".
+ */
+function buildLessonsFromFiles(files: DriveItem[], ctx: BuildContext): ParsedLesson[] {
+  const lessons: ParsedLesson[] = [];
+  const sortedFiles = [...files].sort((a, b) => naturalSortCompare(a.name, b.name));
+  let currentLesson: ParsedLesson | null = null;
+
+  for (const file of sortedFiles) {
+    if (detectKind(file.mimeType) === "video") {
+      const material = toMaterial(file, ctx, 1);
+      currentLesson = {
+        driveFolderId: null,
+        rawName: file.name,
+        title: cleanTitle(file.name),
+        position: lessons.length + 1,
+        durationSeconds: material.durationSeconds,
+        materials: [material],
+      };
+      lessons.push(currentLesson);
+      continue;
+    }
+
+    if (!currentLesson) {
+      currentLesson = {
+        driveFolderId: null,
+        rawName: "Introdução",
+        title: "Introdução",
+        position: lessons.length + 1,
+        durationSeconds: 0,
+        materials: [],
+      };
+      lessons.push(currentLesson);
+    }
+
+    const material = toMaterial(file, ctx, currentLesson.materials.length + 1);
+    currentLesson.materials.push(material);
+    currentLesson.durationSeconds += material.durationSeconds;
+  }
+
+  return lessons;
 }
 
 function getAllFilesInFolderRecursive(

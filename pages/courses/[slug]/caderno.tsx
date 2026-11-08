@@ -162,32 +162,32 @@ export default function CourseNotebookPage() {
       <div className="min-h-screen bg-[#0b0b0c] text-[#ece9e2]">
         {/* Barra superior de navegação */}
         <header className="border-b border-[#2a2a2e] bg-[#131315]/80 backdrop-blur-md sticky top-0 z-30">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
               <Link
                 href={`/courses/${slug}`}
-                className="p-2 rounded-xl bg-[#1b1b1e] hover:bg-[#2a2a2e] text-[#9a978f] hover:text-[#ece9e2] transition flex items-center gap-1.5 text-xs font-medium"
+                className="shrink-0 p-2.5 sm:p-2 rounded-xl bg-[#1b1b1e] hover:bg-[#2a2a2e] text-[#9a978f] hover:text-[#ece9e2] transition flex items-center gap-1.5 text-xs font-medium"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span className="hidden sm:inline">Voltar à Sala de Aula</span>
                 <span className="sm:hidden">Voltar</span>
               </Link>
 
-              <div className="h-4 w-px bg-[#2a2a2e]" />
+              <div className="hidden sm:block h-4 w-px bg-[#2a2a2e]" />
 
-              <div className="flex items-center gap-2 text-sm">
-                <BookOpen className="w-4 h-4 text-[#d4af37]" />
-                <span className="font-semibold truncate max-w-xs sm:max-w-md">
+              <div className="flex items-center gap-2 text-sm min-w-0">
+                <BookOpen className="hidden sm:block w-4 h-4 text-[#d4af37] shrink-0" />
+                <span className="font-semibold truncate sm:max-w-md">
                   {course?.title || "Carregando..."}
                 </span>
-                <span className="text-xs text-[#9a978f]">/ Caderno</span>
+                <span className="hidden sm:inline text-xs text-[#9a978f] shrink-0">/ Caderno</span>
               </div>
             </div>
 
             <button
               onClick={exportToMarkdown}
               disabled={notes.length === 0}
-              className="px-3.5 py-1.5 rounded-xl bg-[#1b1b1e] border border-[#2a2a2e] hover:border-[#d4af37] text-xs font-semibold text-[#ece9e2] hover:text-[#d4af37] transition flex items-center gap-1.5 disabled:opacity-40 shadow-sm"
+              className="shrink-0 px-3.5 py-2.5 sm:py-1.5 rounded-xl bg-[#1b1b1e] border border-[#2a2a2e] hover:border-[#d4af37] text-xs font-semibold text-[#ece9e2] hover:text-[#d4af37] transition flex items-center gap-1.5 disabled:opacity-40 shadow-sm"
             >
               <Download className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Exportar Markdown (.md)</span>

@@ -153,7 +153,7 @@ export default function PomodoroTimer({ onFocusEnd }: PomodoroTimerProps) {
   return (
     <div className="relative inline-flex items-center">
       {/* Widget principal do Pomodoro no topo da sala */}
-      <div className="flex items-center gap-2 bg-[#131315]/90 border border-[#2a2a2e] rounded-xl px-3 py-1.5 shadow-md">
+      <div className="flex items-center gap-1 sm:gap-2 bg-[#131315]/90 border border-[#2a2a2e] rounded-xl px-1.5 sm:px-3 py-1 sm:py-1.5 shadow-md">
         {/* Ícone de modo */}
         <button
           onClick={() => switchMode(mode === "focus" ? "shortBreak" : "focus")}
@@ -173,7 +173,7 @@ export default function PomodoroTimer({ onFocusEnd }: PomodoroTimerProps) {
             {timeFormatted}
           </span>
           {/* Micro barra dourada de progresso do ciclo */}
-          <div className="w-12 h-1 bg-[#2a2a2e] rounded-full overflow-hidden mt-1">
+          <div className="w-10 sm:w-12 h-1 bg-[#2a2a2e] rounded-full overflow-hidden mt-1">
             <div
               className={`h-full transition-all duration-500 ${
                 mode === "focus" ? "bg-[#d4af37]" : "bg-[#6fbf73]"
@@ -187,7 +187,7 @@ export default function PomodoroTimer({ onFocusEnd }: PomodoroTimerProps) {
         <button
           onClick={toggleRun}
           title={isRunning ? "Pausar foco" : "Iniciar foco"}
-          className="p-1.5 rounded-lg bg-[#1b1b1e] hover:bg-[#2a2a2e] text-[#ece9e2] transition ml-1"
+          className="p-1.5 rounded-lg bg-[#1b1b1e] hover:bg-[#2a2a2e] text-[#ece9e2] transition sm:ml-1"
         >
           {isRunning ? (
             <Pause className="w-3.5 h-3.5 fill-current" />
@@ -200,7 +200,7 @@ export default function PomodoroTimer({ onFocusEnd }: PomodoroTimerProps) {
         <button
           onClick={resetTimer}
           title="Reiniciar ciclo"
-          className="p-1.5 rounded-lg hover:bg-[#1b1b1e] text-[#9a978f] hover:text-[#ece9e2] transition"
+          className="hidden sm:inline-flex p-1.5 rounded-lg hover:bg-[#1b1b1e] text-[#9a978f] hover:text-[#ece9e2] transition"
         >
           <RotateCcw className="w-3 h-3" />
         </button>
@@ -217,7 +217,7 @@ export default function PomodoroTimer({ onFocusEnd }: PomodoroTimerProps) {
 
       {/* Modal / Popover de Configurações do Pomodoro */}
       {settingsOpen && (
-        <div className="absolute top-12 right-0 z-50 w-72 bg-[#131315] border border-[#2a2a2e] rounded-2xl p-4 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed left-4 right-4 top-20 sm:absolute sm:left-auto sm:top-12 sm:right-0 z-50 sm:w-72 bg-[#131315] border border-[#2a2a2e] rounded-2xl p-4 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
           <div className="flex items-center justify-between pb-3 border-b border-[#2a2a2e] mb-3">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-[#d4af37]">
               Ajustar Pomodoro
