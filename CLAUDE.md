@@ -711,22 +711,28 @@ min_tier: # pior modelo aceitável por tarefa; abaixo disso, o job ESPERA em vez
     - Suíte completa de testes E2E com Playwright Chromium (`tests/e2e/student-flow.spec.ts`) com 5 cenários cobrindo o fluxo completo de ponta a ponta (100% verde em ~16s).
     - Atualização otimizada do cache SWR no login (`pages/login.tsx`) e isolamento no Jest (`jest.config.js`).
 - **Estratégia de Branches & Foco Atual:**
-  - Branch `main`: Alinhada estritamente com o deploy em produção na VM Oracle (`7f8235d`).
+  - Branch `main`: em `70595d1` (Fase 8.1 já mergeada). Confirmar qual commit está em produção na VM.
   - Branch `feat/questions`: Salva e versionada no GitHub com todo o módulo de questões desenvolvido (Fase 9 & 10).
   - Branch ativa: `feat/mobile-responsive` (foco total na experiência e usabilidade em celulares).
 - **Fase 8.1 (Mobile & Telas) [CONCLUÍDA]:**
-    - Mobile Bottom Dock (`components/layout/MobileBottomNav.tsx`) com Início, Cursos, Busca e Perfil/Drawer.
-    - Sala de aula adaptativa (`pages/courses/[slug].tsx`) com abas táteis ([Aulas], [Anotações], [Materiais]) e alternância áudio/vídeo instantânea.
-    - Dashboard responsivo (`pages/index.tsx`) com auto-scroll no Heatmap para semanas recentes, cards 2x2 do Streak e Hero com CTA touch full-width.
-    - Caderno de estudos (`pages/courses/[slug]/caderno.tsx`) com filtro dropdown de módulos para evitar scroll infinito e botões responsivos.
-    - Tela de login com inputs anti-zoom para iOS (`text-base sm:text-xs`) e botões com touch target >= 44px.
-    - Safe areas com `viewport-fit=cover` no `pages/_app.tsx` e padding dinâmico `pb-[max(0.5rem,env(safe-area-inset-bottom))]`.
-    - Suíte de 4 cenários E2E mobile (`tests/e2e/mobile-navigation.spec.ts`) + 5 cenários desktop (`tests/e2e/student-flow.spec.ts`) totalizando 9 testes 100% verdes em ~27s.
+  - Mobile Bottom Dock (`components/layout/MobileBottomNav.tsx`) com Início, Cursos, Busca e Perfil/Drawer.
+  - Sala de aula adaptativa (`pages/courses/[slug].tsx`) com abas táteis ([Aulas], [Anotações], [Materiais]) e alternância áudio/vídeo instantânea.
+  - Dashboard responsivo (`pages/index.tsx`) com auto-scroll no Heatmap para semanas recentes, cards 2x2 do Streak e Hero com CTA touch full-width.
+  - Caderno de estudos (`pages/courses/[slug]/caderno.tsx`) com filtro dropdown de módulos para evitar scroll infinito e botões responsivos.
+  - Tela de login com inputs anti-zoom para iOS (`text-base sm:text-xs`) e botões com touch target >= 44px.
+  - Safe areas com `viewport-fit=cover` no `pages/_app.tsx` e padding dinâmico `pb-[max(0.5rem,env(safe-area-inset-bottom))]`.
+  - Suíte de 4 cenários E2E mobile (`tests/e2e/mobile-navigation.spec.ts`) + 5 cenários desktop (`tests/e2e/student-flow.spec.ts`) totalizando 9 testes 100% verdes em ~27s.
 - **Estratégia de Branches & Foco Atual:**
-  - Branch `main`: Alinhada estritamente com o deploy em produção na VM Oracle (`7f8235d`).
+  - Branch `main`: em `70595d1` (Fase 8.1 já mergeada). Confirmar qual commit está em produção na VM.
   - Branch `feat/questions`: Salva e versionada no GitHub com todo o módulo de questões desenvolvido (Fase 9 & 10).
   - Branch ativa: `feat/mobile-responsive` (Fase 8.1 100% concluída, pronta para merge/deploy).
-- **Próximo passo:** Validação pelo dono da experiência mobile ou merge de `feat/mobile-responsive` para deploy na VM.
+- **Branch `fix/mobile-collapse-flat-courses` (2026-11-08, a partir da `main` em `70595d1`, que já contém a Fase 8.1):**
+  - Zoom no celular: campos de formulário com 16px abaixo de `md` (o iOS dava zoom ao focar campos `text-xs`), `text-size-adjust: 100%`, viewport acessível (sem `user-scalable=no`), cabeçalhos da sala de aula, caderno e admin cabendo em 360px, Pomodoro compacto e alvos de toque maiores.
+  - Árvore do curso: módulos recolhidos por padrão; só o módulo da aula atual abre. A busca abre os módulos com resultado.
+  - Drive: arquivos soltos na raiz da pasta do curso viram o módulo "Aulas" (curso sem subpastas) ou "Materiais do curso" (curso misto). Ignora `desktop.ini`, `Thumbs.db` e `.DS_Store`.
+  - Sync idempotente: re-sincronizar não duplica mais módulos e aulas; o que sumiu do Drive recebe soft delete; uma leitura vazia aborta o sync.
+  - `.gitattributes` força LF (havia diffs só de CRLF vindos do Windows).
+- **Próximo passo:** o dono valida a branch `fix/mobile-collapse-flat-courses` (integração e e2e precisam do Docker no WSL) e faz o merge e o deploy. Depois do deploy, re-sincronizar os cursos uma vez para desativar módulos e aulas duplicados por syncs antigos.
 - **Problemas conhecidos:** —
 - **Decisões pendentes com o dono:** nome definitivo da plataforma; domínio; provedor de e-mail (SMTP); lista inicial de disciplinas/assuntos (taxonomia) e bancas prioritárias; se a plataforma será só para uso próprio/grupo fechado ou comercial (afeta plano da IA e questões de direito autoral).
 
