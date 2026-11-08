@@ -85,7 +85,8 @@ describe("POST /api/v1/admin/courses", () => {
     expect(body.title).toBe("Direito Administrativo Avançado");
     expect(body.slug).toBe("direito-administrativo");
     expect(body.drive_folder_id).toBe("pasta-adm-456");
-    expect(body.status).toBe("draft");
+    // Since 9c213c0 new courses are published right away (and everyone is enrolled)
+    expect(body.status).toBe("published");
   });
 });
 
