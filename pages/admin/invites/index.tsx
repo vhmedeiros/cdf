@@ -205,16 +205,16 @@ export default function AdminInvitesPage() {
 
       <div className="min-h-screen bg-[#0b0b0c] text-[#ece9e2]">
         {/* Navbar Admin */}
-        <header className="h-16 border-b border-[#2a2a2e] bg-[#131315]/90 backdrop-blur-md sticky top-0 z-30 px-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <header className="h-16 border-b border-[#2a2a2e] bg-[#131315]/90 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-6 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
             <Link
               href="/admin/courses"
-              className="p-2 rounded-lg bg-[#1b1b1e] border border-[#2a2a2e] text-[#9a978f] hover:text-[#ece9e2] transition"
+              className="shrink-0 p-2.5 sm:p-2 rounded-lg bg-[#1b1b1e] border border-[#2a2a2e] text-[#9a978f] hover:text-[#ece9e2] transition"
               title="Voltar para Cursos"
             >
               <ChevronLeft className="w-4 h-4" />
             </Link>
-            <div className="flex items-center gap-2">
+            <div className="hidden lg:flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-[#d4af37]" />
               <span className="font-serif font-bold text-base text-[#ece9e2]">
                 Painel do Administrador
@@ -222,19 +222,20 @@ export default function AdminInvitesPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <nav className="flex items-center gap-2 text-xs">
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+            <nav className="flex items-center gap-1 sm:gap-2 text-xs">
               <Link
                 href="/admin/courses"
-                className="px-3 py-1.5 rounded-lg text-[#9a978f] hover:text-[#ece9e2] transition"
+                className="px-3 py-2 sm:py-1.5 rounded-lg text-[#9a978f] hover:text-[#ece9e2] transition"
               >
                 Cursos
               </Link>
               <Link
                 href="/admin/invites"
-                className="px-3 py-1.5 rounded-lg bg-[#1b1b1e] text-[#d4af37] font-semibold border border-[#2a2a2e]"
+                className="px-3 py-2 sm:py-1.5 rounded-lg bg-[#1b1b1e] text-[#d4af37] font-semibold border border-[#2a2a2e] whitespace-nowrap"
               >
-                Convites & Alunos
+                <span className="sm:hidden">Alunos</span>
+                <span className="hidden sm:inline">Convites & Alunos</span>
               </Link>
               <Link
                 href="/"
@@ -244,7 +245,9 @@ export default function AdminInvitesPage() {
               </Link>
             </nav>
 
-            <UserMenu />
+            <div className="hidden md:block">
+              <UserMenu />
+            </div>
           </div>
         </header>
 

@@ -231,50 +231,55 @@ export default function AdminCoursesPage() {
       <div className="min-h-screen bg-[#0b0b0c] text-[#ece9e2]">
         {/* Top Navbar */}
         <header className="border-b border-[#2a2a2e] bg-[#131315]/90 backdrop-blur-md sticky top-0 z-30">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <Link
                 href="/courses"
-                className="p-2 rounded-xl bg-[#1b1b1e] hover:bg-[#2a2a2e] text-[#9a978f] hover:text-[#ece9e2] transition flex items-center gap-1.5 text-xs font-medium"
+                title="Área do Aluno"
+                className="shrink-0 p-2.5 sm:p-2 rounded-xl bg-[#1b1b1e] hover:bg-[#2a2a2e] text-[#9a978f] hover:text-[#ece9e2] transition flex items-center gap-1.5 text-xs font-medium"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Área do Aluno
+                <span className="hidden sm:inline">Área do Aluno</span>
               </Link>
 
-              <div className="h-4 w-px bg-[#2a2a2e]" />
+              <div className="hidden lg:block h-4 w-px bg-[#2a2a2e]" />
 
-              <div className="flex items-center gap-2">
+              <div className="hidden lg:flex items-center gap-2">
                 <Shield className="w-4 h-4 text-[#d4af37]" />
                 <span className="font-semibold text-sm">Painel do Administrador</span>
               </div>
 
               <div className="h-4 w-px bg-[#2a2a2e]" />
 
-              <nav className="flex items-center gap-1">
+              <nav className="flex items-center gap-1 min-w-0">
                 <Link
                   href="/admin/courses"
-                  className="px-2.5 py-1 rounded-lg bg-[#1b1b1e] text-[#d4af37] text-xs font-semibold border border-[#2a2a2e]"
+                  className="px-2.5 py-2 sm:py-1 rounded-lg bg-[#1b1b1e] text-[#d4af37] text-xs font-semibold border border-[#2a2a2e]"
                 >
                   Cursos
                 </Link>
                 <Link
                   href="/admin/invites"
-                  className="px-2.5 py-1 rounded-lg text-[#9a978f] hover:text-[#ece9e2] text-xs transition"
+                  className="px-2.5 py-2 sm:py-1 rounded-lg text-[#9a978f] hover:text-[#ece9e2] text-xs transition whitespace-nowrap"
                 >
-                  Convites & Alunos
+                  <span className="sm:hidden">Alunos</span>
+                  <span className="hidden sm:inline">Convites & Alunos</span>
                 </Link>
               </nav>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <Link
                 href="/admin/courses/new"
-                className="px-4 py-2 rounded-xl bg-[#d4af37] text-black hover:bg-[#f5d76e] text-xs font-semibold transition flex items-center gap-1.5 shadow-md"
+                title="Cadastrar Novo Curso"
+                className="px-3 sm:px-4 py-2.5 sm:py-2 rounded-xl bg-[#d4af37] text-black hover:bg-[#f5d76e] text-xs font-semibold transition flex items-center gap-1.5 shadow-md"
               >
                 <Plus className="w-4 h-4" />
-                Cadastrar Novo Curso
+                <span className="hidden sm:inline">Cadastrar Novo Curso</span>
               </Link>
-              <UserMenu />
+              <div className="hidden md:block">
+                <UserMenu />
+              </div>
             </div>
           </div>
         </header>

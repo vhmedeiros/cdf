@@ -181,7 +181,7 @@ export default function NewCourseAdminPage() {
 
         {/* Formulário Principal */}
         <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-6 pb-24 md:pb-8 space-y-6">
-          <div className="bg-[#131315] border border-[#2a2a2e] rounded-2xl p-6 sm:p-8 shadow-xl space-y-6">
+          <div className="bg-[#131315] border border-[#2a2a2e] rounded-2xl p-4 sm:p-8 shadow-xl space-y-6">
             <div className="pb-4 border-b border-[#2a2a2e]">
               <div className="flex items-center gap-3 mb-1">
                 <FolderPlus className="w-6 h-6 text-[#d4af37]" />

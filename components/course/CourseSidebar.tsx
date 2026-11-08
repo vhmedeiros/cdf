@@ -142,7 +142,7 @@ export function CourseSidebar({
           <div className="flex items-center gap-1.5">
             <button
               onClick={toggleCollapseAll}
-              className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-[#9a978f] hover:text-[#d4af37] hover:bg-[#1b1b1e] border border-[#2a2a2e] transition"
+              className="flex items-center gap-1 px-2.5 py-2 md:px-2 md:py-1 rounded-md text-[11px] font-medium text-[#9a978f] hover:text-[#d4af37] hover:bg-[#1b1b1e] border border-[#2a2a2e] transition"
               title={allCollapsed ? "Expandir todos os módulos" : "Recolher todos os módulos"}
             >
               <ChevronsUpDown className="w-3.5 h-3.5 text-[#d4af37]" />
@@ -151,7 +151,7 @@ export function CourseSidebar({
             {onCloseMobile && (
               <button
                 onClick={onCloseMobile}
-                className="md:hidden p-1 rounded text-[#9a978f] hover:text-[#ece9e2] hover:bg-[#1b1b1e]"
+                className="md:hidden p-2 rounded text-[#9a978f] hover:text-[#ece9e2] hover:bg-[#1b1b1e]"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -253,7 +253,7 @@ export function CourseSidebar({
                                 onCloseMobile?.();
                               }
                             }}
-                            className="w-full text-left px-3 py-1.5 text-[11px] font-semibold text-[#9a978f] hover:text-[#d4af37] tracking-wide transition flex items-center justify-between"
+                            className="w-full text-left px-3 py-2.5 md:py-1.5 text-[11px] font-semibold text-[#9a978f] hover:text-[#d4af37] tracking-wide transition flex items-center justify-between"
                           >
                             <span className="truncate">{lesson.title}</span>
                           </button>
@@ -267,7 +267,7 @@ export function CourseSidebar({
                             <div
                               key={mat.id}
                               className={cn(
-                                "flex items-center justify-between rounded-lg px-2.5 py-2 text-xs transition group/item",
+                                "flex items-center justify-between rounded-lg px-2.5 py-3 md:py-2 text-xs transition group/item",
                                 isActive
                                   ? "bg-[#1b1b1e] border-l-2 border-[#d4af37] text-[#ece9e2] font-medium shadow-sm"
                                   : "text-[#9a978f] hover:text-[#ece9e2] hover:bg-[#1b1b1e]/40",
@@ -301,7 +301,7 @@ export function CourseSidebar({
                                       ? i18n.course.markPending
                                       : i18n.course.markCompleted
                                   }
-                                  className="text-[#9a978f] hover:text-[#d4af37] transition"
+                                  className="p-1.5 -m-1.5 text-[#9a978f] hover:text-[#d4af37] transition"
                                 >
                                   {isCompleted ? (
                                     <CheckCircle2 className="w-4 h-4 text-[#6fbf73]" />

@@ -175,7 +175,7 @@ export default function CourseClassroomPage() {
             <div className="flex items-center gap-3 min-w-0">
               <Link
                 href="/courses"
-                className="p-2 rounded-lg bg-[#1b1b1e] border border-[#2a2a2e] text-[#9a978f] hover:text-[#ece9e2] hover:border-[#d4af37] transition"
+                className="shrink-0 p-2.5 sm:p-2 rounded-lg bg-[#1b1b1e] border border-[#2a2a2e] text-[#9a978f] hover:text-[#ece9e2] hover:border-[#d4af37] transition"
                 title="Voltar para lista de cursos"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -194,7 +194,7 @@ export default function CourseClassroomPage() {
             </div>
 
             {/* Action buttons */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
               {/* Painel Admin (apenas para administradores) */}
               {isAdmin && (
                 <Link
@@ -224,7 +224,7 @@ export default function CourseClassroomPage() {
 
               <button
                 onClick={toggleShortcutsModal}
-                className="p-2 rounded-lg text-[#9a978f] hover:text-[#d4af37] hover:bg-[#1b1b1e] transition"
+                className="hidden sm:flex p-2 rounded-lg text-[#9a978f] hover:text-[#d4af37] hover:bg-[#1b1b1e] transition"
                 title="Atalhos do teclado (?)"
               >
                 <Keyboard className="w-4 h-4" />
@@ -256,13 +256,13 @@ export default function CourseClassroomPage() {
 
               <button
                 onClick={() => setMobileSidebarOpen(true)}
-                className="md:hidden p-2 rounded-lg text-[#9a978f] hover:text-[#ece9e2] hover:bg-[#1b1b1e] transition"
+                className="md:hidden p-2.5 rounded-lg text-[#9a978f] hover:text-[#ece9e2] hover:bg-[#1b1b1e] transition"
                 title="Abrir conteúdo do curso"
               >
                 <Menu className="w-5 h-5" />
               </button>
 
-              <div className="pl-1 border-l border-[#2a2a2e]">
+              <div className="hidden md:block pl-1 border-l border-[#2a2a2e]">
                 <UserMenu />
               </div>
             </div>
@@ -305,12 +305,12 @@ export default function CourseClassroomPage() {
             {activeItem && (
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#2a2a2e]">
-                  <div className="space-y-1">
-                    <h2 className="text-lg sm:text-xl font-bold text-[#ece9e2]">
+                  <div className="space-y-1 min-w-0">
+                    <h2 className="text-lg sm:text-xl font-bold text-[#ece9e2] break-words">
                       {activeItem.material.title}
                     </h2>
-                    <div className="flex items-center gap-3 text-xs text-[#9a978f]">
-                      <span>{activeItem.lesson.title}</span>
+                    <div className="flex items-center gap-3 text-xs text-[#9a978f] min-w-0">
+                      <span className="truncate">{activeItem.lesson.title}</span>
                       {activeItem.material.duration_seconds > 0 && (
                         <>
                           <span>&bull;</span>
@@ -323,10 +323,10 @@ export default function CourseClassroomPage() {
                   </div>
 
                   {/* Mark Completed + Navigation */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex w-full sm:w-auto items-center gap-2">
                     <button
                       onClick={() => toggleCompleted(activeItem.material.id)}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
+                      className={`flex-1 sm:flex-none justify-center flex items-center gap-2 px-3 py-2.5 sm:py-1.5 rounded-lg text-xs font-medium border transition ${
                         isCompleted
                           ? "bg-[#6fbf73]/10 border-[#6fbf73]/40 text-[#6fbf73]"
                           : "bg-[#1b1b1e] border-[#2a2a2e] text-[#ece9e2] hover:border-[#d4af37]"
@@ -347,14 +347,14 @@ export default function CourseClassroomPage() {
 
                     <button
                       onClick={playPrevious}
-                      className="p-1.5 rounded-lg bg-[#1b1b1e] border border-[#2a2a2e] text-[#9a978f] hover:text-[#ece9e2] hover:border-[#d4af37] transition"
+                      className="p-2.5 sm:p-1.5 rounded-lg bg-[#1b1b1e] border border-[#2a2a2e] text-[#9a978f] hover:text-[#ece9e2] hover:border-[#d4af37] transition"
                       title="Aula anterior (Shift+P)"
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </button>
                     <button
                       onClick={playNext}
-                      className="p-1.5 rounded-lg bg-[#1b1b1e] border border-[#2a2a2e] text-[#9a978f] hover:text-[#ece9e2] hover:border-[#d4af37] transition"
+                      className="p-2.5 sm:p-1.5 rounded-lg bg-[#1b1b1e] border border-[#2a2a2e] text-[#9a978f] hover:text-[#ece9e2] hover:border-[#d4af37] transition"
                       title="Próxima aula (Shift+N)"
                     >
                       <ChevronRight className="w-4 h-4" />
@@ -362,7 +362,7 @@ export default function CourseClassroomPage() {
                     {/* Alternância de Áudio/Vídeo rápida */}
                     <button
                       onClick={toggleAudioMode}
-                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition ${audioMode ? "bg-[#d4af37]/15 border-[#d4af37]/40 text-[#d4af37]" : "bg-[#1b1b1e] border-[#2a2a2e] text-[#9a978f] hover:text-[#ece9e2] hover:border-[#d4af37]"}`}
+                      className={`flex items-center gap-1.5 px-3 py-2.5 sm:px-2.5 sm:py-1.5 rounded-lg text-xs font-medium border transition ${audioMode ? "bg-[#d4af37]/15 border-[#d4af37]/40 text-[#d4af37]" : "bg-[#1b1b1e] border-[#2a2a2e] text-[#9a978f] hover:text-[#ece9e2] hover:border-[#d4af37]"}`}
                       title={audioMode ? "Voltar ao Vídeo (A)" : "Modo Áudio (A)"}
                     >
                       {audioMode ? (
@@ -386,7 +386,7 @@ export default function CourseClassroomPage() {
                     <button
                       type="button"
                       onClick={() => setMobileTab("lessons")}
-                      className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition ${
+                      className={`flex-1 py-2.5 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition ${
                         mobileTab === "lessons"
                           ? "bg-[#1b1b1e] text-[#d4af37] shadow-sm border border-[#d4af37]/30"
                           : "text-[#9a978f] hover:text-[#ece9e2]"
@@ -398,7 +398,7 @@ export default function CourseClassroomPage() {
                     <button
                       type="button"
                       onClick={() => setMobileTab("notes")}
-                      className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition ${
+                      className={`flex-1 py-2.5 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition ${
                         mobileTab === "notes"
                           ? "bg-[#1b1b1e] text-[#d4af37] shadow-sm border border-[#d4af37]/30"
                           : "text-[#9a978f] hover:text-[#ece9e2]"
@@ -410,7 +410,7 @@ export default function CourseClassroomPage() {
                     <button
                       type="button"
                       onClick={() => setMobileTab("materials")}
-                      className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition ${
+                      className={`flex-1 py-2.5 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition ${
                         mobileTab === "materials"
                           ? "bg-[#1b1b1e] text-[#d4af37] shadow-sm border border-[#d4af37]/30"
                           : "text-[#9a978f] hover:text-[#ece9e2]"
@@ -455,7 +455,7 @@ export default function CourseClassroomPage() {
                             <a
                               href={`/api/v1/stream/${m.id}`}
                               download
-                              className="p-2 rounded-lg bg-[#1b1b1e] border border-[#2a2a2e] text-[#9a978f] hover:text-[#d4af37] transition"
+                              className="shrink-0 p-2.5 rounded-lg bg-[#1b1b1e] border border-[#2a2a2e] text-[#9a978f] hover:text-[#d4af37] transition"
                               title="Baixar material"
                             >
                               <Download className="w-4 h-4" />
