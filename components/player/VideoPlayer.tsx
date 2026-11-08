@@ -259,12 +259,12 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
 
       {/* Video Overlay Controls */}
       <div
-        className={`absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-4 transition-opacity duration-300 ${
+        className={`absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-2 sm:p-4 transition-opacity duration-300 ${
           controlsVisible ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       >
         {/* Timeline Scrub Bar */}
-        <div className="relative mb-3 flex items-center group/scrub">
+        <div className="relative mb-1.5 sm:mb-3 flex items-center group/scrub">
           <input
             type="range"
             min={0}
@@ -279,8 +279,8 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
         </div>
 
         {/* Buttons Row */}
-        <div className="flex items-center justify-between text-xs text-[#ece9e2]">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-1 text-xs text-[#ece9e2]">
+          <div className="flex items-center gap-0.5 sm:gap-3 min-w-0">
             {/* Play/Pause */}
             <button
               onClick={togglePlay}
@@ -352,14 +352,14 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
             </div>
 
             {/* Timers */}
-            <div className="font-mono text-xs text-[#9a978f] tabular-nums pl-1">
+            <div className="font-mono text-[11px] sm:text-xs text-[#9a978f] tabular-nums pl-1 whitespace-nowrap">
               <span className="text-[#ece9e2]">{formatDuration(currentTime)}</span> /{" "}
               <span>{formatDuration(duration || activeItem?.material.duration_seconds)}</span>
             </div>
           </div>
 
-          {/* Right actions */}
-          <div className="flex items-center gap-2">
+          {/* Right actions (audio, next, note and theater are also below the player on phones) */}
+          <div className="flex items-center gap-0.5 sm:gap-2 shrink-0">
             {/* Speed Selector Menu */}
             <div className="relative">
               <button
@@ -393,7 +393,7 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
             {/* Audio Mode Toggle */}
             <button
               onClick={toggleAudioMode}
-              className="p-1.5 rounded-lg hover:bg-white/10 text-[#9a978f] hover:text-[#d4af37] transition"
+              className="hidden sm:inline-flex p-1.5 rounded-lg hover:bg-white/10 text-[#9a978f] hover:text-[#d4af37] transition"
               title="Alternar Modo Áudio (A)"
             >
               <Headphones className="w-4 h-4" />
@@ -402,7 +402,7 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
             {/* Next Lesson Button */}
             <button
               onClick={playNext}
-              className="p-1.5 rounded-lg hover:bg-white/10 text-[#9a978f] hover:text-[#ece9e2] transition"
+              className="hidden sm:inline-flex p-1.5 rounded-lg hover:bg-white/10 text-[#9a978f] hover:text-[#ece9e2] transition"
               title="Próxima aula (Shift+N)"
             >
               <SkipForward className="w-4 h-4" />
@@ -412,7 +412,7 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
             {onNewNote && (
               <button
                 onClick={onNewNote}
-                className="p-1.5 rounded-lg hover:bg-white/10 text-[#9a978f] hover:text-[#d4af37] transition"
+                className="hidden sm:inline-flex p-1.5 rounded-lg hover:bg-white/10 text-[#9a978f] hover:text-[#d4af37] transition"
                 title="Criar anotação neste momento (N)"
               >
                 <StickyNote className="w-4 h-4" />
@@ -422,7 +422,7 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
             {/* Theater Mode Toggle */}
             <button
               onClick={toggleTheater}
-              className={`p-1.5 rounded-lg hover:bg-white/10 transition ${
+              className={`hidden sm:inline-flex p-1.5 rounded-lg hover:bg-white/10 transition ${
                 theaterMode ? "text-[#d4af37]" : "text-[#9a978f] hover:text-[#ece9e2]"
               }`}
               title="Modo Teatro (T)"
