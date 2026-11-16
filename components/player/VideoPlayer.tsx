@@ -162,7 +162,7 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
         ref={videoElementRef}
         src={streamSrc}
         playsInline
-        preload="auto"
+        preload="metadata"
         className="w-full h-full object-contain"
         onClick={togglePlay}
         onWaiting={() => setIsBuffering(true)}

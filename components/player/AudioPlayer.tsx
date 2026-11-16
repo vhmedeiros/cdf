@@ -73,7 +73,7 @@ export default function AudioPlayer() {
       <audio
         ref={audioRef}
         src={streamSrc}
-        preload="auto"
+        preload="metadata"
         onWaiting={() => setIsBuffering(true)}
         onPlaying={() => setIsBuffering(false)}
         onCanPlay={() => setIsBuffering(false)}
