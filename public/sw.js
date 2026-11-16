@@ -1,8 +1,8 @@
 // Service Worker para shell PWA da aplicação "Aula"
-// Importante: NÃO cachear chamadas de streaming, vídeo ou APIs dinâmicas
+// Importante: NÃO cachear HTML, chamadas de streaming, vídeo ou APIs dinâmicas
 
-const CACHE_NAME = "aula-shell-v1";
-const STATIC_ASSETS = ["/", "/favicon.ico"];
+const CACHE_NAME = "aula-static-v2";
+const STATIC_ASSETS = ["/favicon.ico"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -23,30 +23,48 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  const url = new URL(event.request.url);
+  const { request } = event;
+  const url = new URL(request.url);
+
+  if (request.method !== "GET") return;
 
   // Nunca intercepta streaming, media ou chamadas de API
   if (
     url.pathname.startsWith("/api/") ||
     url.pathname.startsWith("/_drive/") ||
-    event.request.headers.get("range")
+    request.headers.get("range")
   ) {
     return;
   }
 
-  // Apenas busca na rede com fallback de cache para recursos estáticos locais
-  if (
-    url.origin === location.origin &&
-    (url.pathname.startsWith("/_next/static/") || STATIC_ASSETS.includes(url.pathname))
-  ) {
+  // Navegação sempre busca a versão nova do HTML; cache é apenas fallback offline
+  if (request.mode === "navigate") {
     event.respondWith(
-      caches.match(event.request).then((cached) => {
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(async () => {
+          return (await caches.match(request)) || (await caches.match("/"));
+        }),
+    );
+    return;
+  }
+
+  // Apenas assets estáticos com hash de conteúdo podem vir do cache
+  if (url.origin === location.origin && url.pathname.startsWith("/_next/static/")) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
         return (
           cached ||
-          fetch(event.request).then((response) => {
+          fetch(request).then((response) => {
             if (response.status === 200) {
               const copy = response.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
             }
             return response;
           })

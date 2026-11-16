@@ -24,7 +24,7 @@ const fetcher = async (url: string) => {
 export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
     if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
+      navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" }).catch(() => {});
     }
   }, []);
 
