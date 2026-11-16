@@ -38,7 +38,7 @@ Regra de trabalho: itens **P0** não devem competir com novas funcionalidades. I
 | PROD-12 | Categorias de cursos                                   | Produto      | P1         |
 | PROD-13 | Métricas de produto e comportamento                    | Produto      | P2         |
 | TECH-01 | Reconciliar a branch `feat/questions` com a `main`     | Git/entrega  | P0         |
-| TECH-02 | Corrigir os 4 erros atuais de typecheck                | Qualidade    | P0         |
+| TECH-02 | Corrigir os 4 erros atuais de typecheck                | Qualidade    | Concluído  |
 | TECH-03 | Implementar verificação de `Origin`/CSRF nas mutações  | Segurança    | P0         |
 | TECH-04 | Armazenar tokens de sessão, convite e reset como hash  | Segurança    | P1         |
 | TECH-05 | Confirmar qual commit está em produção na VM           | Operação     | Concluído  |
@@ -390,7 +390,7 @@ Regra de trabalho: itens **P0** não devem competir com novas funcionalidades. I
 
 ## 9. Qualidade, testes e documentação
 
-### TECH-02 — Corrigir os 4 erros de typecheck
+### TECH-02 — Corrigir os 4 erros de typecheck (concluído)
 
 - **Contexto:** `node node_modules/typescript/bin/tsc --noEmit` reportava `tree` possivelmente `null` em:
   - `tests/integration/api/v1/notes/notes.test.ts`;
@@ -398,9 +398,9 @@ Regra de trabalho: itens **P0** não devem competir com novas funcionalidades. I
   - `tests/integration/api/v1/reviews/reviews.test.ts`;
   - `tests/integration/api/v1/search/search.test.ts`.
 - **Correção aplicada:** guarda `if (!tree) throw new Error("Course tree not found")` nos 4 testes; script `npm run typecheck` e step `Run Typecheck` adicionados ao CI.
-- **Status:** `npm run typecheck`, ESLint e Prettier passam localmente em 2026-11-16; falta commit/push para o CI validar.
+- **Status:** concluído em 2026-11-16; commit `aa3db30` e CI #45 com `Run Typecheck` e testes de integração verdes.
 - **Critério de aceite:** `tsc --noEmit` sem erros.
-- **Prioridade:** P0.
+- **Prioridade:** Concluído.
 
 ### TECH-09 — Cobertura de rotas administrativas e erros
 
