@@ -72,8 +72,9 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse) {
   const isCached = isMediaCached(material.drive_file_id, material.mime);
   const streamMode = process.env.STREAM_MODE || "node";
 
-  // 3a. Se já está em cache local e em modo Nginx: Nginx serve em alta performance via X-Accel-Redirect
-  if (isCached && streamMode === "nginx") {
+  // 3a. Cache + Nginx sem Range: Nginx serve em alta performance via X-Accel-Redirect.
+  // Com Range, usamos o Node para garantir HTTP 206 e evitar download integral do arquivo.
+  if (isCached && streamMode === "nginx" && !rangeHeader) {
     const ext = getExtensionFromMime(material.mime);
     const cachedFilePath = getCachePath(material.drive_file_id, material.mime);
     touchCacheFile(cachedFilePath);
