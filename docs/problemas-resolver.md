@@ -194,11 +194,14 @@ Regra de trabalho: itens **P0** não devem competir com novas funcionalidades. I
 
 ### TECH-28 — Otimizações e teste de velocidade do streaming
 
-- **Contexto:** no primeiro play, o código transmite do Drive e também baixa o arquivo inteiro em background para o cache, duplicando tráfego. O Nginx não tem `proxy_buffering off` para a rota de stream e o cache local tem teto de 50 GB.
+- **Contexto:** no primeiro play, o código transmite do Drive e também baixa o arquivo inteiro em background para o cache, duplicando tráfego. O Nginx já tem `proxy_buffering off` para a rota de stream e o cache local tem teto de 50 GB. A segunda medição mostrou downloads integrais (`200`) de 53–126 MB vindos do cache local e Range Requests (`206`) frios a 4–22 Mbps. O service worker cacheava HTML/chunks com cache-first e podia manter o bundle antigo; o branch de cache do Nginx também devolvia `200` mesmo com `Range`.
 - **Ação:** testar A/B com:
-  - `proxy_buffering off` e `proxy_request_buffering off` em `/api/v1/stream/`, com timeouts maiores;
+  - `proxy_buffering off` e `proxy_request_buffering off` em `/api/v1/stream/`, com timeouts maiores (aplicado);
+  - usar `streamLocalFile` quando houver `Range` em arquivo cacheado, para garantir `206` (aplicado);
+  - service worker sem cache-first de HTML e com versão nova do cache (aplicado);
   - não duplicar o download no primeiro play ou implementar tee (stream + cache na mesma requisição);
   - limitar downloads de cache a 2–4 simultâneos e não cachear arquivos acima de um limite;
+  - remover o segundo `<video autoplay>` do `GlobalMiniPlayer`;
   - preaquecer aulas populares e usar `faststart` no MP4;
   - cache HTTP para mídia e HLS 720p se o MP4 progressivo não estabilizar no mobile.
 - **Métricas:** TTFB, tempo até o primeiro frame, latência de seek, rebuffering, erros 403/429 do Drive, CPU/RAM/disco e egress.

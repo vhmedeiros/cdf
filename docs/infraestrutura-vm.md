@@ -188,13 +188,13 @@ O código dos projetos é pequeno; o consumo real está em Docker, volumes e log
 
 Material testado: `fcbbb1af-1500-46b7-99ac-289253dce69a`.
 
-| Requisição | Status | Tamanho | Tempo | Vazão aproximada |
-|---|---:|---:|---:|---:|
-| Range inicial | 206 | 545 kB | 459 ms | ~9,5 Mbps |
-| Range | 206 | 8,8 MB | 6,46 s | ~10,9 Mbps |
-| Range | 206 | 1,9 MB | 646 ms | ~23,5 Mbps |
-| Range | 206 | 24,7 MB | 38,11 s | **~5,2 Mbps** |
-| Resposta completa | 200 | 85,1 MB | 9,70 s | ~70 Mbps |
+| Requisição        | Status | Tamanho |   Tempo | Vazão aproximada |
+| ----------------- | -----: | ------: | ------: | ---------------: |
+| Range inicial     |    206 |  545 kB |  459 ms |        ~9,5 Mbps |
+| Range             |    206 |  8,8 MB |  6,46 s |       ~10,9 Mbps |
+| Range             |    206 |  1,9 MB |  646 ms |       ~23,5 Mbps |
+| Range             |    206 | 24,7 MB | 38,11 s |    **~5,2 Mbps** |
+| Resposta completa |    200 | 85,1 MB |  9,70 s |         ~70 Mbps |
 
 Observações:
 
@@ -203,6 +203,28 @@ Observações:
 - O `VideoPlayer` e o `AudioPlayer` usavam `preload="auto"`, o que pode baixar o arquivo inteiro antes de o aluno assistir. Foram alterados para `preload="metadata"`; falta rebuild/deploy.
 - O cache estava com **19,2 GB** de 50 GB. O maior arquivo cacheado é `1wJU6yH89DKvzPsCfIkg6xesGX6qdU1wd.mp4`, com **2,7 GB** — um forte candidato a 720p ou a não ser cacheado inteiro.
 - Não foi possível confirmar pelo log qual arquivo do cache corresponde ao material; a consulta de mapeamento está nos comandos de referência.
+
+### 8.1 Segunda medição — pós-deploy do player
+
+| Requisição        | Status | Tamanho |   Tempo | Vazão aproximada |
+| ----------------- | -----: | ------: | ------: | ---------------: |
+| Range             |    206 | 15,8 MB | 14,28 s |        ~8,8 Mbps |
+| Download integral |    200 | 53,0 MB |  4,61 s |         ~92 Mbps |
+| Range             |    206 |  1,9 MB |  2,19 s |        ~7,0 Mbps |
+| Download integral |    200 |  125 MB |  5,22 s |        ~191 Mbps |
+| Range             |    206 | 12,6 MB |  4,64 s |       ~21,7 Mbps |
+| Range             |    206 |  2,1 MB |  2,59 s |        ~6,5 Mbps |
+| Range             |    206 |  2,2 MB |  1,86 s |        ~9,5 Mbps |
+| Range             |    206 |  1,4 MB |  2,81 s |        ~4,0 Mbps |
+| Download integral |    200 |  126 MB |  7,33 s |        ~137 Mbps |
+
+Observações:
+
+- Os `200` de 53 MB, 125 MB e 126 MB são **downloads integrais**, mas com vazão de 92–191 Mbps: vêm do cache local/Nginx, não do Drive.
+- Os `206` continuam lentos no primeiro acesso (4–22 Mbps), confirmando que o gargalo é o **Drive/cache frio**.
+- O service worker antigo fazia cache-first de `/` e `/_next/static/`, podendo continuar servindo o bundle com `preload="auto"`; corrigido para network-first no HTML e cache versionado (`aula-static-v2`).
+- O branch de cache do Nginx retornava `200` mesmo com `Range`; agora requisições com `Range` usam `streamLocalFile` no Node, garantindo `206`.
+- Ainda há duplicação potencial no `GlobalMiniPlayer`, que abre um segundo `<video autoplay>` ao rolar a página.
 
 ---
 
