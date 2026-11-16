@@ -8,13 +8,13 @@
 
 ## 1. Como usar este documento
 
-| Código | Significado |
-|---|---|
-| **P0** | Bloqueador. Resolver antes do próximo deploy relevante ou antes de abrir para usuários. |
-| **P1** | Alta prioridade. Próximo ciclo de desenvolvimento. |
-| **P2** | Melhoria ou dívida tolerável no curto prazo. |
-| **Decisão** | Depende de definição do dono do produto. |
-| **Técnico** | Depende de implementação no código/infra. |
+| Código      | Significado                                                                             |
+| ----------- | --------------------------------------------------------------------------------------- |
+| **P0**      | Bloqueador. Resolver antes do próximo deploy relevante ou antes de abrir para usuários. |
+| **P1**      | Alta prioridade. Próximo ciclo de desenvolvimento.                                      |
+| **P2**      | Melhoria ou dívida tolerável no curto prazo.                                            |
+| **Decisão** | Depende de definição do dono do produto.                                                |
+| **Técnico** | Depende de implementação no código/infra.                                               |
 
 Regra de trabalho: itens **P0** não devem competir com novas funcionalidades. Itens de produto devem ser decididos antes de investir em implementação que dependa deles.
 
@@ -22,37 +22,37 @@ Regra de trabalho: itens **P0** não devem competir com novas funcionalidades. I
 
 ## 2. Resumo executivo
 
-| ID | Item | Tipo | Prioridade |
-|---|---|---|---|
-| PROD-01 | Definir nome definitivo da plataforma | Decisão | P1 |
-| PROD-02 | Definir domínio oficial | Decisão | P1 |
-| PROD-03 | Definir modelo de operação: fechado ou comercial | Decisão | P0 |
-| PROD-04 | Configurar SMTP transacional de produção | Infra | P0 |
-| PROD-05 | Configurar monitoramento com Sentry | Infra | P2 |
-| PROD-06 | Fechar taxonomia inicial de disciplinas e assuntos | Conteúdo | P1 |
-| PROD-07 | Definir bancas prioritárias do importador | Conteúdo | P1 |
-| PROD-08 | Formalizar diretriz de direitos autorais das questões | Política | P0 |
-| PROD-09 | Gerar e configurar a chave Gemini | IA | P1 |
-| PROD-10 | Editar nome e descrição dos cursos | Produto | P1 |
-| PROD-11 | Busca, filtro e paginação de cursos | Produto | P1 |
-| PROD-12 | Categorias de cursos | Produto | P1 |
-| PROD-13 | Métricas de produto e comportamento | Produto | P2 |
-| TECH-01 | Reconciliar a branch `feat/questions` com a `main` | Git/entrega | P0 |
-| TECH-02 | Corrigir os 4 erros atuais de typecheck | Qualidade | P0 |
-| TECH-03 | Implementar verificação de `Origin`/CSRF nas mutações | Segurança | P0 |
-| TECH-04 | Armazenar tokens de sessão, convite e reset como hash | Segurança | P1 |
-| TECH-05 | Confirmar qual commit está em produção na VM | Operação | P0 |
-| TECH-06 | Validar streaming real com volume de cache e Nginx | Infra | P0 |
-| TECH-07 | Alinhar `CLAUDE.md` ao que realmente está implementado | Documentação | P1 |
-| TECH-08 | Implementar sync incremental do Drive | Drive | P1 |
-| TECH-09 | Implementar testes das rotas administrativas e erros | Qualidade | P1 |
-| TECH-10 | Concluir a fase 10: ingestão de provas em PDF | Questões | P1 |
-| TECH-24 | Melhorar player e reprodução no mobile | Experiência | P1 |
-| TECH-25 | Corrigir scroll da sidebar de aulas no mobile | Bug | P1 |
-| TECH-26 | Robustez do preview/sync do Drive | Drive | P0 |
-| TECH-27 | Pipeline 720p e variantes de mídia | Mídia | P1 |
-| TECH-28 | Otimizações e teste de velocidade do streaming | Mídia | P1 |
-| TECH-29 | Plano de capacidade para 20 simultâneos e 5 TB | Infra | P1 |
+| ID      | Item                                                   | Tipo         | Prioridade |
+| ------- | ------------------------------------------------------ | ------------ | ---------- |
+| PROD-01 | Definir nome definitivo da plataforma                  | Decisão      | P1         |
+| PROD-02 | Definir domínio oficial                                | Decisão      | P1         |
+| PROD-03 | Definir modelo de operação: fechado ou comercial       | Decisão      | P0         |
+| PROD-04 | Configurar SMTP transacional de produção               | Infra        | P0         |
+| PROD-05 | Configurar monitoramento com Sentry                    | Infra        | P2         |
+| PROD-06 | Fechar taxonomia inicial de disciplinas e assuntos     | Conteúdo     | P1         |
+| PROD-07 | Definir bancas prioritárias do importador              | Conteúdo     | P1         |
+| PROD-08 | Formalizar diretriz de direitos autorais das questões  | Política     | P0         |
+| PROD-09 | Gerar e configurar a chave Gemini                      | IA           | P1         |
+| PROD-10 | Editar nome e descrição dos cursos                     | Produto      | P1         |
+| PROD-11 | Busca, filtro e paginação de cursos                    | Produto      | P1         |
+| PROD-12 | Categorias de cursos                                   | Produto      | P1         |
+| PROD-13 | Métricas de produto e comportamento                    | Produto      | P2         |
+| TECH-01 | Reconciliar a branch `feat/questions` com a `main`     | Git/entrega  | P0         |
+| TECH-02 | Corrigir os 4 erros atuais de typecheck                | Qualidade    | P0         |
+| TECH-03 | Implementar verificação de `Origin`/CSRF nas mutações  | Segurança    | P0         |
+| TECH-04 | Armazenar tokens de sessão, convite e reset como hash  | Segurança    | P1         |
+| TECH-05 | Confirmar qual commit está em produção na VM           | Operação     | P0         |
+| TECH-06 | Validar streaming real com volume de cache e Nginx     | Infra        | P0         |
+| TECH-07 | Alinhar `CLAUDE.md` ao que realmente está implementado | Documentação | P1         |
+| TECH-08 | Implementar sync incremental do Drive                  | Drive        | P1         |
+| TECH-09 | Implementar testes das rotas administrativas e erros   | Qualidade    | P1         |
+| TECH-10 | Concluir a fase 10: ingestão de provas em PDF          | Questões     | P1         |
+| TECH-24 | Melhorar player e reprodução no mobile                 | Experiência  | P1         |
+| TECH-25 | Corrigir scroll da sidebar de aulas no mobile          | Bug          | P1         |
+| TECH-26 | Robustez do preview/sync do Drive                      | Drive        | P0         |
+| TECH-27 | Pipeline 720p e variantes de mídia                     | Mídia        | P1         |
+| TECH-28 | Otimizações e teste de velocidade do streaming         | Mídia        | P1         |
+| TECH-29 | Plano de capacidade para 20 simultâneos e 5 TB         | Infra        | P1         |
 
 ---
 
