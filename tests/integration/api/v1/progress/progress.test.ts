@@ -86,6 +86,7 @@ describe("Progress API (/api/v1/progress)", () => {
       });
 
       const tree = await CourseModel.getTree(course.id);
+      if (!tree) throw new Error("Course tree not found");
       const materialId = tree.modules[0].lessons[0].materials[0].id;
 
       // 3. Atualiza progresso para 50 segundos (50%) -> Não deve estar concluído

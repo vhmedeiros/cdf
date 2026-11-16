@@ -41,7 +41,7 @@ Regra de trabalho: itens **P0** não devem competir com novas funcionalidades. I
 | TECH-02 | Corrigir os 4 erros atuais de typecheck                | Qualidade    | P0         |
 | TECH-03 | Implementar verificação de `Origin`/CSRF nas mutações  | Segurança    | P0         |
 | TECH-04 | Armazenar tokens de sessão, convite e reset como hash  | Segurança    | P1         |
-| TECH-05 | Confirmar qual commit está em produção na VM           | Operação     | P0         |
+| TECH-05 | Confirmar qual commit está em produção na VM           | Operação     | Concluído  |
 | TECH-06 | Validar streaming real com volume de cache e Nginx     | Infra        | P0         |
 | TECH-07 | Alinhar `CLAUDE.md` ao que realmente está implementado | Documentação | P1         |
 | TECH-08 | Implementar sync incremental do Drive                  | Drive        | P1         |
@@ -53,6 +53,7 @@ Regra de trabalho: itens **P0** não devem competir com novas funcionalidades. I
 | TECH-27 | Pipeline 720p e variantes de mídia                     | Mídia        | P1         |
 | TECH-28 | Otimizações e teste de velocidade do streaming         | Mídia        | P1         |
 | TECH-29 | Plano de capacidade para 20 simultâneos e 5 TB         | Infra        | P1         |
+| TECH-30 | Normalizar containers e validar mídia do Drive         | Mídia        | P1         |
 
 ---
 
@@ -168,16 +169,16 @@ Regra de trabalho: itens **P0** não devem competir com novas funcionalidades. I
 - **Ação:** criar projeto no Sentry e configurar o DSN. Opcional para o uso inicial, recomendado antes de abrir para mais usuários.
 - **Prioridade:** P2.
 
-### TECH-05 — Confirmar o commit em produção
+### TECH-05 — Confirmar o commit em produção (concluído)
 
-- **Contexto:** a `main` está em `640840e`, mas a documentação manda confirmar qual commit está rodando na VM.
-- **Ação:** verificar `git rev-parse HEAD` na VM e comparar com a `main`; registrar o resultado.
+- **Contexto:** a `main` está em `6036f64`, e a VM foi confirmada no mesmo commit.
+- **Status:** confirmado em 2026-11-16: `HEAD`, `origin/main` e `origin/HEAD` em `6036f64`; working tree limpo.
 - **Critério de aceite:** commit de produção documentado e deploy reproduzível.
-- **Prioridade:** P0.
+- **Prioridade:** Concluído.
 
 ### TECH-06 — Validar streaming no ambiente real
 
-- **Contexto:** o fluxo de produção depende do volume compartilhado `cdf_prod_media`, do `alias /var/cache/media/` no Nginx e do cache LRU em disco.
+- **Contexto:** o fluxo de produção depende do volume compartilhado `cdf_prod_media`, do `alias /var/cache/media/` no Nginx e do cache LRU em disco. Em 2026-11-16 foram validados `206`, cache quente e a correção do service worker; ainda faltam PDF inline, áudio, seek em mobile e limpeza do LRU.
 - **Riscos:** cache vazio no primeiro acesso, permissões do volume, range requests quebrados, cache crescendo sem controle e divergência entre `STREAM_MODE=node` e `nginx`.
 - **Ação:** testar vídeo grande com seek, PDF inline, áudio, primeiro acesso e acesso repetido; confirmar HTTP 206, `Content-Range` e limpeza do LRU.
 - **Critério de aceite:** seek funciona no desktop e no celular; cache é preenchido e limpo corretamente; token do Drive não aparece no navegador.
@@ -188,7 +189,7 @@ Regra de trabalho: itens **P0** não devem competir com novas funcionalidades. I
 - **Decisão:** todo vídeo deve ser servido em **720p** por padrão, para reduzir o consumo de dados e o egress.
 - **Contexto:** a API do Google Drive entrega o arquivo original; não existe parâmetro de resolução. Portanto, “tocar em 720p” só reduz banda se existir uma variante 720p transcodificada. Redimensionar no CSS/player não reduz o download.
 - **Infra:** Google Drive Pro com **5 TB** (cerca de 2 TB de cursos, ~3 TB livres). O restante da stack é gratuito (Oracle Always Free, Postgres, Redis, Nginx/Caddy), mas o egress do Oracle tem limite mensal.
-- **Ação:** gerar proxy 720p H.264/AAC com `-movflags +faststart`, bitrate aproximado de 1,5–2,5 Mbps e áudio 96–128 kbps. Mapear `material -> variante` (tabela `media_variants` ou campo `stream_drive_file_id`), usar o proxy no streaming e manter o original como arquivo/fallback. Transcodificar sob demanda no worker, com fila e concorrência 1–2; não transcodificar o que já é ≤720p e compatível.
+- **Ação:** gerar proxy 720p H.264/AAC com `-movflags +faststart`, bitrate aproximado de 1,5–2,5 Mbps e áudio 96–128 kbps. Mapear `material -> variante` (tabela `media_variants` ou campo `stream_drive_file_id`), usar o proxy no streaming e manter o original como arquivo/fallback. Transcodificar sob demanda no worker, com fila e concorrência 1–2; não transcodificar o que já é ≤720p e compatível. Antes de decidir, rodar `ffprobe` e normalizar o container: arquivos TS/MKV renomeados como `.mp4` devem ser remuxados para MP4 faststart.
 - **Critério de aceite:** o player recebe 720p; consumo cai para ~0,7–1,1 GB por hora; original preservado; seek e mobile continuam funcionando.
 - **Prioridade:** P1.
 
@@ -214,6 +215,14 @@ Regra de trabalho: itens **P0** não devem competir com novas funcionalidades. I
 - **Avaliação:** 20 streams em 720p (~1,5–2,5 Mbps) cabem no egress mensal em uso moderado; o risco principal é o Google Drive não ser CDN, o cache de 50 GB ser pequeno para 2 TB e o download duplicado. 2 TB de armazenamento no Drive não é gratuito, mas já está contratado.
 - **Ação:** executar teste de carga com 5, 10 e 20 sessões; medir egress; manter cache quente das aulas mais vistas; limitar conexões por usuário; monitorar 429/403; só migrar para R2/B2/Wasabi/Cloudflare Stream se o uso crescer além disso.
 - **Critério de aceite:** 20 sessões simultâneas por 30 minutos sem erro e sem rebuffering, com relatório de egress e cache hit.
+- **Prioridade:** P1.
+
+### TECH-30 — Normalizar containers e validar mídia do Drive
+
+- **Contexto:** a aula `5c3d6b3b-19a6-44ec-b4dc-d4d13b80631e` (`drive_file_id` `1wJU6yH89DKvzPsCfIkg6xesGX6qdU1wd`, 2,86 GB, 2h55) está marcada como `video/mp4`, mas o conteúdo é **MPEG-TS**: primeiro byte `0x47`, metadados `FFmpeg.Service` no payload e boxes MP4 inválidos. O md5 do cache confere com o `md5Checksum` do Drive, então o download está íntegro; o problema é o container/formato. O Chrome não reproduz TS via `<video src>`.
+- **Impacto:** aulas específicas não carregam, o cache baixa 2,7 GB e o usuário não consegue distinguir problema de arquivo de problema de rede/player. Há também um material duplicado `.temp` (`12RRjuH0Ff3Jw_us-9GdhvxegaM6DUTK2`, 2,58 GB) que pode ser upload incompleto.
+- **Ação:** validar magic bytes e `ffprobe` no sync ou no primeiro play; normalizar para MP4 H.264/AAC com `-movflags +faststart`; se necessário, gerar proxy 720p e salvar no Drive; registrar a variante em `media_variants`/`stream_drive_file_id`; não confiar apenas em extensão e `mimeType`.
+- **Critério de aceite:** toda mídia reproduz no Chrome/Safari; TS/MKV/AVI renomeados são remuxados ou transcodificados; arquivo inválido gera erro explícito para o admin; md5 e tamanho são verificados após o download.
 - **Prioridade:** P1.
 
 ### TECH-11 — Limpar o placeholder `X-Drive-Token`
@@ -383,12 +392,13 @@ Regra de trabalho: itens **P0** não devem competir com novas funcionalidades. I
 
 ### TECH-02 — Corrigir os 4 erros de typecheck
 
-- **Contexto:** `node node_modules/typescript/bin/tsc --noEmit` reporta `tree` possivelmente `null` em:
+- **Contexto:** `node node_modules/typescript/bin/tsc --noEmit` reportava `tree` possivelmente `null` em:
   - `tests/integration/api/v1/notes/notes.test.ts`;
   - `tests/integration/api/v1/progress/progress.test.ts`;
   - `tests/integration/api/v1/reviews/reviews.test.ts`;
   - `tests/integration/api/v1/search/search.test.ts`.
-- **Ação:** adicionar asserção de não-nulo ou tipagem correta; garantir que o typecheck faça parte do CI.
+- **Correção aplicada:** guarda `if (!tree) throw new Error("Course tree not found")` nos 4 testes; script `npm run typecheck` e step `Run Typecheck` adicionados ao CI.
+- **Status:** `npm run typecheck`, ESLint e Prettier passam localmente em 2026-11-16; falta commit/push para o CI validar.
 - **Critério de aceite:** `tsc --noEmit` sem erros.
 - **Prioridade:** P0.
 

@@ -29,5 +29,8 @@ jobs:
       - name: Run Prettier check
         run: npm run lint:prettier:check
 
+      - name: Run Typecheck
+        run: npm run typecheck
+
       - name: Run Integration Tests
         run: npm test

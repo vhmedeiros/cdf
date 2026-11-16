@@ -83,6 +83,7 @@ describe("Reviews & Stats API (/api/v1/me/reviews & /api/v1/me/stats)", () => {
       });
 
       const tree = await CourseModel.getTree(course.id);
+      if (!tree) throw new Error("Course tree not found");
       const materialId = tree.modules[0].lessons[0].materials[0].id;
 
       // 3. Aluno assiste até 95 segundos (>= 90% de 100s -> auto-completes)

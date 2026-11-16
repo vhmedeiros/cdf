@@ -23,6 +23,7 @@
     "lint:eslint:check": "next lint",
     "lint:prettier:check": "prettier --check .",
     "lint:prettier:fix": "prettier --write .",
+    "typecheck": "tsc --noEmit",
     "test": "npm run services:up && npm run services:wait:database && npm run migrations:up && concurrently -n next,jest -k -s command-jest \"next dev\" \"jest --runInBand\"",
     "test:watch": "concurrently -n next,jest -k -s command-jest \"next dev\" \"jest --watch --runInBand\"",
     "test:e2e": "playwright test",

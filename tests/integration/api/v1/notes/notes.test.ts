@@ -79,6 +79,7 @@ describe("Notes API (/api/v1/notes)", () => {
       });
 
       const tree = await CourseModel.getTree(course.id);
+      if (!tree) throw new Error("Course tree not found");
       const materialId = tree.modules[0].lessons[0].materials[0].id;
 
       // 3. Cria uma anotação com timestamp 45.2s

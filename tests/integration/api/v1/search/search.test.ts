@@ -82,6 +82,7 @@ describe("Search API (/api/v1/search)", () => {
       });
 
       const tree = await CourseModel.getTree(course.id);
+      if (!tree) throw new Error("Course tree not found");
       const materialId = tree.modules[0].lessons[0].materials[0].id;
 
       // 4. Cria anotação com acentos para o aluno
