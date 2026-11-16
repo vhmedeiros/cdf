@@ -22,12 +22,12 @@ Além dos cursos, existe uma **plataforma de questões de concursos** integrada,
 
 ## 2. Estado das branches
 
-| Branch | Situação |
-|---|---|
-| `main` | Em `640840e`, com README e screenshot. Contém fases 0–8 e a fase 8.1 mobile já mergeada. |
-| `feat/questions` | Em `84f153f`, 3 commits à frente do ponto de divergência `7f8235d`. Contém schema, models, API, UI, seed, roteador de IA e testes da fase 9. |
-| `feat/mobile-responsive` | Já incorporada à `main` (0 commits à frente). |
-| `fix/mobile-collapse-flat-courses` | Já mergeada na `main` via PR #1. |
+| Branch                             | Situação                                                                                                                                     |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `main`                             | Em `640840e`, com README e screenshot. Contém fases 0–8 e a fase 8.1 mobile já mergeada.                                                     |
+| `feat/questions`                   | Em `84f153f`, 3 commits à frente do ponto de divergência `7f8235d`. Contém schema, models, API, UI, seed, roteador de IA e testes da fase 9. |
+| `feat/mobile-responsive`           | Já incorporada à `main` (0 commits à frente).                                                                                                |
+| `fix/mobile-collapse-flat-courses` | Já mergeada na `main` via PR #1.                                                                                                             |
 
 Ponto importante: `feat/questions` divergiu **antes** dos últimos ajustes da `main` (README, correções de mobile, `.gitattributes`, sync idempotente). Ela precisa ser reconciliada antes de ir para produção. Há também um `docs/panorama-do-projeto.md` não rastreado no working tree.
 
@@ -35,17 +35,17 @@ Ponto importante: `feat/questions` divergiu **antes** dos últimos ajustes da `m
 
 ## 3. Stack
 
-| Camada | Tecnologias |
-|---|---|
-| Frontend | Next.js 15.2.1 (Pages Router), React 19, TypeScript strict, Tailwind CSS v4, SWR, cmdk, Lucide |
-| Mídia | Vídeo HTML5 nativo, `react-pdf` (pdf.js), Web Audio API para volume/Pomodoro |
-| Backend | API Routes, `next-connect`, Zod, bcryptjs, nodemailer |
-| Banco | PostgreSQL 17 com SQL puro via `pg`, `node-pg-migrate`, extensão `unaccent`, `pgvector` na branch de questões |
-| Cache/filas | Redis 7 com `ioredis`, BullMQ |
-| Drive | Service Account + `google-auth-library` + `fetch` nativo |
-| Infra | Docker Compose, Nginx, Caddy externo, imagens ARM64, Oracle Cloud A1 |
-| Qualidade | Jest, Playwright, ESLint, Prettier, Husky, Commitlint, Commitizen |
-| IA (branch) | Google Gemini via HTTP, `config/ai-chains.yaml` validado com Zod |
+| Camada      | Tecnologias                                                                                                   |
+| ----------- | ------------------------------------------------------------------------------------------------------------- |
+| Frontend    | Next.js 15.2.1 (Pages Router), React 19, TypeScript strict, Tailwind CSS v4, SWR, cmdk, Lucide                |
+| Mídia       | Vídeo HTML5 nativo, `react-pdf` (pdf.js), Web Audio API para volume/Pomodoro                                  |
+| Backend     | API Routes, `next-connect`, Zod, bcryptjs, nodemailer                                                         |
+| Banco       | PostgreSQL 17 com SQL puro via `pg`, `node-pg-migrate`, extensão `unaccent`, `pgvector` na branch de questões |
+| Cache/filas | Redis 7 com `ioredis`, BullMQ                                                                                 |
+| Drive       | Service Account + `google-auth-library` + `fetch` nativo                                                      |
+| Infra       | Docker Compose, Nginx, Caddy externo, imagens ARM64, Oracle Cloud A1                                          |
+| Qualidade   | Jest, Playwright, ESLint, Prettier, Husky, Commitlint, Commitizen                                             |
+| IA (branch) | Google Gemini via HTTP, `config/ai-chains.yaml` validado com Zod                                              |
 
 Curiosidade técnica: `@vidstack/react` está no `package.json`, mas o player principal da `main` usa `<video>` nativo (`components/player/VideoPlayer.tsx:161`). O Vidstack não é usado no código atual.
 
@@ -80,7 +80,7 @@ Processo Node e worker são separados. O worker compartilha os mesmos `models/` 
 ### 5.1 Autenticação e autorização
 
 - Sessão própria na tabela `sessions`, token aleatório no cookie `session_id`, `httpOnly`, `SameSite=Lax`, `Secure` em produção.
-- Expiração de 30 dias renovada a cada uso (*sliding session*) em `infra/controller.ts:24` e `models/session.ts:23`.
+- Expiração de 30 dias renovada a cada uso (_sliding session_) em `infra/controller.ts:24` e `models/session.ts:23`.
 - Senhas com bcrypt e proteção contra timing attack em `models/user.ts:104`.
 - Sem cadastro público: entrada por **convite** com token de 7 dias e uso único, ou criação por admin.
 - Reset de senha com token de 2 horas e envio por nodemailer/Mailcatcher.
@@ -175,12 +175,12 @@ Ainda não implementado nessa branch:
 
 ### Núcleo de cursos — 15 tabelas
 
-| Grupo | Tabelas |
-|---|---|
-| Contas | `users`, `sessions`, `invites`, `password_resets` |
-| Cursos | `courses`, `modules`, `lessons`, `materials`, `enrollments`, `sync_runs` |
-| Aprendizado | `progress`, `notes`, `user_preferences` |
-| Engajamento | `study_days`, `reviews` |
+| Grupo       | Tabelas                                                                  |
+| ----------- | ------------------------------------------------------------------------ |
+| Contas      | `users`, `sessions`, `invites`, `password_resets`                        |
+| Cursos      | `courses`, `modules`, `lessons`, `materials`, `enrollments`, `sync_runs` |
+| Aprendizado | `progress`, `notes`, `user_preferences`                                  |
+| Engajamento | `study_days`, `reviews`                                                  |
 
 Características:
 
@@ -204,22 +204,22 @@ O `questions.embedding` é `vector(768)` com `pgvector`, já preparado para busc
 
 A `main` tem 33 arquivos de rota em `pages/api/v1`; a branch de questões chega a 38.
 
-| Área | Rotas principais |
-|---|---|
-| Sistema | `GET /status` |
-| Sessão | `POST/DELETE /sessions`, `GET /user`, `PATCH /user/password` |
-| Convites | `GET/PATCH /invites/[token]` |
-| Senha | `POST /password-resets`, `PATCH /password-resets/[token]` |
-| Cursos | `GET /courses`, `GET /courses/[slug]` |
-| Materiais | `GET /materials/[id]`, `GET /stream/[id]` |
-| Progresso | `GET/PUT /progress/[materialId]`, `POST /progress/batch` |
-| Notas | `GET/POST /notes`, `PATCH/DELETE /notes/[id]` |
-| Busca | `GET /search` |
-| Estatísticas | `GET /me/stats`, `GET /me/reviews`, `PATCH /me/preferences` |
-| Revisões | `GET /me/reviews`, `POST /me/reviews/[id]/complete` |
-| Admin de cursos | CRUD, `preview`, `sync`, `publish`, `enrollments`, `enroll-all` |
-| Admin de usuários/convites | `GET/POST /admin/users`, `GET/POST/DELETE /admin/invites`, `/admin/enrollments` |
-| Questões (branch) | `/subjects`, `/questions`, `/questions/[id]`, `/questions/[id]/answers`, `/me/daily-goals` |
+| Área                       | Rotas principais                                                                           |
+| -------------------------- | ------------------------------------------------------------------------------------------ |
+| Sistema                    | `GET /status`                                                                              |
+| Sessão                     | `POST/DELETE /sessions`, `GET /user`, `PATCH /user/password`                               |
+| Convites                   | `GET/PATCH /invites/[token]`                                                               |
+| Senha                      | `POST /password-resets`, `PATCH /password-resets/[token]`                                  |
+| Cursos                     | `GET /courses`, `GET /courses/[slug]`                                                      |
+| Materiais                  | `GET /materials/[id]`, `GET /stream/[id]`                                                  |
+| Progresso                  | `GET/PUT /progress/[materialId]`, `POST /progress/batch`                                   |
+| Notas                      | `GET/POST /notes`, `PATCH/DELETE /notes/[id]`                                              |
+| Busca                      | `GET /search`                                                                              |
+| Estatísticas               | `GET /me/stats`, `GET /me/reviews`, `PATCH /me/preferences`                                |
+| Revisões                   | `GET /me/reviews`, `POST /me/reviews/[id]/complete`                                        |
+| Admin de cursos            | CRUD, `preview`, `sync`, `publish`, `enrollments`, `enroll-all`                            |
+| Admin de usuários/convites | `GET/POST /admin/users`, `GET/POST/DELETE /admin/invites`, `/admin/enrollments`            |
+| Questões (branch)          | `/subjects`, `/questions`, `/questions/[id]`, `/questions/[id]/answers`, `/me/daily-goals` |
 
 Formato de erro padronizado: `{ name, message, action, status_code }`, com mensagens em PT-BR.
 
