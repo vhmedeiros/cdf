@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   AlertCircle,
   Check,
@@ -128,7 +129,9 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
 
   const inputType = showPasswords ? "text" : "password";
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <div
       className="fixed inset-0 z-[60] overflow-y-auto overscroll-contain bg-black/80 backdrop-blur-sm animate-fade-in"
       onClick={onClose}
@@ -291,6 +294,7 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
           </form>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
