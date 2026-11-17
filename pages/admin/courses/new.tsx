@@ -39,6 +39,21 @@ interface PreviewData {
   warning?: string;
 }
 
+async function readJsonSafely(res: Response): Promise<any> {
+  const text = await res.text();
+  if (!text) return {};
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return {
+      message:
+        text.trim().slice(0, 300) ||
+        "O servidor retornou uma resposta inválida. Tente novamente em instantes.",
+    };
+  }
+}
+
 export default function NewCourseAdminPage() {
   const router = useRouter();
 
@@ -99,7 +114,7 @@ export default function NewCourseAdminPage() {
         }),
       });
 
-      const data = await res.json();
+      const data = await readJsonSafely(res);
       if (!res.ok) {
         throw new Error(data.message || "Erro ao consultar Google Drive.");
       }
@@ -138,24 +153,39 @@ export default function NewCourseAdminPage() {
         }),
       });
 
-      const createData = await createRes.json();
+      const createData = await readJsonSafely(createRes);
       if (!createRes.ok) {
         throw new Error(createData.message || "Erro ao criar curso no banco.");
       }
 
       const courseId = createData.id;
 
-      // 2. Dispara a sincronização e autoinscrição do admin
+      // 2. Sincroniza a pasta. O curso nasce como rascunho para não ficar vazio.
       const syncRes = await fetch(`/api/v1/admin/courses/${courseId}/sync?direct=true`, {
         method: "POST",
       });
 
+      const syncData = await readJsonSafely(syncRes);
       if (!syncRes.ok) {
-        const syncData = await syncRes.json();
-        throw new Error(syncData.message || "Curso criado, mas falhou ao sincronizar arquivos.");
+        throw new Error(
+          syncData.message ||
+            "Curso criado como rascunho, mas falhou ao sincronizar. Ressincronize no painel admin.",
+        );
       }
 
-      // 3. Sucesso! Redireciona para a sala de aula do novo curso
+      // 3. Só publica (e matricula alunos) depois que o sync terminou com sucesso.
+      const publishRes = await fetch(`/api/v1/admin/courses/${courseId}/publish`, {
+        method: "POST",
+      });
+      const publishData = await readJsonSafely(publishRes);
+      if (!publishRes.ok) {
+        throw new Error(
+          publishData.message ||
+            "Curso sincronizado, mas não foi possível publicar. Publique no painel admin.",
+        );
+      }
+
+      // 4. Sucesso! Redireciona para a sala de aula do novo curso
       router.push(`/courses/${slug.trim()}`);
     } catch (err: any) {
       setSaveError(err.message || "Erro durante o cadastro do curso.");

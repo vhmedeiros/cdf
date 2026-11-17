@@ -4,8 +4,11 @@ import { z } from "zod";
 import controller from "@/infra/controller";
 import { ValidationError } from "@/infra/errors";
 import CourseModel, { LessonStrategy } from "@/models/course";
-import EnrollmentModel from "@/models/enrollment";
-import { extractFolderId } from "@/services/drive/client";
+import {
+  extractFolderId,
+  getDriveFileMetadata,
+  GOOGLE_DRIVE_FOLDER_MIME,
+} from "@/services/drive/client";
 
 const router = createRouter<NextApiRequest, NextApiResponse>();
 
@@ -48,12 +51,19 @@ async function postHandler(req: NextApiRequest, res: NextApiResponse) {
   const driveFolderId = extractFolderId(drive_url);
   if (!driveFolderId) {
     throw new ValidationError({
-      message:
-        "Não foi possível identificar o ID da pasta do Google Drive a partir do link fornecido.",
+      message: "O link informado não é de uma pasta do Google Drive.",
+      action:
+        "Cole um link de pasta (ex: https://drive.google.com/drive/folders/...) ou o ID da pasta. Links de arquivo (/file/d/...) não criam curso.",
     });
   }
 
-  const adminUser = req.context.user as any;
+  const metadata = await getDriveFileMetadata(driveFolderId);
+  if (metadata && metadata.mimeType !== GOOGLE_DRIVE_FOLDER_MIME) {
+    throw new ValidationError({
+      message: "O link informado aponta para um arquivo, não para uma pasta.",
+      action: "Abra a pasta no Google Drive e copie o link de compartilhamento dela.",
+    });
+  }
 
   const course = await CourseModel.create({
     title,
@@ -63,13 +73,14 @@ async function postHandler(req: NextApiRequest, res: NextApiResponse) {
     driveUrl: drive_url,
     driveFolderId,
     lessonStrategy: lesson_strategy as LessonStrategy,
-    status: "published",
+    status: "draft",
   });
 
-  // Auto-matricula todos os usuários no novo curso publicado
-  await EnrollmentModel.enrollAllUsersInCourse(course.id, adminUser?.id);
-
-  return res.status(201).json(course);
+  return res.status(201).json({
+    ...course,
+    message:
+      "Curso criado como rascunho. Sincronize para importar as aulas e depois publique para os alunos.",
+  });
 }
 
 export default router.handler(controller.errorHandlers);

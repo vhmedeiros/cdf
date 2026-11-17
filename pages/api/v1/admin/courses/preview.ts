@@ -5,7 +5,12 @@ import controller from "@/infra/controller";
 import { ValidationError } from "@/infra/errors";
 import { LessonStrategy } from "@/models/course";
 import { buildTree } from "@/services/drive/buildTree";
-import { extractFolderId, fetchDriveFolderItems } from "@/services/drive/client";
+import {
+  extractFolderId,
+  fetchDriveFolderItems,
+  getDriveFileMetadata,
+  GOOGLE_DRIVE_FOLDER_MIME,
+} from "@/services/drive/client";
 
 const router = createRouter<NextApiRequest, NextApiResponse>();
 
@@ -29,9 +34,17 @@ async function postHandler(req: NextApiRequest, res: NextApiResponse) {
   const folderId = extractFolderId(drive_url);
   if (!folderId) {
     throw new ValidationError({
-      message: "Não foi possível identificar o ID da pasta do Google Drive a partir do link.",
+      message: "O link informado não é de uma pasta do Google Drive.",
       action:
-        "Certifique-se de colar um link válido do Google Drive (ex: https://drive.google.com/drive/folders/...)",
+        "Cole um link de pasta (ex: https://drive.google.com/drive/folders/...) ou o ID da pasta. Links de arquivo (/file/d/...) não criam curso.",
+    });
+  }
+
+  const metadata = await getDriveFileMetadata(folderId);
+  if (metadata && metadata.mimeType !== GOOGLE_DRIVE_FOLDER_MIME) {
+    throw new ValidationError({
+      message: "O link informado aponta para um arquivo, não para uma pasta.",
+      action: "Abra a pasta no Google Drive e copie o link de compartilhamento dela.",
     });
   }
 

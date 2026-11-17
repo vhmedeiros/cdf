@@ -85,8 +85,50 @@ describe("POST /api/v1/admin/courses", () => {
     expect(body.title).toBe("Direito Administrativo Avançado");
     expect(body.slug).toBe("direito-administrativo");
     expect(body.drive_folder_id).toBe("pasta-adm-456");
-    // Since 9c213c0 new courses are published right away (and everyone is enrolled)
-    expect(body.status).toBe("published");
+    // Cursos nascem como rascunho; o sync e a publicação acontecem depois.
+    expect(body.status).toBe("draft");
+  });
+
+  test("Rejects a file link and does not create a course", async () => {
+    const { default: User } = await import("@/models/user");
+    const { default: CourseModel } = await import("@/models/course");
+
+    await User.create({
+      email: "admin.arquivo@teste.com",
+      password: "senha-admin-123",
+      display_name: "Admin Arquivo",
+      features: ["create:course"],
+    });
+
+    const loginRes = await fetch("http://localhost:3000/api/v1/sessions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "admin.arquivo@teste.com",
+        password: "senha-admin-123",
+      }),
+    });
+    const cookie = loginRes.headers.get("set-cookie") || "";
+
+    const response = await fetch("http://localhost:3000/api/v1/admin/courses", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookie.split(";")[0],
+      },
+      body: JSON.stringify({
+        title: "Curso com Link de Arquivo",
+        slug: "curso-link-arquivo",
+        drive_url: "https://drive.google.com/file/d/1a2b3c4d5e/view?usp=sharing",
+      }),
+    });
+
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.name).toBe("ValidationError");
+
+    const courses = await CourseModel.findAll();
+    expect(courses.find((course) => course.slug === "curso-link-arquivo")).toBeUndefined();
   });
 });
 

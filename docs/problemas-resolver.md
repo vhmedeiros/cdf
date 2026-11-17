@@ -51,7 +51,7 @@ Foco atual: **experiência mobile primeiro**. A criação de questões, ingestã
 | TECH-10 | Concluir a fase 10: ingestão de provas em PDF          | Questões     | Adiado       |
 | TECH-24 | Melhorar player e reprodução no mobile                 | Experiência  | Concluído    |
 | TECH-25 | Corrigir scroll da sidebar de aulas no mobile          | Bug          | Concluído    |
-| TECH-26 | Robustez do preview/sync do Drive                      | Drive        | P0           |
+| TECH-26 | Robustez do preview/sync do Drive                      | Drive        | Em andamento |
 | TECH-27 | Pipeline 720p e variantes de mídia                     | Mídia        | P1           |
 | TECH-28 | Otimizações e teste de velocidade do streaming         | Mídia        | P1           |
 | TECH-29 | Plano de capacidade para 20 simultâneos e 5 TB         | Infra        | P1           |
@@ -305,10 +305,16 @@ Foco atual: **experiência mobile primeiro**. A criação de questões, ingestã
 
 ### TECH-26 — Robustez do preview/sync do Drive
 
-- **Contexto:** `extractFolderId` não reconhece links `/file/d/<ID>/view` e devolve a URL inteira; o link de exemplo é de arquivo, não de pasta. O frontend faz `res.json()` sem tratar HTML; o Nginx usa `proxy_read_timeout` padrão de 60s e pode devolver 504 HTML em pastas grandes. O curso é criado antes do sync e permanece se o sync falhar.
-- **Ação:** validar a pasta via `files.get` (`mimeType` de folder), aceitar `/file/d/` apenas para material, fazer parse seguro de JSON, aumentar/remover timeout do preview ou movê-lo para background, criar curso como `draft`/`syncing` e marcar `sync_failed` com retry em vez de deixar curso vazio. Não autoinscrever antes do sync concluir.
+- **Contexto:** `extractFolderId` aceitava qualquer coisa e devolvia a URL inteira para links `/file/d/<ID>/view`; o frontend fazia `res.json()` sem tratar HTML; o Nginx usava `proxy_read_timeout` padrão de 60s e podia devolver 504 em pastas grandes; o curso era criado como publicado antes do sync e permanecia vazio se o sync falhasse.
+- **Implementado:**
+  - `extractFolderId` retorna `null` para links de arquivo e links desconhecidos; pasta agora exige link `/folders/`, `?id=` ou ID puro;
+  - `getDriveFileMetadata` valida `mimeType` de pasta via `files.get` antes de criar/sincronizar (quando há credencial);
+  - `new.tsx` faz parse seguro do JSON (HTML de 504 vira mensagem legível);
+  - curso nasce como `draft` e só é publicado (com matrícula dos alunos) depois do sync com sucesso; falha no sync retorna erro claro e o curso fica como rascunho para ressincronizar;
+  - Nginx dá 600s de `proxy_read_timeout`/`proxy_send_timeout` para `/api/v1/admin/courses/`.
+- **Pendente:** validar na interface com um link de arquivo, com pasta grande e com pasta sem permissão; considerar mover o preview para background se ainda houver 504.
 - **Critério de aceite:** link inválido retorna erro JSON claro e não cria curso; pasta grande não gera HTML; curso com sync falho fica identificado e pode ser ressincronizado.
-- **Prioridade:** P0.
+- **Prioridade:** Em andamento.
 
 ---
 
@@ -493,3 +499,4 @@ Itens que **não devem ser implementados sem uma decisão explícita**:
 - **2026-11-16 (CSRF):** TECH-03 concluído; `injectAnonymousOrUser` valida `Origin`/`Referer` em mutações contra `WEBSERVER_ORIGIN`, com testes de integração em `tests/integration/api/v1/security/origin.test.ts`.
 - **2026-11-16 (streaming/TECH-06):** TECH-06 concluído; `streamLocalFile` trata ranges simples/inválidos e a limpeza LRU remove downloads interrompidos; `infra/scripts/validate-streaming.sh` passou em produção (206 frio/quente, 200, 416, sem token, cache 19,8 GB/50 GB). Login de aluno agora cai em **Início** (`/`).
 - **2026-11-16 (mobile/TECH-24/25):** validados em dispositivo real. TECH-24: retomada, seek, fullscreen, erro/retry, toques e PDF/áudio OK. TECH-25: lista inline e drawer rolam até o fim, sem rolagem horizontal. Ambos concluídos.
+- **2026-11-16 (TECH-26):** `extractFolderId` rejeita links de arquivo, `getDriveFileMetadata` valida pasta, frontend faz parse seguro de JSON, curso nasce como rascunho e só publica após sync, e o Nginx ganhou 600s de timeout em `/api/v1/admin/courses/`.

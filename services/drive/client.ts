@@ -25,14 +25,23 @@ export function getServiceAccountPath(): string | null {
 }
 
 /**
- * Extrai o folder ID de qualquer formato de link do Google Drive:
+ * Extrai o folder ID de um link de pasta do Google Drive:
  * - https://drive.google.com/drive/folders/1a2b3c4d5e
  * - https://drive.google.com/drive/u/0/folders/1a2b3c4d5e?usp=sharing
  * - https://drive.google.com/open?id=1a2b3c4d5e
  * - ID puro: 1a2b3c4d5e
+ *
+ * Retorna `null` para links de arquivo (`/file/d/...`), que não servem para curso.
  */
-export function extractFolderId(input: string): string {
+export function extractFolderId(input: string): string | null {
   const trimmed = input.trim();
+
+  if (!trimmed) return null;
+
+  // Link de arquivo não é pasta de curso; material usa outra rota.
+  if (/\/file\/d\//.test(trimmed)) {
+    return null;
+  }
 
   // Formato /folders/<ID>
   const foldersMatch = trimmed.match(/\/folders\/([a-zA-Z0-9_-]+)/);
@@ -46,13 +55,49 @@ export function extractFolderId(input: string): string {
     return idParamMatch[1];
   }
 
-  // Se já for o ID puro (sem barras ou pontos de interrogação)
+  // Se já for o ID puro (sem barras, pontos ou dois-pontos)
   if (/^[a-zA-Z0-9_-]+$/.test(trimmed)) {
     return trimmed;
   }
 
-  return trimmed;
+  return null;
 }
+
+export type DriveFileMetadata = {
+  id: string;
+  name: string;
+  mimeType: string;
+};
+
+/**
+ * Busca metadados de um item do Drive para validar se é pasta antes de criar/sincronizar.
+ * Retorna `null` quando não há credencial disponível ou o item não existe.
+ */
+export async function getDriveFileMetadata(fileId: string): Promise<DriveFileMetadata | null> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return null;
+
+  const url = new URL(`https://www.googleapis.com/drive/v3/files/${fileId}`);
+  url.searchParams.set("fields", "id,name,mimeType");
+  url.searchParams.set("supportsAllDrives", "true");
+
+  const response = await fetch(url.toString(), {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!response.ok) return null;
+
+  const data = await response.json();
+  if (!data?.id || !data?.mimeType) return null;
+
+  return {
+    id: data.id,
+    name: data.name || "",
+    mimeType: data.mimeType,
+  };
+}
+
+export const GOOGLE_DRIVE_FOLDER_MIME = "application/vnd.google-apps.folder";
 
 /**
  * Obtém o token de acesso da Service Account do Google Drive

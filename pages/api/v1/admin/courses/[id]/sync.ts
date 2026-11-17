@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { createRouter } from "next-connect";
 import controller from "@/infra/controller";
 import database from "@/infra/database";
-import { NotFoundError } from "@/infra/errors";
+import { NotFoundError, ValidationError } from "@/infra/errors";
 import { driveQueue } from "@/infra/queue";
 import CourseModel from "@/models/course";
 
@@ -24,14 +24,17 @@ async function postHandler(req: NextApiRequest, res: NextApiResponse) {
   // Execução direta (útil para desenvolvimento e quando o worker não estiver rodando)
   if (direct === "true") {
     const { processSyncCourse } = await import("@/worker/jobs/syncCourse");
-    const { default: EnrollmentModel } = await import("@/models/enrollment");
-    await processSyncCourse({ courseId: id });
-    if (req.context.user?.id) {
-      await EnrollmentModel.create({
-        userId: req.context.user.id,
-        courseId: id,
+
+    try {
+      await processSyncCourse({ courseId: id });
+    } catch (err: any) {
+      throw new ValidationError({
+        message: `Falha na sincronização: ${err.message || "erro desconhecido"}`,
+        action:
+          "Verifique se a pasta existe, está compartilhada com a Service Account e tente novamente. O curso fica como rascunho e pode ser ressincronizado.",
       });
     }
+
     const updated = await CourseModel.findById(id);
     return res.status(200).json({
       message: "Sincronização concluída com sucesso.",
