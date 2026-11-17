@@ -33,6 +33,7 @@ const CreateCourseSchema = z.object({
     .regex(/^[a-z0-9-]+$/, "Slug deve conter apenas letras minúsculas, números e hífens."),
   drive_url: z.string().min(1, "Link do Google Drive é obrigatório."),
   description: z.string().optional().nullable(),
+  category_id: z.string().uuid().optional().nullable(),
   lesson_strategy: z.enum(["auto", "folders", "files"]).default("auto"),
 });
 
@@ -42,7 +43,7 @@ async function postHandler(req: NextApiRequest, res: NextApiResponse) {
     throw new ValidationError({ message: parsed.error.issues[0].message });
   }
 
-  const { title, slug, drive_url, description, lesson_strategy } = parsed.data;
+  const { title, slug, drive_url, description, category_id, lesson_strategy } = parsed.data;
 
   const driveFolderId = extractFolderId(drive_url);
   if (!driveFolderId) {
@@ -58,6 +59,7 @@ async function postHandler(req: NextApiRequest, res: NextApiResponse) {
     title,
     slug,
     description: description || null,
+    categoryId: category_id || null,
     driveUrl: drive_url,
     driveFolderId,
     lessonStrategy: lesson_strategy as LessonStrategy,

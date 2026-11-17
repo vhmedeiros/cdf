@@ -11,6 +11,7 @@ export type Course = {
   title: string;
   slug: string;
   description: string | null;
+  category_id: string | null;
   drive_url: string;
   drive_folder_id: string;
   cover_url: string | null;
@@ -55,17 +56,66 @@ type CreateCourseInput = {
   title: string;
   slug: string;
   description?: string | null;
+  categoryId?: string | null;
   driveUrl: string;
   driveFolderId: string;
   lessonStrategy?: LessonStrategy;
   status?: CourseStatus;
 };
 
+export type CourseFilters = {
+  q?: string;
+  categorySlug?: string;
+  limit?: number;
+  offset?: number;
+};
+
+function addCourseFilters(
+  conditions: string[],
+  params: unknown[],
+  filters: CourseFilters,
+  paramIndex: number,
+): number {
+  if (filters.q) {
+    conditions.push(
+      `(unaccent(c.title) ILIKE unaccent($${paramIndex}) OR unaccent(c.slug) ILIKE unaccent($${paramIndex}) OR unaccent(COALESCE(c.description, '')) ILIKE unaccent($${paramIndex}))`,
+    );
+    params.push(`%${filters.q}%`);
+    paramIndex += 1;
+  }
+
+  if (filters.categorySlug) {
+    conditions.push(`cat.slug = $${paramIndex}`);
+    params.push(filters.categorySlug);
+    paramIndex += 1;
+  }
+
+  return paramIndex;
+}
+
+function addListModifiers(sql: string, params: unknown[], filters: CourseFilters): string {
+  let nextIndex = params.length + 1;
+
+  if (filters.limit) {
+    sql += ` LIMIT $${nextIndex}`;
+    params.push(filters.limit);
+    nextIndex += 1;
+  }
+
+  if (filters.offset) {
+    sql += ` OFFSET $${nextIndex}`;
+    params.push(filters.offset);
+  }
+
+  return sql;
+}
+
 async function create(input: CreateCourseInput): Promise<Course> {
   const {
     title,
     slug,
     description = null,
+    categoryId = null,
     driveUrl,
     driveFolderId,
     lessonStrategy = "auto",
@@ -74,10 +124,10 @@ async function create(input: CreateCourseInput): Promise<Course> {
 
   const result = await database.query<Course>(
     `INSERT INTO courses (
-      title, slug, description, drive_url, drive_folder_id, lesson_strategy, status
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+      title, slug, description, category_id, drive_url, drive_folder_id, lesson_strategy, status
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     RETURNING *`,
-    [title, slug, description, driveUrl, driveFolderId, lessonStrategy, status],
+    [title, slug, description, categoryId, driveUrl, driveFolderId, lessonStrategy, status],
   );
 
   return result.rows[0];
@@ -95,22 +145,86 @@ async function findBySlug(slug: string): Promise<Course | null> {
   return result.rows[0] ?? null;
 }
 
-async function findAll(): Promise<Course[]> {
-  const result = await database.query<Course>(`SELECT * FROM courses ORDER BY created_at DESC`);
+type UpdateCourseInput = {
+  title?: string;
+  description?: string | null;
+  categoryId?: string | null;
+};
+
+async function update(id: string, input: UpdateCourseInput): Promise<Course | null> {
+  const sets: string[] = [];
+  const params: unknown[] = [];
+  let index = 1;
+
+  if (input.title !== undefined) {
+    sets.push(`title = $${index++}`);
+    params.push(input.title);
+  }
+
+  if (input.description !== undefined) {
+    sets.push(`description = $${index++}`);
+    params.push(input.description);
+  }
+
+  if (input.categoryId !== undefined) {
+    sets.push(`category_id = $${index++}`);
+    params.push(input.categoryId);
+  }
+
+  if (sets.length === 0) {
+    return findById(id);
+  }
+
+  sets.push(`updated_at = now()`);
+  params.push(id);
+
+  const result = await database.query<Course>(
+    `UPDATE courses SET ${sets.join(", ")} WHERE id = $${index} RETURNING *`,
+    params,
+  );
+
+  return result.rows[0] ?? null;
+}
+
+async function findAll(filters: CourseFilters = {}): Promise<Course[]> {
+  const conditions: string[] = [];
+  const params: unknown[] = [];
+  addCourseFilters(conditions, params, filters, 1);
+
+  let sql = `SELECT c.*
+     FROM courses c
+     LEFT JOIN categories cat ON cat.id = c.category_id`;
+
+  if (conditions.length > 0) {
+    sql += ` WHERE ${conditions.join(" AND ")}`;
+  }
+
+  sql += ` ORDER BY c.created_at DESC`;
+  sql = addListModifiers(sql, params, filters);
+
+  const result = await database.query<Course>(sql, params);
   return result.rows;
 }
 
-async function findEnrolledByUser(userId: string): Promise<Course[]> {
-  const result = await database.query<Course>(
-    `SELECT c.*
+async function findEnrolledByUser(userId: string, filters: CourseFilters = {}): Promise<Course[]> {
+  const conditions: string[] = [
+    "e.user_id = $1",
+    "c.status = 'published'",
+    "(e.expires_at IS NULL OR e.expires_at > now())",
+  ];
+  const params: unknown[] = [userId];
+  addCourseFilters(conditions, params, filters, 2);
+
+  let sql = `SELECT c.*
      FROM courses c
      INNER JOIN enrollments e ON e.course_id = c.id
-     WHERE e.user_id = $1
-       AND c.status = 'published'
-       AND (e.expires_at IS NULL OR e.expires_at > now())
-     ORDER BY c.title ASC`,
-    [userId],
-  );
+     LEFT JOIN categories cat ON cat.id = c.category_id
+     WHERE ${conditions.join(" AND ")}`;
+
+  sql += ` ORDER BY c.title ASC`;
+  sql = addListModifiers(sql, params, filters);
+
+  const result = await database.query<Course>(sql, params);
   return result.rows;
 }
 
@@ -421,6 +535,7 @@ const CourseModel = {
   findEnrolledByUser,
   getTree,
   syncTreeToDatabase,
+  update,
   updateStatus,
   getEnrollmentsCount,
   deleteCourse,

@@ -1,46 +1,27 @@
-import React from "react";
+import React, { useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import useSWR from "swr";
-import {
-  Search,
-  BookOpen,
-  GraduationCap,
-  Sparkles,
-  ArrowRight,
-  LogOut,
-  User,
-  Clock,
-  Play,
-  Layers,
-  Shield,
-} from "lucide-react";
+import { Search, ArrowRight, Shield } from "lucide-react";
 import HeroResume from "@/components/home/HeroResume";
 import StudyStreak from "@/components/home/StudyStreak";
 import DueReviews from "@/components/home/DueReviews";
 import StudyHeatmap from "@/components/home/StudyHeatmap";
 import PomodoroTimer from "@/components/player/PomodoroTimer";
 import UserMenu from "@/components/ui/UserMenu";
+import { CourseCard } from "@/components/course/CourseCard";
+import { CategoryChips } from "@/components/course/CategoryChips";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import type { UserStats } from "@/models/stats";
 import type { ReviewWithDetails } from "@/models/review";
+import type { Category } from "@/models/category";
 import type { Course } from "@/models/course";
 
-function getDeterministicGradient(slug: string) {
-  let hash = 0;
-  for (let i = 0; i < slug.length; i++) {
-    hash = slug.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const gradients = [
-    "from-[#1b1b1e] via-[#2a2a2e] to-[#0b0b0c]",
-    "from-[#24211a] via-[#1b1b1e] to-[#0b0b0c]",
-    "from-[#1f1a14] via-[#2a2216] to-[#0b0b0c]",
-    "from-[#181d18] via-[#152016] to-[#0b0b0c]",
-    "from-[#261f2d] via-[#1d1724] to-[#0b0b0c]",
-  ];
-  return gradients[Math.abs(hash) % gradients.length];
-}
-
 export default function StudentDashboardPage() {
+  const router = useRouter();
+  const [courseSearch, setCourseSearch] = useState("");
+
   const { data: user, error: userError } = useSWR<{
     id: string;
     email: string;
@@ -62,7 +43,11 @@ export default function StudentDashboardPage() {
     reviews: ReviewWithDetails[];
   }>(user ? "/api/v1/me/reviews" : null);
 
-  const { data: courses } = useSWR<Course[]>("/api/v1/courses");
+  const { data: courses } = useSWR<Course[]>("/api/v1/courses?limit=6");
+  const { data: categories } = useSWR<Category[]>("/api/v1/categories");
+
+  const categoryNames = new Map((categories ?? []).map((item) => [item.id, item.name]));
+  const categoryOptions = categories?.map(({ id, slug, name }) => ({ id, slug, name })) ?? [];
 
   function openCommandPalette() {
     window.dispatchEvent(new CustomEvent("open-command-palette"));
@@ -83,7 +68,7 @@ export default function StudentDashboardPage() {
         />
       </Head>
 
-      <div className="min-h-screen bg-[#0b0b0c] text-[#ece9e2]">
+      <div className="min-h-[100dvh] bg-[#0b0b0c] pt-[env(safe-area-inset-top)] text-[#ece9e2]">
         {/* Top Navbar */}
         <header className="h-16 border-b border-[#2a2a2e] bg-[#131315]/90 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-6 flex items-center justify-between">
           <div className="flex items-center gap-6">
@@ -176,78 +161,84 @@ export default function StudentDashboardPage() {
             <StudyHeatmap activity={stats?.heatmap || []} />
           </div>
 
-          {/* 4. Meus Cursos em Andamento */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-serif font-bold text-xl text-[#ece9e2]">
-                  Meus Cursos em Andamento
-                </h3>
-                <p className="text-xs text-[#9a978f] mt-0.5">
-                  Acesse suas aulas estruturadas e materiais de apoio.
-                </p>
+          {/* 4. Cursos */}
+          <section className="space-y-5">
+            <SectionHeader
+              title="Meus Cursos em Andamento"
+              description="Acesse suas aulas estruturadas e materiais de apoio."
+              actionHref="/courses"
+              actionLabel="Ver todos"
+            />
+
+            <form
+              role="search"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const term = courseSearch.trim();
+                router.push(term ? `/courses?q=${encodeURIComponent(term)}` : "/courses");
+              }}
+              className="flex flex-col gap-2 sm:flex-row"
+            >
+              <label htmlFor="home-course-search" className="sr-only">
+                Buscar cursos
+              </label>
+              <div className="relative flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9a978f]" />
+                <input
+                  id="home-course-search"
+                  type="search"
+                  enterKeyHint="search"
+                  value={courseSearch}
+                  onChange={(event) => setCourseSearch(event.target.value)}
+                  placeholder="Buscar cursos por título ou descrição..."
+                  className="min-h-11 w-full rounded-xl border border-[#2a2a2e] bg-[#1b1b1e] pl-10 pr-3 text-sm text-[#ece9e2] placeholder-[#9a978f] outline-none transition focus:border-[#d4af37] focus-visible:ring-2 focus-visible:ring-[#d4af37]/40"
+                />
               </div>
-              <Link
-                href="/courses"
-                className="text-xs text-[#d4af37] hover:underline flex items-center gap-1"
+              <button
+                type="submit"
+                className="min-h-11 rounded-xl bg-[#d4af37] px-5 text-xs font-semibold text-black transition hover:bg-[#f5d76e]"
               >
-                <span>Ver todos</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
+                Buscar
+              </button>
+            </form>
+
+            {categoryOptions.length > 0 && (
+              <CategoryChips
+                categories={categoryOptions}
+                value={null}
+                allLabel="Todas as categorias"
+                onChange={(slug) => {
+                  router.push(slug ? `/courses?category=${slug}` : "/courses");
+                }}
+              />
+            )}
 
             {courses && courses.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {courses.map((course) => {
-                  const gradient = getDeterministicGradient(course.slug);
-                  return (
-                    <Link
-                      key={course.id}
-                      href={`/courses/${course.slug}`}
-                      className="group flex flex-col justify-between h-56 rounded-2xl bg-[#131315] border border-[#2a2a2e] hover:border-[#d4af37]/60 overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-[#d4af37]/5 relative"
-                    >
-                      <div
-                        className={`h-28 p-5 bg-gradient-to-br ${gradient} flex flex-col justify-between relative overflow-hidden`}
-                      >
-                        <div className="absolute inset-0 bg-black/20" />
-                        <div className="relative z-10 flex justify-between items-start">
-                          <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-black/40 text-[#ece9e2]/80 backdrop-blur-sm border border-white/10">
-                            {course.status === "published" ? "Publicado" : "Rascunho"}
-                          </span>
-                        </div>
-                        <h4 className="relative z-10 font-serif font-bold text-base text-[#ece9e2] group-hover:text-[#f5d76e] transition line-clamp-2">
-                          {course.title}
-                        </h4>
-                      </div>
-
-                      <div className="p-4 flex-1 flex flex-col justify-between bg-[#131315]">
-                        <div className="flex items-center justify-between text-xs text-[#9a978f]">
-                          <span className="flex items-center gap-1.5">
-                            <Layers className="w-3.5 h-3.5 text-[#d4af37]" />
-                            {course.materials_count} materiais
-                          </span>
-                          <span className="flex items-center gap-1 text-[#ece9e2] font-medium group-hover:text-[#d4af37] transition">
-                            <Play className="w-3.5 h-3.5 fill-current" />
-                            Acessar
-                          </span>
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })}
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {courses.map((course) => (
+                  <CourseCard
+                    key={course.id}
+                    course={course}
+                    variant="compact"
+                    showDescription={false}
+                    showStatus
+                    categoryName={course.category_id ? categoryNames.get(course.category_id) : null}
+                  />
+                ))}
               </div>
             ) : (
-              <div className="p-8 rounded-2xl bg-[#131315] border border-[#2a2a2e] text-center space-y-2">
+              <div className="space-y-2 rounded-2xl border border-[#2a2a2e] bg-[#131315] p-8 text-center">
                 <p className="text-xs text-[#9a978f]">Nenhum curso matriculado no momento.</p>
                 <Link
                   href="/courses"
-                  className="inline-block text-xs text-[#d4af37] hover:underline"
+                  className="inline-flex min-h-9 items-center gap-1 text-xs font-medium text-[#d4af37] transition hover:underline"
                 >
                   Explorar catálogo de cursos
+                  <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
             )}
-          </div>
+          </section>
         </main>
       </div>
     </>

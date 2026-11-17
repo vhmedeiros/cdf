@@ -24,38 +24,38 @@ Foco atual: **experiência mobile primeiro**. A criação de questões, ingestã
 
 ## 2. Resumo executivo
 
-| ID      | Item                                                   | Tipo         | Prioridade |
-| ------- | ------------------------------------------------------ | ------------ | ---------- |
-| PROD-01 | Definir nome definitivo da plataforma                  | Decisão      | P1         |
-| PROD-02 | Definir domínio oficial                                | Decisão      | P1         |
-| PROD-03 | Definir modelo de operação: fechado ou comercial       | Decisão      | Decidido   |
-| PROD-04 | Configurar SMTP transacional de produção               | Infra        | Concluído  |
-| PROD-05 | Configurar monitoramento com Sentry                    | Infra        | P2         |
-| PROD-06 | Fechar taxonomia inicial de disciplinas e assuntos     | Conteúdo     | Adiado     |
-| PROD-07 | Definir bancas prioritárias do importador              | Conteúdo     | Adiado     |
-| PROD-08 | Formalizar diretriz de direitos autorais das questões  | Política     | Adiado     |
-| PROD-09 | Gerar e configurar a chave Gemini                      | IA           | Adiado     |
-| PROD-10 | Editar nome e descrição dos cursos                     | Produto      | P1         |
-| PROD-11 | Busca, filtro e paginação de cursos                    | Produto      | P1         |
-| PROD-12 | Categorias de cursos                                   | Produto      | P1         |
-| PROD-13 | Métricas de produto e comportamento                    | Produto      | P2         |
-| TECH-01 | Reconciliar a branch `feat/questions` com a `main`     | Git/entrega  | Adiado     |
-| TECH-02 | Corrigir os 4 erros atuais de typecheck                | Qualidade    | Concluído  |
-| TECH-03 | Implementar verificação de `Origin`/CSRF nas mutações  | Segurança    | P0         |
-| TECH-04 | Armazenar tokens de sessão, convite e reset como hash  | Segurança    | P1         |
-| TECH-05 | Confirmar qual commit está em produção na VM           | Operação     | Concluído  |
-| TECH-06 | Validar streaming real com volume de cache e Nginx     | Infra        | P0         |
-| TECH-07 | Alinhar `CLAUDE.md` ao que realmente está implementado | Documentação | P1         |
-| TECH-08 | Implementar sync incremental do Drive                  | Drive        | P1         |
-| TECH-09 | Implementar testes das rotas administrativas e erros   | Qualidade    | P1         |
-| TECH-10 | Concluir a fase 10: ingestão de provas em PDF          | Questões     | Adiado     |
-| TECH-24 | Melhorar player e reprodução no mobile                 | Experiência  | P0         |
-| TECH-25 | Corrigir scroll da sidebar de aulas no mobile          | Bug          | P0         |
-| TECH-26 | Robustez do preview/sync do Drive                      | Drive        | P0         |
-| TECH-27 | Pipeline 720p e variantes de mídia                     | Mídia        | P1         |
-| TECH-28 | Otimizações e teste de velocidade do streaming         | Mídia        | P1         |
-| TECH-29 | Plano de capacidade para 20 simultâneos e 5 TB         | Infra        | P1         |
-| TECH-30 | Normalizar containers e validar mídia do Drive         | Mídia        | P1         |
+| ID      | Item                                                   | Tipo         | Prioridade   |
+| ------- | ------------------------------------------------------ | ------------ | ------------ |
+| PROD-01 | Definir nome definitivo da plataforma                  | Decisão      | P1           |
+| PROD-02 | Definir domínio oficial                                | Decisão      | P1           |
+| PROD-03 | Definir modelo de operação: fechado ou comercial       | Decisão      | Decidido     |
+| PROD-04 | Configurar SMTP transacional de produção               | Infra        | Concluído    |
+| PROD-05 | Configurar monitoramento com Sentry                    | Infra        | P2           |
+| PROD-06 | Fechar taxonomia inicial de disciplinas e assuntos     | Conteúdo     | Adiado       |
+| PROD-07 | Definir bancas prioritárias do importador              | Conteúdo     | Adiado       |
+| PROD-08 | Formalizar diretriz de direitos autorais das questões  | Política     | Adiado       |
+| PROD-09 | Gerar e configurar a chave Gemini                      | IA           | Adiado       |
+| PROD-10 | Editar nome e descrição dos cursos                     | Produto      | Em andamento |
+| PROD-11 | Busca, filtro e paginação de cursos                    | Produto      | Em andamento |
+| PROD-12 | Categorias de cursos                                   | Produto      | Concluído    |
+| PROD-13 | Métricas de produto e comportamento                    | Produto      | P2           |
+| TECH-01 | Reconciliar a branch `feat/questions` com a `main`     | Git/entrega  | Adiado       |
+| TECH-02 | Corrigir os 4 erros atuais de typecheck                | Qualidade    | Concluído    |
+| TECH-03 | Implementar verificação de `Origin`/CSRF nas mutações  | Segurança    | P0           |
+| TECH-04 | Armazenar tokens de sessão, convite e reset como hash  | Segurança    | P1           |
+| TECH-05 | Confirmar qual commit está em produção na VM           | Operação     | Concluído    |
+| TECH-06 | Validar streaming real com volume de cache e Nginx     | Infra        | P0           |
+| TECH-07 | Alinhar `CLAUDE.md` ao que realmente está implementado | Documentação | P1           |
+| TECH-08 | Implementar sync incremental do Drive                  | Drive        | P1           |
+| TECH-09 | Implementar testes das rotas administrativas e erros   | Qualidade    | P1           |
+| TECH-10 | Concluir a fase 10: ingestão de provas em PDF          | Questões     | Adiado       |
+| TECH-24 | Melhorar player e reprodução no mobile                 | Experiência  | P0           |
+| TECH-25 | Corrigir scroll da sidebar de aulas no mobile          | Bug          | P0           |
+| TECH-26 | Robustez do preview/sync do Drive                      | Drive        | P0           |
+| TECH-27 | Pipeline 720p e variantes de mídia                     | Mídia        | P1           |
+| TECH-28 | Otimizações e teste de velocidade do streaming         | Mídia        | P1           |
+| TECH-29 | Plano de capacidade para 20 simultâneos e 5 TB         | Infra        | P1           |
+| TECH-30 | Normalizar containers e validar mídia do Drive         | Mídia        | P1           |
 
 ---
 
@@ -124,25 +124,29 @@ Foco atual: **experiência mobile primeiro**. A criação de questões, ingestã
 
 ### PROD-10 — Editar nome e descrição dos cursos
 
-- **Contexto:** o admin só consegue excluir, publicar/despublicar e sincronizar cursos. Não existe `PATCH` nem edição de título/descrição.
-- **Ação:** criar `PATCH /api/v1/admin/courses/[id]` para título, descrição e, se necessário, slug; adicionar modal de edição no painel admin.
-- **Cuidado:** alterar o slug quebra links e matrículas antigas; se permitido, manter histórico/redirect.
+- **Contexto:** o admin só conseguia excluir, publicar/despublicar e sincronizar cursos. Não existia `PATCH` nem edição de título/descrição.
+- **Implementado:** `PATCH /api/v1/admin/courses/[id]` aceita `title`, `description` e `category_id`.
+- **Pendente:** modal/tela de edição no painel admin para título e descrição. O slug continua imutável para não quebrar links e matrículas.
 - **Critério de aceite:** editar título e descrição reflete no catálogo e na sala de aula sem exigir novo sync.
-- **Prioridade:** P1.
+- **Prioridade:** Em andamento.
 
 ### PROD-11 — Busca, filtro e paginação de cursos
 
-- **Contexto:** o painel admin busca apenas alunos (`studentSearch`); a lista de cursos carrega todos os registros de uma vez.
-- **Ação:** adicionar `q`, `status`, `category`, `page` e `limit` na API/admin e os controles correspondentes na UI. Aplicar o mesmo padrão ao catálogo do aluno.
+- **Implementado:**
+  - `GET /api/v1/courses` aceita `q`, `category`, `limit` e `offset`, com busca sem acento (`unaccent`) em título, slug e descrição;
+  - `/courses` tem busca com debounce, filtro por categoria, estado vazio com sugestão e "Carregar mais";
+  - `GET /api/v1/categories` expõe as categorias.
+  - filtros ficam refletidos na URL (`?q=`, `?category=`) para compartilhar e voltar.
+- **Pendente:** busca/filtro/paginação no painel admin; paginação real com `total` pode ser adicionada quando o acervo crescer.
 - **Critério de aceite:** buscar por título/slug, filtrar por status/categoria e navegar por páginas sem carregar o acervo inteiro.
-- **Prioridade:** P1.
+- **Prioridade:** Em andamento.
 
-### PROD-12 — Categorias de cursos
+### PROD-12 — Categorias de cursos (concluído)
 
-- **Contexto:** a taxonomia atual (`subjects`) organiza questões, não cursos. Não há categoria de curso no schema.
-- **Ação:** definir categoria única ou múltipla; criar tabela/campo, seed inicial (ENEM, concursos, programação, inglês etc.), filtros no admin e no catálogo.
-- **Decisão pendente:** categoria única ou N:N; categorias fixas ou editáveis pelo admin.
-- **Prioridade:** P1.
+- **Decisão:** categoria única por curso, com conjunto fixo inicial: ENEM, Concursos, Programação, Inglês e Outros.
+- **Implementado:** migration `8_create-course-categories.ts` com tabela `categories`, seed e `courses.category_id`; `GET /api/v1/categories`; seleção de categoria no cadastro e na lista do admin; chips de filtro na home e no catálogo.
+- **Pendente:** permitir que o admin edite/renomeie categorias e ordene os cursos dentro de cada categoria, se necessário.
+- **Prioridade:** Concluído.
 
 ### PROD-13 — Métricas de produto e comportamento
 
@@ -466,6 +470,9 @@ Itens que **não devem ser implementados sem uma decisão explícita**:
 - [ ] Melhorar player, autoplay, erro/retry e fullscreen no mobile.
 - [ ] Remover o segundo stream do mini player.
 - [ ] Ajustar PDF e anotações para telas pequenas.
+- [x] Criar categorias de curso (única) com seed inicial e filtros.
+- [ ] Concluir busca, filtro e paginação no painel admin.
+- [ ] Adicionar edição de título/descrição no painel admin.
 - [ ] Implementar o pipeline 720p e o mapeamento de variantes.
 - [ ] Testar velocidade e capacidade com 20 sessões simultâneas.
 - [ ] Endurecer o preview/sync do Drive contra links de arquivo e pastas grandes.
@@ -478,3 +485,4 @@ Itens que **não devem ser implementados sem uma decisão explícita**:
 ## 12. Última atualização
 
 - **2026-11-16:** PROD-04 concluído com SMTP Gmail validado; itens de questões/IA foram adiados por decisão do produto. A prioridade atual passa a ser **experiência mobile**: player, scroll da sidebar, mini player, PDF, anotações e testes em viewport de celular.
+- **2026-11-16 (home e catálogo):** categorias de curso criadas (única, ENEM/Concursos/Programação/Inglês/Outros); home e `/courses` ganharam busca, filtro por categoria, cards reutilizáveis, estado vazio com sugestão e carregamento incremental; o admin já seleciona categoria no cadastro e na listagem. Aplicadas regras de UI/UX do skill `ui-ux-pro-max` para chips acessíveis (`aria-pressed`), foco visível, alvos de toque, safe areas e `prefers-reduced-motion`.

@@ -17,6 +17,20 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse) {
     throw new UnauthorizedError();
   }
 
+  const q = typeof req.query.q === "string" ? req.query.q.trim() : undefined;
+  const categorySlug =
+    typeof req.query.category === "string" && req.query.category.trim()
+      ? req.query.category.trim()
+      : undefined;
+
+  const parsedLimit = Number.parseInt(String(req.query.limit ?? ""), 10);
+  const parsedOffset = Number.parseInt(String(req.query.offset ?? ""), 10);
+  const limit =
+    Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.min(parsedLimit, 50) : undefined;
+  const offset = Number.isFinite(parsedOffset) && parsedOffset > 0 ? parsedOffset : undefined;
+
+  const filters = { q, categorySlug, limit, offset };
+
   const isAdmin = Boolean(
     user.features?.includes("read:course:all") ||
       user.features?.includes("create:course") ||
@@ -25,11 +39,11 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse) {
 
   // Se for administrador, visualiza todos os cursos cadastrados
   if (isAdmin) {
-    const courses = await CourseModel.findAll();
+    const courses = await CourseModel.findAll(filters);
     return res.status(200).json(courses);
   }
 
-  const courses = await CourseModel.findEnrolledByUser(user.id);
+  const courses = await CourseModel.findEnrolledByUser(user.id, filters);
   return res.status(200).json(courses);
 }
 

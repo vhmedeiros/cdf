@@ -31,6 +31,7 @@ interface CourseAdminItem {
   title: string;
   slug: string;
   description: string | null;
+  category_id: string | null;
   drive_url: string;
   drive_folder_id: string;
   status: string;
@@ -64,6 +65,7 @@ export default function AdminCoursesPage() {
   const [studentsLoading, setStudentsLoading] = useState(false);
   const [studentSearch, setStudentSearch] = useState("");
   const [togglingStudentId, setTogglingStudentId] = useState<string | null>(null);
+  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
 
   const loadCourses = async () => {
     setLoading(true);
@@ -86,6 +88,10 @@ export default function AdminCoursesPage() {
 
   useEffect(() => {
     loadCourses();
+    fetch("/api/v1/categories")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setCategories(data))
+      .catch(() => {});
   }, []);
 
   const handleSyncCourse = async (courseId: string) => {
@@ -106,6 +112,28 @@ export default function AdminCoursesPage() {
       setErrorMsg(err.message || "Falha ao sincronizar.");
     } finally {
       setSyncingId(null);
+    }
+  };
+
+  const handleUpdateCategory = async (courseId: string, categoryId: string) => {
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    try {
+      const res = await fetch(`/api/v1/admin/courses/${courseId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category_id: categoryId || null }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Erro ao atualizar categoria.");
+      setCourses((prev) =>
+        prev.map((course) =>
+          course.id === courseId ? { ...course, category_id: data.category_id ?? null } : course,
+        ),
+      );
+      setSuccessMsg("Categoria atualizada.");
+    } catch (err: any) {
+      setErrorMsg(err.message || "Falha ao atualizar categoria.");
     }
   };
 
@@ -378,6 +406,30 @@ export default function AdminCoursesPage() {
                         <p className="text-xs font-mono text-[#9a978f] mt-0.5">
                           slug: <span className="text-[#d4af37]">{course.slug}</span>
                         </p>
+
+                        <div className="mt-2 flex items-center gap-2">
+                          <label
+                            htmlFor={`category-${course.id}`}
+                            className="text-[10px] font-mono uppercase tracking-wide text-[#9a978f]"
+                          >
+                            Categoria
+                          </label>
+                          <select
+                            id={`category-${course.id}`}
+                            value={course.category_id ?? ""}
+                            onChange={(event) =>
+                              handleUpdateCategory(course.id, event.target.value)
+                            }
+                            className="min-h-9 rounded-lg border border-[#2a2a2e] bg-[#1b1b1e] px-2.5 text-xs text-[#ece9e2] outline-none transition focus:border-[#d4af37]"
+                          >
+                            <option value="">Sem categoria</option>
+                            {categories.map((category) => (
+                              <option key={category.id} value={category.id}>
+                                {category.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
 
                       {/* Botões de Ação */}

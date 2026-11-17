@@ -74,6 +74,73 @@ describe("GET /api/v1/courses", () => {
       expect(body).toHaveLength(1);
       expect(body[0].slug).toBe("curso-matriculado");
     });
+
+    test("Filters enrolled courses by category and search term", async () => {
+      const { default: User } = await import("@/models/user");
+      const { default: CourseModel } = await import("@/models/course");
+      const { default: EnrollmentModel } = await import("@/models/enrollment");
+      const { default: CategoryModel } = await import("@/models/category");
+
+      const student = await User.create({
+        email: "aluno.filtro@teste.com",
+        password: "senha-filtro-123",
+        display_name: "Aluno Filtro",
+        features: ["read:course"],
+      });
+
+      const programming = await CategoryModel.findBySlug("programacao");
+      const english = await CategoryModel.findBySlug("ingles");
+      if (!programming || !english) {
+        throw new Error("Categorias iniciais não encontradas.");
+      }
+
+      const javaCourse = await CourseModel.create({
+        title: "Curso de Java",
+        slug: "curso-de-java",
+        categoryId: programming.id,
+        driveUrl: "https://drive.google.com/drive/folders/folder-java",
+        driveFolderId: "folder-java",
+        status: "published",
+      });
+
+      const englishCourse = await CourseModel.create({
+        title: "Curso de Inglês",
+        slug: "curso-de-ingles",
+        categoryId: english.id,
+        driveUrl: "https://drive.google.com/drive/folders/folder-ingles",
+        driveFolderId: "folder-ingles",
+        status: "published",
+      });
+
+      await EnrollmentModel.create({ userId: student.id, courseId: javaCourse.id });
+      await EnrollmentModel.create({ userId: student.id, courseId: englishCourse.id });
+
+      const loginRes = await fetch("http://localhost:3000/api/v1/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: "aluno.filtro@teste.com",
+          password: "senha-filtro-123",
+        }),
+      });
+      const cookie = loginRes.headers.get("set-cookie") || "";
+
+      const byCategory = await fetch("http://localhost:3000/api/v1/courses?category=programacao", {
+        headers: { Cookie: cookie.split(";")[0] },
+      });
+      expect(byCategory.status).toBe(200);
+      const byCategoryBody = await byCategory.json();
+      expect(byCategoryBody).toHaveLength(1);
+      expect(byCategoryBody[0].slug).toBe("curso-de-java");
+
+      const bySearch = await fetch("http://localhost:3000/api/v1/courses?q=ingles", {
+        headers: { Cookie: cookie.split(";")[0] },
+      });
+      expect(bySearch.status).toBe(200);
+      const bySearchBody = await bySearch.json();
+      expect(bySearchBody).toHaveLength(1);
+      expect(bySearchBody[0].slug).toBe("curso-de-ingles");
+    });
   });
 });
 

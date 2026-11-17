@@ -1,33 +1,125 @@
-import React from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import useSWR from "swr";
-import { formatDuration } from "@/lib/utils";
-import { Play, BookOpen, Clock, FileText, Shield, Plus } from "lucide-react";
+import { BookOpen, Loader2, Plus, Search, Shield, X } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
 import UserMenu from "@/components/ui/UserMenu";
+import { CourseCard } from "@/components/course/CourseCard";
+import { CategoryChips } from "@/components/course/CategoryChips";
+import type { Category } from "@/models/category";
 import type { Course } from "@/models/course";
 
-// Deterministic gradient generator based on slug string
-function getDeterministicGradient(slug: string) {
-  let hash = 0;
-  for (let i = 0; i < slug.length; i++) {
-    hash = slug.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const gradients = [
-    "from-[#1b1b1e] via-[#2a2a2e] to-[#0b0b0c]",
-    "from-[#24211a] via-[#1b1b1e] to-[#0b0b0c]",
-    "from-[#1f1a14] via-[#2a2216] to-[#0b0b0c]",
-    "from-[#181d18] via-[#152016] to-[#0b0b0c]",
-    "from-[#261f2d] via-[#1d1724] to-[#0b0b0c]",
-  ];
-  const idx = Math.abs(hash) % gradients.length;
-  return gradients[idx];
-}
+const PAGE_SIZE = 12;
 
 export default function CoursesListPage() {
-  const { data: courses, error, isLoading } = useSWR<Course[]>("/api/v1/courses");
+  const router = useRouter();
   const { isAdmin } = useUser();
+
+  const initialQuery = typeof router.query.q === "string" ? router.query.q : "";
+  const initialCategory =
+    typeof router.query.category === "string" && router.query.category
+      ? router.query.category
+      : null;
+
+  const [searchTerm, setSearchTerm] = useState(initialQuery);
+  const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
+  const [category, setCategory] = useState<string | null>(initialCategory);
+  const [extraCourses, setExtraCourses] = useState<Course[]>([]);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const hydratedFromUrl = useRef(false);
+
+  const { data: categories } = useSWR<Category[]>("/api/v1/categories");
+
+  useEffect(() => {
+    if (!router.isReady || hydratedFromUrl.current) return;
+
+    const q = typeof router.query.q === "string" ? router.query.q : "";
+    const c =
+      typeof router.query.category === "string" && router.query.category
+        ? router.query.category
+        : null;
+
+    hydratedFromUrl.current = true;
+    setSearchTerm(q);
+    setDebouncedQuery(q);
+    setCategory(c);
+  }, [router.isReady, router.query.q, router.query.category]);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedQuery(searchTerm.trim()), 300);
+    return () => clearTimeout(timeout);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    setExtraCourses([]);
+    setHasMore(true);
+  }, [debouncedQuery, category]);
+
+  useEffect(() => {
+    if (!router.isReady || !hydratedFromUrl.current) return;
+
+    const nextQuery: Record<string, string> = {};
+    if (debouncedQuery) nextQuery.q = debouncedQuery;
+    if (category) nextQuery.category = category;
+
+    router.replace({ pathname: "/courses", query: nextQuery }, undefined, { shallow: true });
+  }, [router, router.isReady, debouncedQuery, category]);
+
+  const coursesKey = useMemo(() => {
+    const params = new URLSearchParams();
+    if (debouncedQuery) params.set("q", debouncedQuery);
+    if (category) params.set("category", category);
+    params.set("limit", String(PAGE_SIZE));
+    return `/api/v1/courses?${params.toString()}`;
+  }, [debouncedQuery, category]);
+
+  const { data: firstPage, error, isLoading, isValidating } = useSWR<Course[]>(coursesKey);
+
+  const courses = useMemo(() => [...(firstPage ?? []), ...extraCourses], [firstPage, extraCourses]);
+
+  const categoryNames = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const item of categories ?? []) {
+      map.set(item.id, item.name);
+    }
+    return map;
+  }, [categories]);
+
+  const categoryOptions = categories?.map(({ id, slug, name }) => ({ id, slug, name })) ?? [];
+
+  const hasFilters = Boolean(debouncedQuery || category);
+  const canLoadMore = Boolean(firstPage && firstPage.length === PAGE_SIZE && hasMore);
+
+  async function loadMoreCourses() {
+    setLoadingMore(true);
+    try {
+      const params = new URLSearchParams();
+      if (debouncedQuery) params.set("q", debouncedQuery);
+      if (category) params.set("category", category);
+      params.set("limit", String(PAGE_SIZE));
+      params.set("offset", String(courses.length));
+
+      const res = await fetch(`/api/v1/courses?${params.toString()}`);
+      if (!res.ok) throw new Error("load failed");
+
+      const data: Course[] = await res.json();
+      setExtraCourses((prev) => [...prev, ...data]);
+      if (data.length < PAGE_SIZE) setHasMore(false);
+    } catch {
+      setHasMore(false);
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
+  function clearFilters() {
+    setSearchTerm("");
+    setDebouncedQuery("");
+    setCategory(null);
+  }
 
   return (
     <>
@@ -35,29 +127,28 @@ export default function CoursesListPage() {
         <title>Meus Cursos — Aula</title>
       </Head>
 
-      <div className="min-h-screen bg-[#0b0b0c] text-[#ece9e2]">
-        {/* Header */}
-        <header className="h-16 border-b border-[#2a2a2e] bg-[#131315]/90 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-6 flex items-center justify-between">
+      <div className="min-h-[100dvh] bg-[#0b0b0c] pt-[env(safe-area-inset-top)] text-[#ece9e2]">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-[#2a2a2e] bg-[#131315]/90 px-4 backdrop-blur-md sm:px-6">
           <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-3 group">
-              <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#d4af37] to-[#f5d76e] flex items-center justify-center font-bold text-black font-serif shadow-sm group-hover:scale-105 transition">
+            <Link href="/" className="group flex items-center gap-3">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#d4af37] to-[#f5d76e] font-serif font-bold text-black shadow-sm transition group-hover:scale-105">
                 A
               </span>
-              <span className="font-serif font-bold text-lg text-[#ece9e2] tracking-wide">
+              <span className="font-serif text-lg font-bold tracking-wide text-[#ece9e2]">
                 Aula
               </span>
             </Link>
 
-            <nav className="hidden sm:flex items-center gap-1 text-xs">
+            <nav className="hidden items-center gap-1 text-xs sm:flex">
               <Link
                 href="/"
-                className="px-3 py-1.5 rounded-lg text-[#9a978f] hover:text-[#ece9e2] hover:bg-[#1b1b1e] transition"
+                className="rounded-lg px-3 py-1.5 text-[#9a978f] transition hover:bg-[#1b1b1e] hover:text-[#ece9e2]"
               >
                 Início
               </Link>
               <Link
                 href="/courses"
-                className="px-3 py-1.5 rounded-lg text-[#d4af37] bg-[#1b1b1e] font-medium"
+                className="rounded-lg bg-[#1b1b1e] px-3 py-1.5 font-medium text-[#d4af37]"
               >
                 Cursos
               </Link>
@@ -68,9 +159,9 @@ export default function CoursesListPage() {
             {isAdmin && (
               <Link
                 href="/admin/courses"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#d4af37]/10 border border-[#d4af37]/40 text-[#d4af37] hover:bg-[#d4af37]/20 transition text-xs font-semibold shadow-sm"
+                className="flex items-center gap-1.5 rounded-xl border border-[#d4af37]/40 bg-[#d4af37]/10 px-3 py-1.5 text-xs font-semibold text-[#d4af37] shadow-sm transition hover:bg-[#d4af37]/20"
               >
-                <Shield className="w-4 h-4" />
+                <Shield className="h-4 w-4" />
                 <span className="hidden sm:inline">Painel Admin</span>
               </Link>
             )}
@@ -78,28 +169,97 @@ export default function CoursesListPage() {
           </div>
         </header>
 
-        {/* Content */}
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-24 md:pb-10 space-y-8">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#ece9e2]">
+        <main className="mx-auto max-w-6xl space-y-6 px-4 pb-24 pt-6 sm:px-6 md:pb-10">
+          <div className="space-y-2">
+            <h1 className="text-balance font-serif text-2xl font-bold text-[#ece9e2] sm:text-3xl">
               Meus Cursos
             </h1>
-            <p className="text-sm text-[#9a978f] mt-1">
-              Continue seus estudos exatamente de onde parou.
+            <p className="text-sm text-[#9a978f]">
+              Busque, filtre por categoria e continue de onde parou.
             </p>
           </div>
 
+          <div className="space-y-4 rounded-2xl border border-[#2a2a2e] bg-[#131315] p-4 sm:p-5">
+            <form
+              role="search"
+              onSubmit={(event) => {
+                event.preventDefault();
+                setDebouncedQuery(searchTerm.trim());
+              }}
+              className="flex flex-col gap-3 sm:flex-row sm:items-center"
+            >
+              <label htmlFor="course-search" className="sr-only">
+                Buscar cursos
+              </label>
+              <div className="relative flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9a978f]" />
+                <input
+                  id="course-search"
+                  type="search"
+                  enterKeyHint="search"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="Buscar por título ou descrição..."
+                  className="min-h-11 w-full rounded-xl border border-[#2a2a2e] bg-[#1b1b1e] pl-10 pr-10 text-sm text-[#ece9e2] placeholder-[#9a978f] outline-none transition focus:border-[#d4af37] focus-visible:ring-2 focus-visible:ring-[#d4af37]/40"
+                />
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm("")}
+                    aria-label="Limpar busca"
+                    className="absolute right-2 top-1/2 flex min-h-9 min-w-9 -translate-y-1/2 items-center justify-center rounded-lg text-[#9a978f] transition hover:bg-[#2a2a2e] hover:text-[#ece9e2]"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+
+              {hasFilters && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="min-h-11 rounded-xl border border-[#2a2a2e] bg-[#1b1b1e] px-4 text-xs font-medium text-[#9a978f] transition hover:border-[#d4af37]/50 hover:text-[#ece9e2]"
+                >
+                  Limpar filtros
+                </button>
+              )}
+            </form>
+
+            {categoryOptions.length > 0 && (
+              <CategoryChips
+                categories={categoryOptions}
+                value={category}
+                onChange={setCategory}
+                allLabel="Todos"
+              />
+            )}
+          </div>
+
+          <div className="flex items-center justify-between" aria-live="polite">
+            <p className="text-xs text-[#9a978f]">
+              {isLoading
+                ? "Carregando cursos..."
+                : `${courses?.length ?? 0} curso${(courses?.length ?? 0) === 1 ? "" : "s"} encontrado${(courses?.length ?? 0) === 1 ? "" : "s"}`}
+            </p>
+            {isValidating && !isLoading && (
+              <span className="flex items-center gap-1.5 text-xs text-[#9a978f]">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Atualizando
+              </span>
+            )}
+          </div>
+
           {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3, 4, 5, 6].map((item) => (
                 <div
-                  key={i}
-                  className="h-64 rounded-2xl bg-[#131315] border border-[#2a2a2e] animate-pulse"
+                  key={item}
+                  className="h-72 animate-pulse rounded-2xl border border-[#2a2a2e] bg-[#131315]"
                 />
               ))}
             </div>
           ) : error ? (
-            <div className="p-8 rounded-2xl bg-[#131315] border border-[#2a2a2e] text-center space-y-3">
+            <div className="space-y-3 rounded-2xl border border-[#2a2a2e] bg-[#131315] p-8 text-center">
               <p className="text-xs text-[#9a978f]">
                 {error.status === 401
                   ? "Você precisa entrar com sua conta para ver seus cursos."
@@ -108,85 +268,80 @@ export default function CoursesListPage() {
               {error.status === 401 && (
                 <Link
                   href="/login"
-                  className="inline-block px-4 py-2 bg-[#d4af37] text-black font-semibold text-xs rounded-lg hover:bg-[#f5d76e] transition"
+                  className="inline-block min-h-11 rounded-lg bg-[#d4af37] px-4 py-2 text-xs font-semibold text-black transition hover:bg-[#f5d76e]"
                 >
                   Fazer Login
                 </Link>
               )}
             </div>
           ) : courses && courses.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {courses.map((c) => {
-                const gradient = getDeterministicGradient(c.slug);
+            <>
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {courses.map((course) => (
+                  <CourseCard
+                    key={course.id}
+                    course={course}
+                    categoryName={course.category_id ? categoryNames.get(course.category_id) : null}
+                  />
+                ))}
+              </div>
 
-                return (
-                  <Link
-                    key={c.id}
-                    href={`/courses/${c.slug}`}
-                    className="group flex flex-col rounded-2xl bg-[#131315] border border-[#2a2a2e] overflow-hidden hover:border-[#d4af37]/60 hover:shadow-xl hover:shadow-[#d4af37]/5 transition-all duration-300"
+              {canLoadMore && (
+                <div className="flex justify-center pt-2">
+                  <button
+                    type="button"
+                    onClick={loadMoreCourses}
+                    disabled={loadingMore}
+                    className="flex min-h-11 items-center gap-2 rounded-xl border border-[#2a2a2e] bg-[#1b1b1e] px-5 text-xs font-semibold text-[#ece9e2] transition hover:border-[#d4af37] hover:text-[#d4af37] disabled:opacity-60"
                   >
-                    {/* Course Cover Card */}
-                    <div
-                      className={`h-36 sm:h-40 bg-gradient-to-br ${gradient} p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden border-b border-[#2a2a2e]`}
-                    >
-                      <div className="flex justify-between items-start">
-                        <span className="px-2.5 py-1 rounded-full bg-black/50 border border-white/10 text-[10px] font-mono font-medium text-[#d4af37] backdrop-blur-sm">
-                          {c.materials_count} materiais
-                        </span>
-                      </div>
-
-                      <h3 className="font-serif font-bold text-xl text-[#ece9e2] leading-tight group-hover:text-[#d4af37] transition">
-                        {c.title}
-                      </h3>
-
-                      {/* Golden subtle hover glow */}
-                      <div className="absolute inset-0 bg-radial from-[#d4af37]/10 to-transparent opacity-0 group-hover:opacity-100 transition duration-300 pointer-events-none" />
-                    </div>
-
-                    {/* Course Details */}
-                    <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3 sm:space-y-4">
-                      <p className="text-xs text-[#9a978f] line-clamp-2 leading-relaxed">
-                        {c.description || "Sem descrição informada."}
-                      </p>
-
-                      <div className="pt-2 border-t border-[#1b1b1e] flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-1.5 text-[#9a978f]">
-                          <Clock className="w-3.5 h-3.5" />
-                          <span className="font-mono tabular-nums">
-                            {formatDuration(c.total_duration_seconds)}
-                          </span>
-                        </div>
-
-                        <span className="flex items-center gap-1 text-[#d4af37] font-semibold text-xs group-hover:translate-x-0.5 transition">
-                          Acessar <Play className="w-3 h-3 fill-current ml-0.5" />
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="p-12 rounded-2xl bg-[#131315] border border-[#2a2a2e] text-center space-y-4">
-              <BookOpen className="w-10 h-10 text-[#d4af37] mx-auto opacity-80" />
-              <h3 className="font-semibold text-base text-[#ece9e2]">
-                {isAdmin ? "Nenhum curso cadastrado ainda" : "Nenhum curso matriculado"}
-              </h3>
-              <p className="text-xs text-[#9a978f] max-w-sm mx-auto">
-                {isAdmin
-                  ? "Você está conectado como Administrador. Cadastre seu primeiro curso a partir de uma pasta do Google Drive."
-                  : "Você ainda não possui matrículas ativas. Entre em contato com seu administrador."}
-              </p>
-              {isAdmin && (
-                <div className="pt-2">
-                  <Link
-                    href="/admin/courses/new"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#d4af37] to-[#f5d76e] text-black font-semibold text-xs rounded-xl hover:opacity-95 transition shadow-md"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Cadastrar Primeiro Curso</span>
-                  </Link>
+                    {loadingMore && <Loader2 className="h-4 w-4 animate-spin" />}
+                    Carregar mais
+                  </button>
                 </div>
+              )}
+            </>
+          ) : (
+            <div className="space-y-4 rounded-2xl border border-[#2a2a2e] bg-[#131315] p-12 text-center">
+              <BookOpen className="mx-auto h-10 w-10 text-[#d4af37] opacity-80" />
+
+              {hasFilters ? (
+                <>
+                  <h3 className="text-balance font-semibold text-base text-[#ece9e2]">
+                    Nenhum curso encontrado
+                  </h3>
+                  <p className="mx-auto max-w-sm text-xs text-[#9a978f]">
+                    Tente outro termo, remova a categoria selecionada ou veja todos os cursos.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#d4af37] px-4 py-2 text-xs font-semibold text-black transition hover:bg-[#f5d76e]"
+                  >
+                    Limpar filtros
+                  </button>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-balance font-semibold text-base text-[#ece9e2]">
+                    {isAdmin ? "Nenhum curso cadastrado ainda" : "Nenhum curso matriculado"}
+                  </h3>
+                  <p className="mx-auto max-w-sm text-xs text-[#9a978f]">
+                    {isAdmin
+                      ? "Você está conectado como Administrador. Cadastre seu primeiro curso a partir de uma pasta do Google Drive."
+                      : "Você ainda não possui matrículas ativas. Entre em contato com seu administrador."}
+                  </p>
+                  {isAdmin && (
+                    <div className="pt-2">
+                      <Link
+                        href="/admin/courses/new"
+                        className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#f5d76e] px-4 py-2 text-xs font-semibold text-black shadow-md transition hover:opacity-95"
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span>Cadastrar Primeiro Curso</span>
+                      </Link>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}

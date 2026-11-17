@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -47,6 +47,8 @@ export default function NewCourseAdminPage() {
   const [driveUrl, setDriveUrl] = useState("");
   const [description, setDescription] = useState("");
   const [lessonStrategy, setLessonStrategy] = useState("auto");
+  const [categoryId, setCategoryId] = useState("");
+  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
 
   // Estados de Preview e Salvamento
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -55,6 +57,13 @@ export default function NewCourseAdminPage() {
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/v1/categories")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setCategories(data))
+      .catch(() => {});
+  }, []);
 
   // Auto-slugify ao digitar o título
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -124,6 +133,7 @@ export default function NewCourseAdminPage() {
           slug: slug.trim(),
           drive_url: driveUrl.trim(),
           description: description.trim() || null,
+          category_id: categoryId || null,
           lesson_strategy: lessonStrategy,
         }),
       });
@@ -328,6 +338,25 @@ export default function NewCourseAdminPage() {
                   )}
                 </div>
               )}
+
+              {/* Categoria do Curso */}
+              <div>
+                <label className="block text-xs font-semibold text-[#ece9e2] mb-1.5">
+                  Categoria <span className="text-[#9a978f] font-normal">(opcional)</span>
+                </label>
+                <select
+                  value={categoryId}
+                  onChange={(event) => setCategoryId(event.target.value)}
+                  className="w-full bg-[#1b1b1e] border border-[#2a2a2e] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-[#ece9e2] focus:border-[#d4af37] outline-none transition"
+                >
+                  <option value="">Sem categoria</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
               {/* Descrição Opcional */}
               <div>
