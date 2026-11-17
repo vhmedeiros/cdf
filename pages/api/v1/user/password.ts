@@ -12,7 +12,7 @@ router.use(controller.injectAnonymousOrUser);
 router.patch(patchHandler);
 
 const ChangePasswordSchema = z.object({
-  current_password: z.string().optional(),
+  current_password: z.string().min(1, "Informe a senha atual."),
   new_password: z
     .string()
     .min(8, "A nova senha deve ter no mínimo 8 caracteres.")
@@ -44,12 +44,16 @@ async function patchHandler(req: NextApiRequest, res: NextApiResponse) {
     throw new UnauthorizedError();
   }
 
-  // Se informou a senha atual, valida
-  if (current_password) {
-    const isValid = await bcrypt.compare(current_password, dbUser.password);
-    if (!isValid) {
-      throw new ValidationError({ message: "A senha atual informada está incorreta." });
-    }
+  const isCurrentValid = await bcrypt.compare(current_password, dbUser.password);
+  if (!isCurrentValid) {
+    throw new ValidationError({ message: "A senha atual informada está incorreta." });
+  }
+
+  const isSamePassword = await bcrypt.compare(new_password, dbUser.password);
+  if (isSamePassword) {
+    throw new ValidationError({
+      message: "A nova senha precisa ser diferente da senha atual.",
+    });
   }
 
   // Criptografa e grava a nova senha
