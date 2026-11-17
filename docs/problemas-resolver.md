@@ -41,7 +41,7 @@ Foco atual: **experiência mobile primeiro**. A criação de questões, ingestã
 | PROD-13 | Métricas de produto e comportamento                    | Produto      | P2           |
 | TECH-01 | Reconciliar a branch `feat/questions` com a `main`     | Git/entrega  | Adiado       |
 | TECH-02 | Corrigir os 4 erros atuais de typecheck                | Qualidade    | Concluído    |
-| TECH-03 | Implementar verificação de `Origin`/CSRF nas mutações  | Segurança    | P0           |
+| TECH-03 | Implementar verificação de `Origin`/CSRF nas mutações  | Segurança    | Concluído    |
 | TECH-04 | Armazenar tokens de sessão, convite e reset como hash  | Segurança    | P1           |
 | TECH-05 | Confirmar qual commit está em produção na VM           | Operação     | Concluído    |
 | TECH-06 | Validar streaming real com volume de cache e Nginx     | Infra        | P0           |
@@ -243,12 +243,13 @@ Foco atual: **experiência mobile primeiro**. A criação de questões, ingestã
 
 ## 5. Segurança e autenticação
 
-### TECH-03 — Verificação de `Origin`/CSRF
+### TECH-03 — Verificação de `Origin`/CSRF (concluído)
 
-- **Contexto:** o `CLAUDE.md` previa conferir o header `Origin` nas mutações; isso não está implementado. A proteção atual depende de `SameSite=Lax`.
-- **Ação:** criar middleware para validar `Origin`/`Referer` em `POST`, `PATCH`, `PUT` e `DELETE` contra `WEBSERVER_ORIGIN`.
+- **Contexto:** o `CLAUDE.md` previa conferir o header `Origin` nas mutações; a proteção dependia apenas de `SameSite=Lax`.
+- **Implementado:** `injectAnonymousOrUser` valida `Origin`/`Referer` em `POST`, `PATCH`, `PUT` e `DELETE` contra `WEBSERVER_ORIGIN`. Requisições sem `Origin`/`Referer` continuam permitidas (clientes não-browser, jobs internos), mantendo `SameSite=Lax` como defesa em profundidade.
+- **Testes:** `tests/integration/api/v1/security/origin.test.ts` cobre origem externa, `Referer` externo, origem aceita e cliente sem header.
 - **Critério de aceite:** requisição mutante com origem externa é rejeitada; fluxo normal continua funcionando.
-- **Prioridade:** P0.
+- **Prioridade:** Concluído.
 
 ### TECH-04 — Tokens sensíveis em texto puro
 
@@ -464,7 +465,7 @@ Itens que **não devem ser implementados sem uma decisão explícita**:
 - [x] Confirmar o commit em produção na VM.
 - [x] Corrigir os 4 erros de typecheck e incluir `tsc --noEmit` no CI.
 - [x] Configurar SMTP de produção.
-- [ ] Implementar verificação de `Origin` em mutações.
+- [x] Implementar verificação de `Origin` em mutações.
 - [ ] Validar streaming real com volume e Nginx.
 - [ ] Corrigir o scroll da sidebar de aulas no mobile.
 - [ ] Melhorar player, autoplay, erro/retry e fullscreen no mobile.
@@ -487,3 +488,4 @@ Itens que **não devem ser implementados sem uma decisão explícita**:
 - **2026-11-16:** PROD-04 concluído com SMTP Gmail validado; itens de questões/IA foram adiados por decisão do produto. A prioridade atual passa a ser **experiência mobile**: player, scroll da sidebar, mini player, PDF, anotações e testes em viewport de celular.
 - **2026-11-16 (home e catálogo):** categorias de curso criadas (única, ENEM/Concursos/Programação/Inglês/Outros); home e `/courses` ganharam busca, filtro por categoria, cards reutilizáveis, estado vazio com sugestão e carregamento incremental; o admin já seleciona categoria no cadastro e na listagem. Aplicadas regras de UI/UX do skill `ui-ux-pro-max` para chips acessíveis (`aria-pressed`), foco visível, alvos de toque, safe areas e `prefers-reduced-motion`.
 - **2026-11-16 (revisões):** a home passou a mostrar no máximo 3 revisões com link "Ver todas"; criada a página `/reviews` com paginação de 8 itens, estado vazio e mesmas ações de revisar/concluir. O componente de revisão foi extraído para `components/reviews/ReviewItem.tsx`.
+- **2026-11-16 (CSRF):** TECH-03 concluído; `injectAnonymousOrUser` valida `Origin`/`Referer` em mutações contra `WEBSERVER_ORIGIN`, com testes de integração em `tests/integration/api/v1/security/origin.test.ts`.

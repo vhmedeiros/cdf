@@ -14,6 +14,42 @@ declare module "next" {
   }
 }
 
+// ─── Verificação de Origin/CSRF ──────────────────────────────────────────────
+
+const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+function parseOrigin(value: string | undefined): string | null {
+  if (!value) return null;
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
+}
+
+// Valida Origin/Referer apenas em métodos mutantes e apenas quando o header
+// está presente. Clientes não-browser (testes, jobs internos) normalmente não
+// enviam Origin; nesses casos o SameSite=Lax continua sendo a proteção padrão.
+function isRequestOriginAllowed(req: NextApiRequest): boolean {
+  if (!MUTATING_METHODS.has((req.method || "GET").toUpperCase())) {
+    return true;
+  }
+
+  const allowedOrigin = parseOrigin(process.env.WEBSERVER_ORIGIN);
+  if (!allowedOrigin) {
+    return true;
+  }
+
+  const rawHeader = req.headers.origin ?? req.headers.referer;
+  const headerValue = Array.isArray(rawHeader) ? rawHeader[0] : rawHeader;
+  if (!headerValue) {
+    return true;
+  }
+
+  const requestOrigin = parseOrigin(headerValue);
+  return requestOrigin === allowedOrigin;
+}
+
 // ─── Middlewares ────────────────────────────────────────────────────────────
 
 // injectAnonymousOrUser: lê o cookie session_id, busca a sessão no banco
@@ -26,6 +62,13 @@ export async function injectAnonymousOrUser(
   res: NextApiResponse,
   next: () => void | Promise<void>,
 ) {
+  if (!isRequestOriginAllowed(req)) {
+    throw new ForbiddenError({
+      message: "Origem da requisição não autorizada.",
+      action: "Envie a requisição a partir do domínio oficial da plataforma.",
+    });
+  }
+
   const cookies = parseCookies(req.headers.cookie || "");
   const token = cookies.session_id;
 
