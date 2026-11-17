@@ -41,7 +41,7 @@ export default function StudentDashboardPage() {
   const { data: reviewsData, mutate: mutateReviews } = useSWR<{
     pending_count: number;
     reviews: ReviewWithDetails[];
-  }>(user ? "/api/v1/me/reviews" : null);
+  }>(user ? "/api/v1/me/reviews?limit=3" : null);
 
   const { data: courses } = useSWR<Course[]>("/api/v1/courses?limit=6");
   const { data: categories } = useSWR<Category[]>("/api/v1/categories");
@@ -156,6 +156,7 @@ export default function StudentDashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <DueReviews
               reviews={reviewsData?.reviews || []}
+              pendingCount={reviewsData?.pending_count}
               onReviewCompleted={handleReviewCompleted}
             />
             <StudyHeatmap activity={stats?.heatmap || []} />

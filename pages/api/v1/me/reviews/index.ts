@@ -17,7 +17,11 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   const includeDone = req.query.include_done === "true";
-  const dueReviews = await ReviewModel.listDue(user.id, { includeDone });
+  const parsedLimit = Number.parseInt(String(req.query.limit ?? ""), 10);
+  const limit =
+    Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.min(parsedLimit, 50) : undefined;
+
+  const dueReviews = await ReviewModel.listDue(user.id, { includeDone, limit });
   const pendingCount = await ReviewModel.countPendingToday(user.id);
 
   return res.status(200).json({
