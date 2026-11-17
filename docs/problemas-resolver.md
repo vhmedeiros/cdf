@@ -49,7 +49,7 @@ Foco atual: **experiência mobile primeiro**. A criação de questões, ingestã
 | TECH-08 | Implementar sync incremental do Drive                  | Drive        | P1           |
 | TECH-09 | Implementar testes das rotas administrativas e erros   | Qualidade    | P1           |
 | TECH-10 | Concluir a fase 10: ingestão de provas em PDF          | Questões     | Adiado       |
-| TECH-24 | Melhorar player e reprodução no mobile                 | Experiência  | P0           |
+| TECH-24 | Melhorar player e reprodução no mobile                 | Experiência  | Concluído    |
 | TECH-25 | Corrigir scroll da sidebar de aulas no mobile          | Bug          | P0           |
 | TECH-26 | Robustez do preview/sync do Drive                      | Drive        | P0           |
 | TECH-27 | Pipeline 720p e variantes de mídia                     | Mídia        | P1           |
@@ -334,7 +334,7 @@ Foco atual: **experiência mobile primeiro**. A criação de questões, ingestã
 - **Ação:** ampliar cenários de falha de login, curso sem matrícula, sync com erro, PDF quebrado e recuperação de sessão. A validação de scroll da sidebar mobile já foi adicionada em `tests/e2e/mobile-navigation.spec.ts`.
 - **Prioridade:** P1.
 
-### TECH-24 — Player e reprodução no mobile (P0)
+### TECH-24 — Player e reprodução no mobile (concluído)
 
 - **Contexto:** o player usa `<video>` nativo; já tinha `playsInline` e `preload="metadata"`, mas faltavam erro/retry, tratamento de autoplay bloqueado, fullscreen no iOS e áreas de toque confortáveis.
 - **Implementado:**
@@ -343,9 +343,10 @@ Foco atual: **experiência mobile primeiro**. A criação de questões, ingestã
   - fullscreen com fallback para `webkitEnterFullscreen` no iOS Safari;
   - controles com alvo mínimo de 44px, `touch-manipulation`, barra de seek mais alta e `overscroll-contain`;
   - estado de buffering preservado em `waiting`, `playing`, `canplay`, `loadeddata` e `seeked`.
-- **Pendente:** validar em iPhone real e Android 3G/4G; avaliar poster/PiP em etapa futura.
+- **Validado em dispositivo (2026-11-16):** retomada do vídeo, seek, fullscreen, erro com "Tentar novamente", toques e PDF/áudio funcionando.
+- **Pendente opcional:** poster e Picture-in-Picture numa etapa futura.
 - **Critério de aceite:** primeiro frame previsível, retomada correta, seek funcional no celular e erro explícito quando o arquivo não tocar.
-- **Prioridade:** P0 (mobile-first).
+- **Prioridade:** Concluído.
 
 ### TECH-25 — Scroll da sidebar de aulas no mobile (P0)
 
@@ -469,7 +470,7 @@ Itens que **não devem ser implementados sem uma decisão explícita**:
 - [x] Implementar verificação de `Origin` em mutações.
 - [x] Validar streaming real com volume e Nginx.
 - [ ] Corrigir o scroll da sidebar de aulas no mobile.
-- [ ] Melhorar player, autoplay, erro/retry e fullscreen no mobile.
+- [x] Melhorar player, autoplay, erro/retry e fullscreen no mobile.
 - [ ] Remover o segundo stream do mini player.
 - [ ] Ajustar PDF e anotações para telas pequenas.
 - [x] Criar categorias de curso (única) com seed inicial e filtros.
@@ -491,3 +492,4 @@ Itens que **não devem ser implementados sem uma decisão explícita**:
 - **2026-11-16 (revisões):** a home passou a mostrar no máximo 3 revisões com link "Ver todas"; criada a página `/reviews` com paginação de 8 itens, estado vazio e mesmas ações de revisar/concluir. O componente de revisão foi extraído para `components/reviews/ReviewItem.tsx`.
 - **2026-11-16 (CSRF):** TECH-03 concluído; `injectAnonymousOrUser` valida `Origin`/`Referer` em mutações contra `WEBSERVER_ORIGIN`, com testes de integração em `tests/integration/api/v1/security/origin.test.ts`.
 - **2026-11-16 (streaming/TECH-06):** TECH-06 concluído; `streamLocalFile` trata ranges simples/inválidos e a limpeza LRU remove downloads interrompidos; `infra/scripts/validate-streaming.sh` passou em produção (206 frio/quente, 200, 416, sem token, cache 19,8 GB/50 GB). Login de aluno agora cai em **Início** (`/`).
+- **2026-11-16 (mobile/TECH-24):** validado em dispositivo real; retomada, seek, fullscreen, erro/retry, toques e PDF/áudio OK. TECH-24 concluído.
