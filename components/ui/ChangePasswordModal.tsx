@@ -133,7 +133,7 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
       className="fixed inset-0 z-[60] overflow-y-auto overscroll-contain bg-black/80 backdrop-blur-sm animate-fade-in"
       onClick={onClose}
     >
-      <div className="flex min-h-full items-center justify-center p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div className="mx-auto flex min-h-full w-full max-w-md flex-col justify-start p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] sm:justify-center">
         <div
           role="dialog"
           aria-modal="true"
