@@ -147,7 +147,7 @@ export function CourseSidebar({
   }
 
   const content = (
-    <div className="flex flex-col h-full bg-[#131315] border-r border-[#2a2a2e] text-[#ece9e2]">
+    <div className="flex flex-col h-full min-h-0 bg-[#131315] border-r border-[#2a2a2e] text-[#ece9e2]">
       {/* Header & Overall Course Progress */}
       <div className="p-4 border-b border-[#2a2a2e] space-y-3">
         <div className="flex items-center justify-between">
@@ -216,7 +216,10 @@ export function CourseSidebar({
       </div>
 
       {/* Modules Tree */}
-      <div className="flex-1 overflow-y-auto divide-y divide-[#1b1b1e]">
+      <div
+        data-testid="course-modules-tree"
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain divide-y divide-[#1b1b1e]"
+      >
         {filteredModules.length === 0 ? (
           <div className="p-6 text-center text-xs text-[#9a978f]">{i18n.course.noLessonsFound}</div>
         ) : (
@@ -345,7 +348,10 @@ export function CourseSidebar({
 
   if (variant === "inline") {
     return (
-      <div className="bg-[#131315] border border-[#2a2a2e] rounded-2xl overflow-hidden shadow-xl max-h-[70vh] flex flex-col">
+      <div
+        data-testid="course-sidebar-inline"
+        className="bg-[#131315] border border-[#2a2a2e] rounded-2xl overflow-hidden shadow-xl max-h-[70dvh] min-h-0 flex flex-col"
+      >
         {content}
       </div>
     );
@@ -361,7 +367,7 @@ export function CourseSidebar({
       {/* Mobile drawer */}
       {isOpenMobile && (
         <div className="fixed inset-0 z-40 md:hidden bg-black/80 backdrop-blur-sm">
-          <div className="fixed inset-y-0 right-0 w-full max-w-xs bg-[#131315] shadow-xl animate-in slide-in-from-right duration-200">
+          <div className="fixed inset-y-0 right-0 w-full max-w-xs bg-[#131315] shadow-xl animate-in slide-in-from-right duration-200 pb-[env(safe-area-inset-bottom)]">
             {content}
           </div>
         </div>

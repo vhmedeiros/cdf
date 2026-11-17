@@ -199,20 +199,20 @@ export default function NotesSection({ onNoteAdded }: NotesSectionProps) {
   return (
     <div className="bg-[#131315] border border-[#2a2a2e] rounded-2xl p-5 sm:p-6 shadow-xl space-y-4">
       {/* Cabeçalho da seção de anotações */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-2.5">
           <StickyNote className="w-5 h-5 text-[#d4af37]" />
-          <h3 className="font-semibold text-base text-[#ece9e2]">Anotações desta Aula</h3>
+          <h3 className="truncate font-semibold text-base text-[#ece9e2]">Anotações desta Aula</h3>
           <span className="text-xs bg-[#1b1b1e] text-[#9a978f] border border-[#2a2a2e] px-2 py-0.5 rounded-full font-mono">
             {notes.length}
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex w-full items-center gap-2 sm:w-auto">
           {course?.slug && (
             <Link
               href={`/courses/${course.slug}/caderno`}
-              className="text-xs text-[#9a978f] hover:text-[#d4af37] flex items-center gap-1.5 transition px-2.5 py-1.5 rounded-lg hover:bg-[#1b1b1e]"
+              className="hidden text-xs text-[#9a978f] hover:text-[#d4af37] sm:flex items-center gap-1.5 transition px-2.5 py-1.5 rounded-lg hover:bg-[#1b1b1e]"
             >
               <BookOpen className="w-3.5 h-3.5" />
               Caderno do Curso
@@ -222,7 +222,7 @@ export default function NotesSection({ onNoteAdded }: NotesSectionProps) {
           {!isCreating && (
             <button
               onClick={startNewNote}
-              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-[#d4af37] text-black hover:bg-[#f5d76e] transition shadow"
+              className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-[#d4af37] px-3 py-1.5 text-xs font-semibold text-black shadow transition hover:bg-[#f5d76e] sm:w-auto touch-manipulation"
             >
               <Plus className="w-3.5 h-3.5" />
               Nova Nota <span className="text-[10px] opacity-75 font-mono ml-0.5">(N)</span>
@@ -237,13 +237,13 @@ export default function NotesSection({ onNoteAdded }: NotesSectionProps) {
           onSubmit={handleCreateNote}
           className="bg-[#1b1b1e] border border-[#d4af37]/40 rounded-xl p-4 space-y-3 animate-in fade-in duration-200"
         >
-          <div className="flex items-center justify-between text-xs">
+          <div className="flex flex-col gap-2 text-xs sm:flex-row sm:items-center sm:justify-between">
             <span className="flex items-center gap-1.5 font-mono text-[#d4af37] font-medium">
               <Clock className="w-3.5 h-3.5" />
               Timestamp: {formatDuration(capturedTime)}
             </span>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <label className="flex items-center gap-1.5 text-xs text-[#9a978f] cursor-pointer hover:text-[#ece9e2]">
                 <input
                   type="checkbox"
@@ -310,7 +310,7 @@ export default function NotesSection({ onNoteAdded }: NotesSectionProps) {
           </p>
         </div>
       ) : (
-        <div className="space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
+        <div className="space-y-2.5 max-h-[60dvh] overflow-y-auto overscroll-contain pr-1 sm:max-h-[420px]">
           {notes.map((note) => {
             const isEditing = editingId === note.id;
 
@@ -390,7 +390,7 @@ export default function NotesSection({ onNoteAdded }: NotesSectionProps) {
                           title={
                             note.is_important ? "Desmarcar importante" : "Marcar como importante"
                           }
-                          className={`p-1 rounded hover:bg-[#2a2a2e] transition ${
+                          className={`flex min-h-9 min-w-9 items-center justify-center rounded p-1 transition hover:bg-[#2a2a2e] touch-manipulation ${
                             note.is_important
                               ? "text-[#d4af37]"
                               : "text-[#9a978f] hover:text-[#d4af37]"
@@ -408,7 +408,7 @@ export default function NotesSection({ onNoteAdded }: NotesSectionProps) {
                             setEditImportant(note.is_important);
                           }}
                           title="Editar anotação"
-                          className="p-1 rounded hover:bg-[#2a2a2e] text-[#9a978f] hover:text-[#ece9e2] transition"
+                          className="flex min-h-9 min-w-9 items-center justify-center rounded p-1 text-[#9a978f] transition hover:bg-[#2a2a2e] hover:text-[#ece9e2] touch-manipulation"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
@@ -416,7 +416,7 @@ export default function NotesSection({ onNoteAdded }: NotesSectionProps) {
                         <button
                           onClick={() => handleDeleteNote(note.id)}
                           title="Excluir anotação"
-                          className="p-1 rounded hover:bg-[#2a2a2e] text-[#9a978f] hover:text-[#e5484d] transition"
+                          className="flex min-h-9 min-w-9 items-center justify-center rounded p-1 text-[#9a978f] transition hover:bg-[#2a2a2e] hover:text-[#e5484d] touch-manipulation"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>

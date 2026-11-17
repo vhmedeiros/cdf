@@ -143,7 +143,7 @@ export default function AudioPlayer() {
           max={duration || activeItem?.material.duration_seconds || 100}
           value={currentTime}
           onChange={(e) => seekTo(parseFloat(e.target.value))}
-          className="w-full h-1.5 bg-[#2a2a2e] accent-[#d4af37] rounded-lg cursor-pointer"
+          className="w-full h-2 sm:h-1.5 bg-[#2a2a2e] accent-[#d4af37] rounded-lg cursor-pointer touch-none"
         />
         <div className="flex justify-between items-center text-xs font-mono text-[#9a978f] mt-2">
           <span>{formatDuration(currentTime)}</span>
@@ -155,7 +155,7 @@ export default function AudioPlayer() {
       <div className="flex items-center gap-4 sm:gap-6 mb-4">
         <button
           onClick={playPrevious}
-          className="p-2 rounded-full hover:bg-[#1b1b1e] text-[#9a978f] hover:text-[#ece9e2] transition"
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-full p-2 text-[#9a978f] transition hover:bg-[#1b1b1e] hover:text-[#ece9e2] touch-manipulation"
           title="Aula Anterior"
         >
           <SkipBack className="w-5 h-5" />
@@ -163,7 +163,7 @@ export default function AudioPlayer() {
 
         <button
           onClick={() => seek(-10)}
-          className="p-2 rounded-full hover:bg-[#1b1b1e] text-[#9a978f] hover:text-[#ece9e2] transition"
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-full p-2 text-[#9a978f] transition hover:bg-[#1b1b1e] hover:text-[#ece9e2] touch-manipulation"
           title="Voltar 10s"
         >
           <RotateCcw className="w-5 h-5" />
@@ -183,7 +183,7 @@ export default function AudioPlayer() {
 
         <button
           onClick={() => seek(10)}
-          className="p-2 rounded-full hover:bg-[#1b1b1e] text-[#9a978f] hover:text-[#ece9e2] transition"
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-full p-2 text-[#9a978f] transition hover:bg-[#1b1b1e] hover:text-[#ece9e2] touch-manipulation"
           title="Avançar 10s"
         >
           <RotateCw className="w-5 h-5" />
@@ -191,7 +191,7 @@ export default function AudioPlayer() {
 
         <button
           onClick={playNext}
-          className="p-2 rounded-full hover:bg-[#1b1b1e] text-[#9a978f] hover:text-[#ece9e2] transition"
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-full p-2 text-[#9a978f] transition hover:bg-[#1b1b1e] hover:text-[#ece9e2] touch-manipulation"
           title="Próxima Aula"
         >
           <SkipForward className="w-5 h-5" />
@@ -202,13 +202,17 @@ export default function AudioPlayer() {
       <div className="flex items-center gap-4 text-xs">
         <button
           onClick={() => setPlaybackRate(playbackRate >= 2 ? 0.75 : playbackRate + 0.25)}
-          className="px-2.5 py-1 rounded bg-[#1b1b1e] border border-[#2a2a2e] font-mono text-[#d4af37] font-semibold hover:border-[#d4af37] transition"
+          className="flex min-h-11 items-center justify-center rounded border border-[#2a2a2e] bg-[#1b1b1e] px-2.5 py-1 font-mono font-semibold text-[#d4af37] transition hover:border-[#d4af37] touch-manipulation"
         >
           {playbackRate}x
         </button>
 
         <div className="flex items-center gap-2 text-[#9a978f]">
-          <button onClick={toggleMute} className="hover:text-[#ece9e2] p-1" title="Mudo (M)">
+          <button
+            onClick={toggleMute}
+            className="flex min-h-11 min-w-11 items-center justify-center rounded p-1 hover:text-[#ece9e2] touch-manipulation"
+            title="Mudo (M)"
+          >
             {isMuted || volume === 0 ? (
               <VolumeX className="w-4 h-4 text-[#e5484d]" />
             ) : volume > 1.0 ? (
@@ -229,7 +233,7 @@ export default function AudioPlayer() {
             step={0.05}
             value={isMuted ? 0 : volume}
             onChange={(e) => setVolume(parseFloat(e.target.value))}
-            className="w-24 h-1.5 bg-[#2a2a2e] accent-[#d4af37] rounded cursor-pointer"
+            className="w-24 h-2 sm:h-1.5 bg-[#2a2a2e] accent-[#d4af37] rounded cursor-pointer touch-none"
             title={`Volume: ${Math.round((isMuted ? 0 : volume) * 100)}%`}
           />
           <span

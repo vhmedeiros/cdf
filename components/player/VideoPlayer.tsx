@@ -15,9 +15,10 @@ import {
   Tv,
   Headphones,
   SkipForward,
-  Settings,
   StickyNote,
   Loader2,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 
 interface VideoPlayerProps {
@@ -60,10 +61,30 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [isBuffering, setIsBuffering] = useState(false);
+  const [playbackError, setPlaybackError] = useState<string | null>(null);
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const materialId = activeItem?.material.id;
   const streamSrc = materialId ? `/api/v1/stream/${materialId}` : "";
+
+  useEffect(() => {
+    setPlaybackError(null);
+    setAutoplayBlocked(false);
+    setIsBuffering(false);
+  }, [materialId]);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+    };
+  }, []);
 
   // Assign internal video ref to playerRef in context and restore time if switching modes
   useEffect(() => {
@@ -88,7 +109,7 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
       const playPromise = videoElementRef.current.play();
       if (playPromise !== undefined) {
         playPromise.catch(() => {
-          // Browser prevented autoplay with sound
+          setAutoplayBlocked(true);
         });
       }
     }
@@ -117,8 +138,8 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
     return () => observer.disconnect();
   }, [setMiniPlayer]);
 
-  // Hide controls after inactivity
-  const handleMouseMove = useCallback(() => {
+  // Hide controls after inactivity on mouse and touch devices.
+  const handleControlsActivity = useCallback(() => {
     setControlsVisible(true);
     if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
     controlsTimeoutRef.current = setTimeout(() => {
@@ -129,15 +150,40 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
     }, 3000);
   }, [isPlaying]);
 
-  const toggleFullscreen = useCallback(() => {
-    if (!containerRef.current) return;
-    if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen().catch(console.error);
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen().catch(console.error);
-      setIsFullscreen(false);
+  const retryPlayback = useCallback(() => {
+    const video = videoElementRef.current;
+    if (!video) return;
+
+    setPlaybackError(null);
+    setAutoplayBlocked(false);
+    setIsBuffering(true);
+    if (playbackError) {
+      video.load();
+      video.play().catch(() => {});
+      return;
     }
+    video.play().catch(() => setAutoplayBlocked(true));
+  }, [playbackError]);
+
+  const toggleFullscreen = useCallback(() => {
+    const container = containerRef.current;
+    const video = videoElementRef.current as
+      | (HTMLVideoElement & { webkitEnterFullscreen?: () => void })
+      | null;
+
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+      return;
+    }
+
+    if (container?.requestFullscreen) {
+      container.requestFullscreen().catch(() => {
+        video?.webkitEnterFullscreen?.();
+      });
+      return;
+    }
+
+    video?.webkitEnterFullscreen?.();
   }, []);
 
   const speeds = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5];
@@ -153,7 +199,8 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
   return (
     <div
       ref={containerRef}
-      onMouseMove={handleMouseMove}
+      onPointerMove={handleControlsActivity}
+      onTouchStart={handleControlsActivity}
       className={`relative w-full overflow-hidden bg-black rounded-xl select-none group border border-[#2a2a2e] transition-all duration-300 ${
         theaterMode ? "aspect-[21/9] max-h-[80vh]" : "aspect-video"
       }`}
@@ -166,9 +213,28 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
         className="w-full h-full object-contain"
         onClick={togglePlay}
         onWaiting={() => setIsBuffering(true)}
-        onPlaying={() => setIsBuffering(false)}
+        onPlaying={() => {
+          setAutoplayBlocked(false);
+          setIsBuffering(false);
+        }}
         onCanPlay={() => setIsBuffering(false)}
+        onLoadedData={() => setIsBuffering(false)}
         onSeeked={() => setIsBuffering(false)}
+        onError={(e) => {
+          const mediaError = e.currentTarget.error;
+          setAutoplayBlocked(false);
+          setIsBuffering(false);
+
+          if (mediaError?.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED) {
+            setPlaybackError(
+              "Este vídeo está em um formato que o navegador não consegue reproduzir.",
+            );
+          } else if (mediaError?.code === MediaError.MEDIA_ERR_NETWORK) {
+            setPlaybackError("A conexão caiu durante o carregamento do vídeo.");
+          } else {
+            setPlaybackError("Não foi possível carregar este vídeo.");
+          }
+        }}
         onTimeUpdate={(e) => {
           const target = e.currentTarget;
           if (target.currentTime > 0 || currentTime === 0) {
@@ -206,6 +272,41 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
             Carregando transmissão...
           </span>
         </div>
+      )}
+
+      {playbackError && (
+        <div className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-3 bg-black/85 p-6 text-center">
+          <AlertCircle className="w-9 h-9 text-[#e5484d]" />
+          <p className="max-w-sm text-sm font-medium text-[#ece9e2]">{playbackError}</p>
+          <p className="max-w-sm text-[11px] text-[#9a978f]">
+            Tente novamente. Se persistir, o arquivo pode estar corrompido ou em formato
+            incompatível.
+          </p>
+          <button
+            type="button"
+            onClick={retryPlayback}
+            className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[#d4af37] px-4 py-2 text-xs font-semibold text-black transition hover:bg-[#f5d76e]"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Tentar novamente
+          </button>
+        </div>
+      )}
+
+      {autoplayBlocked && !playbackError && (
+        <button
+          type="button"
+          onClick={retryPlayback}
+          className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 bg-black/45 text-[#ece9e2]"
+          aria-label="Reproduzir vídeo"
+        >
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#d4af37] text-black shadow-xl">
+            <Play className="w-6 h-6 fill-current" />
+          </span>
+          <span className="rounded-full border border-white/20 bg-black/70 px-3 py-1 text-xs font-medium">
+            Toque para reproduzir
+          </span>
+        </button>
       )}
 
       {/* Toast Retomando de onde parou */}
@@ -274,7 +375,7 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
               const val = parseFloat(e.target.value);
               seekTo(val);
             }}
-            className="w-full h-1.5 bg-[#2a2a2e] accent-[#d4af37] rounded-lg cursor-pointer appearance-none group-hover/scrub:h-2.5 transition-all"
+            className="w-full h-2 sm:h-1.5 bg-[#2a2a2e] accent-[#d4af37] rounded-lg cursor-pointer appearance-none touch-none group-hover/scrub:h-2.5 transition-all"
           />
         </div>
 
@@ -284,7 +385,7 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
             {/* Play/Pause */}
             <button
               onClick={togglePlay}
-              className="p-1.5 rounded-lg hover:bg-white/10 text-[#ece9e2] hover:text-[#d4af37] transition"
+              className="flex min-h-11 min-w-11 sm:min-h-0 sm:min-w-0 items-center justify-center p-1.5 rounded-lg hover:bg-white/10 text-[#ece9e2] hover:text-[#d4af37] transition touch-manipulation"
               title={isPlaying ? "Pausar (Espaço)" : "Reproduzir (Espaço)"}
             >
               {isPlaying ? (
@@ -297,14 +398,14 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
             {/* Jump -5s / +5s */}
             <button
               onClick={() => seek(-5)}
-              className="p-1.5 rounded-lg hover:bg-white/10 text-[#9a978f] hover:text-[#ece9e2] transition"
+              className="flex min-h-11 min-w-11 sm:min-h-0 sm:min-w-0 items-center justify-center p-1.5 rounded-lg hover:bg-white/10 text-[#9a978f] hover:text-[#ece9e2] transition touch-manipulation"
               title="Voltar 5s (←)"
             >
               <RotateCcw className="w-4 h-4" />
             </button>
             <button
               onClick={() => seek(5)}
-              className="p-1.5 rounded-lg hover:bg-white/10 text-[#9a978f] hover:text-[#ece9e2] transition"
+              className="flex min-h-11 min-w-11 sm:min-h-0 sm:min-w-0 items-center justify-center p-1.5 rounded-lg hover:bg-white/10 text-[#9a978f] hover:text-[#ece9e2] transition touch-manipulation"
               title="Avançar 5s (→)"
             >
               <RotateCw className="w-4 h-4" />
@@ -314,7 +415,7 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
             <div className="flex items-center gap-1.5 group/vol">
               <button
                 onClick={toggleMute}
-                className="p-1.5 rounded-lg hover:bg-white/10 text-[#9a978f] hover:text-[#ece9e2] transition"
+                className="flex min-h-11 min-w-11 sm:min-h-0 sm:min-w-0 items-center justify-center p-1.5 rounded-lg hover:bg-white/10 text-[#9a978f] hover:text-[#ece9e2] transition touch-manipulation"
                 title="Mudo (M)"
               >
                 {isMuted || volume === 0 ? (
@@ -364,7 +465,7 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
             <div className="relative">
               <button
                 onClick={() => setShowSpeedMenu(!showSpeedMenu)}
-                className="px-2 py-1 rounded text-xs font-mono font-medium hover:bg-white/10 text-[#d4af37] border border-[#2a2a2e] transition"
+                className="flex min-h-11 sm:min-h-0 items-center justify-center px-2 py-1 rounded text-xs font-mono font-medium hover:bg-white/10 text-[#d4af37] border border-[#2a2a2e] transition touch-manipulation"
                 title="Velocidade ([ ou ])"
               >
                 {playbackRate}x
@@ -433,7 +534,7 @@ export default function VideoPlayer({ onNewNote }: VideoPlayerProps) {
             {/* Fullscreen Toggle */}
             <button
               onClick={toggleFullscreen}
-              className="p-1.5 rounded-lg hover:bg-white/10 text-[#9a978f] hover:text-[#ece9e2] transition"
+              className="flex min-h-11 min-w-11 sm:min-h-0 sm:min-w-0 items-center justify-center p-1.5 rounded-lg hover:bg-white/10 text-[#9a978f] hover:text-[#ece9e2] transition touch-manipulation"
               title="Tela Cheia (F)"
             >
               {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}

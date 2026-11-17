@@ -15,45 +15,47 @@
 | **P2**      | Melhoria ou dívida tolerável no curto prazo.                                            |
 | **Decisão** | Depende de definição do dono do produto.                                                |
 | **Técnico** | Depende de implementação no código/infra.                                               |
+| **Adiado**  | Congelado por decisão do produto; não iniciar sem nova priorização.                     |
 
 Regra de trabalho: itens **P0** não devem competir com novas funcionalidades. Itens de produto devem ser decididos antes de investir em implementação que dependa deles.
+Foco atual: **experiência mobile primeiro**. A criação de questões, ingestão de provas e recursos de IA estão **adiados**.
 
 ---
 
 ## 2. Resumo executivo
 
-| ID      | Item                                                   | Tipo         | Prioridade   |
-| ------- | ------------------------------------------------------ | ------------ | ------------ |
-| PROD-01 | Definir nome definitivo da plataforma                  | Decisão      | P1           |
-| PROD-02 | Definir domínio oficial                                | Decisão      | P1           |
-| PROD-03 | Definir modelo de operação: fechado ou comercial       | Decisão      | Decidido     |
-| PROD-04 | Configurar SMTP transacional de produção               | Infra        | Em andamento |
-| PROD-05 | Configurar monitoramento com Sentry                    | Infra        | P2           |
-| PROD-06 | Fechar taxonomia inicial de disciplinas e assuntos     | Conteúdo     | P1           |
-| PROD-07 | Definir bancas prioritárias do importador              | Conteúdo     | P1           |
-| PROD-08 | Formalizar diretriz de direitos autorais das questões  | Política     | P0           |
-| PROD-09 | Gerar e configurar a chave Gemini                      | IA           | P1           |
-| PROD-10 | Editar nome e descrição dos cursos                     | Produto      | P1           |
-| PROD-11 | Busca, filtro e paginação de cursos                    | Produto      | P1           |
-| PROD-12 | Categorias de cursos                                   | Produto      | P1           |
-| PROD-13 | Métricas de produto e comportamento                    | Produto      | P2           |
-| TECH-01 | Reconciliar a branch `feat/questions` com a `main`     | Git/entrega  | P0           |
-| TECH-02 | Corrigir os 4 erros atuais de typecheck                | Qualidade    | Concluído    |
-| TECH-03 | Implementar verificação de `Origin`/CSRF nas mutações  | Segurança    | P0           |
-| TECH-04 | Armazenar tokens de sessão, convite e reset como hash  | Segurança    | P1           |
-| TECH-05 | Confirmar qual commit está em produção na VM           | Operação     | Concluído    |
-| TECH-06 | Validar streaming real com volume de cache e Nginx     | Infra        | P0           |
-| TECH-07 | Alinhar `CLAUDE.md` ao que realmente está implementado | Documentação | P1           |
-| TECH-08 | Implementar sync incremental do Drive                  | Drive        | P1           |
-| TECH-09 | Implementar testes das rotas administrativas e erros   | Qualidade    | P1           |
-| TECH-10 | Concluir a fase 10: ingestão de provas em PDF          | Questões     | P1           |
-| TECH-24 | Melhorar player e reprodução no mobile                 | Experiência  | P1           |
-| TECH-25 | Corrigir scroll da sidebar de aulas no mobile          | Bug          | P1           |
-| TECH-26 | Robustez do preview/sync do Drive                      | Drive        | P0           |
-| TECH-27 | Pipeline 720p e variantes de mídia                     | Mídia        | P1           |
-| TECH-28 | Otimizações e teste de velocidade do streaming         | Mídia        | P1           |
-| TECH-29 | Plano de capacidade para 20 simultâneos e 5 TB         | Infra        | P1           |
-| TECH-30 | Normalizar containers e validar mídia do Drive         | Mídia        | P1           |
+| ID      | Item                                                   | Tipo         | Prioridade |
+| ------- | ------------------------------------------------------ | ------------ | ---------- |
+| PROD-01 | Definir nome definitivo da plataforma                  | Decisão      | P1         |
+| PROD-02 | Definir domínio oficial                                | Decisão      | P1         |
+| PROD-03 | Definir modelo de operação: fechado ou comercial       | Decisão      | Decidido   |
+| PROD-04 | Configurar SMTP transacional de produção               | Infra        | Concluído  |
+| PROD-05 | Configurar monitoramento com Sentry                    | Infra        | P2         |
+| PROD-06 | Fechar taxonomia inicial de disciplinas e assuntos     | Conteúdo     | Adiado     |
+| PROD-07 | Definir bancas prioritárias do importador              | Conteúdo     | Adiado     |
+| PROD-08 | Formalizar diretriz de direitos autorais das questões  | Política     | Adiado     |
+| PROD-09 | Gerar e configurar a chave Gemini                      | IA           | Adiado     |
+| PROD-10 | Editar nome e descrição dos cursos                     | Produto      | P1         |
+| PROD-11 | Busca, filtro e paginação de cursos                    | Produto      | P1         |
+| PROD-12 | Categorias de cursos                                   | Produto      | P1         |
+| PROD-13 | Métricas de produto e comportamento                    | Produto      | P2         |
+| TECH-01 | Reconciliar a branch `feat/questions` com a `main`     | Git/entrega  | Adiado     |
+| TECH-02 | Corrigir os 4 erros atuais de typecheck                | Qualidade    | Concluído  |
+| TECH-03 | Implementar verificação de `Origin`/CSRF nas mutações  | Segurança    | P0         |
+| TECH-04 | Armazenar tokens de sessão, convite e reset como hash  | Segurança    | P1         |
+| TECH-05 | Confirmar qual commit está em produção na VM           | Operação     | Concluído  |
+| TECH-06 | Validar streaming real com volume de cache e Nginx     | Infra        | P0         |
+| TECH-07 | Alinhar `CLAUDE.md` ao que realmente está implementado | Documentação | P1         |
+| TECH-08 | Implementar sync incremental do Drive                  | Drive        | P1         |
+| TECH-09 | Implementar testes das rotas administrativas e erros   | Qualidade    | P1         |
+| TECH-10 | Concluir a fase 10: ingestão de provas em PDF          | Questões     | Adiado     |
+| TECH-24 | Melhorar player e reprodução no mobile                 | Experiência  | P0         |
+| TECH-25 | Corrigir scroll da sidebar de aulas no mobile          | Bug          | P0         |
+| TECH-26 | Robustez do preview/sync do Drive                      | Drive        | P0         |
+| TECH-27 | Pipeline 720p e variantes de mídia                     | Mídia        | P1         |
+| TECH-28 | Otimizações e teste de velocidade do streaming         | Mídia        | P1         |
+| TECH-29 | Plano de capacidade para 20 simultâneos e 5 TB         | Infra        | P1         |
+| TECH-30 | Normalizar containers e validar mídia do Drive         | Mídia        | P1         |
 
 ---
 
@@ -87,7 +89,7 @@ Regra de trabalho: itens **P0** não devem competir com novas funcionalidades. I
 - **Ação:** não investir em cobrança/escala comercial; manter convite fechado e revisar privacidade antes de ampliar o grupo.
 - **Prioridade:** Decidido.
 
-### PROD-06 — Taxonomia inicial de disciplinas e assuntos
+### PROD-06 — Taxonomia inicial de disciplinas e assuntos (adiado)
 
 - **Contexto:** hoje existem cadastradas:
   - Direito Constitucional;
@@ -97,28 +99,28 @@ Regra de trabalho: itens **P0** não devem competir com novas funcionalidades. I
   - Programação e Backend Java.
 - **Ação:** listar as próximas disciplinas e tópicos prioritários, por exemplo: Direito Penal, Informática, Administração Geral, Contabilidade, Direito Tributário e Legislação.
 - **Critério de aceite:** taxonomia mínima aprovada e cadastrada via seed ou painel admin.
-- **Prioridade:** P1.
+- **Prioridade:** Adiado com a criação de questões.
 
-### PROD-07 — Bancas prioritárias
+### PROD-07 — Bancas prioritárias (adiado)
 
 - **Contexto:** já cadastradas: Cebraspe, FGV, FCC e Vunesp.
 - **Ação:** definir quais bancas o importador deve suportar primeiro, por exemplo: Cesgranrio, Instituto AOCP, Quadrix, Selecon e IBFC.
 - **Critério de aceite:** lista ordenada por prioridade e coberta pelo parser da fase 10.
-- **Prioridade:** P1.
+- **Prioridade:** Adiado com a criação de questões.
 
-### PROD-08 — Direitos autorais das questões
+### PROD-08 — Direitos autorais das questões (adiado)
 
 - **Regra inegociável:** usar **apenas provas e gabaritos oficiais públicos** disponibilizados pelas bancas e órgãos.
 - **Proibição:** nunca raspar sites comerciais de questões (QConcursos, TecConcursos etc.), pois comentários, formatação e curadoria dessas plataformas são protegidos.
 - **Ação:** manter essa regra registrada no fluxo de importação e na revisão de conteúdo.
-- **Prioridade:** P0 (política).
+- **Prioridade:** Adiado com a criação de questões; a regra continua valendo para qualquer conteúdo futuro.
 
-### PROD-09 — Chave definitiva da API Gemini
+### PROD-09 — Chave definitiva da API Gemini (adiado)
 
 - **Contexto:** o roteador de IA, o controle de cota no Redis, o fallback entre modelos e o circuit breaker já existem na branch `feat/questions`.
 - **Ação:** gerar uma única chave no Google AI Studio e configurar `GEMINI_API_KEY` quando as explicações e o coach forem ativados.
 - **Observação:** não implementar rotação de chaves ou múltiplas contas para burlar cota; isso viola os termos do Google e coloca em risco a conta que hospeda o Drive.
-- **Prioridade:** P1.
+- **Prioridade:** Adiado com a criação de questões.
 
 ### PROD-10 — Editar nome e descrição dos cursos
 
@@ -153,16 +155,16 @@ Regra de trabalho: itens **P0** não devem competir com novas funcionalidades. I
 
 ## 4. Infraestrutura e operação
 
-### PROD-04 — SMTP transacional de produção
+### PROD-04 — SMTP transacional de produção (concluído)
 
 - **Contexto:** em desenvolvimento o Mailcatcher intercepta os e-mails em `localhost:1080`.
-- **Decisão em 2026-11-16:** usar o SMTP do Gmail já configurado para o portfólio, com uma **App Password separada** para o CDF.
-- **Configuração prevista:** `EMAIL_SMTP_HOST=smtp.gmail.com`, `EMAIL_SMTP_PORT=465`, `EMAIL_SMTP_SECURE=true`, `EMAIL_SMTP_USER` com o endereço completo da conta e `EMAIL_FROM` igual à conta ou alias verificado no Gmail.
-- **Cuidados:** não reutilizar a mesma App Password do portfólio no CDF; não commitar a senha; manter o `.env.production` com permissão restrita na VM. O limite do Gmail gratuito é de aproximadamente 500 destinatários/dia, suficiente para convites e resets, mas não para envio em massa.
-- **Código:** `infra/email.ts` agora aceita `EMAIL_SMTP_SECURE` e ativa TLS automaticamente na porta 465.
-- **Ação:** criar a App Password no Gmail, preencher o `.env.production` da VM, recriar `web`/`worker` e validar convite e reset.
-- **Critério de aceite:** convite e reset chegam em uma caixa real; falhas de envio são registradas.
-- **Prioridade:** Em andamento.
+- **Decisão em 2026-11-16:** usar o SMTP do Gmail já configurado para o portfólio.
+- **Configuração aplicada:** `EMAIL_SMTP_HOST=smtp.gmail.com`, `EMAIL_SMTP_PORT=465`, `EMAIL_SMTP_SECURE=true`, `EMAIL_SMTP_USER` com o endereço completo da conta e `EMAIL_FROM` igual à conta ou alias verificado no Gmail.
+- **Código:** `infra/email.ts` aceita `EMAIL_SMTP_SECURE` e ativa TLS automaticamente na porta 465.
+- **Validação:** envio de e-mail confirmado em produção; convite e reset usam o mesmo transporte.
+- **Cuidados:** a senha não deve ser commitada e o `.env.production` deve manter permissão restrita. O limite do Gmail gratuito é de aproximadamente 500 destinatários/dia, suficiente para convites e resets, mas não para envio em massa.
+- **Dívida operacional:** o CDF está usando as mesmas credenciais do portfólio. Criar uma App Password separada quando possível, para que revogar uma não derrube o outro.
+- **Prioridade:** Concluído.
 
 ### PROD-05 — Monitoramento com Sentry
 
@@ -197,14 +199,14 @@ Regra de trabalho: itens **P0** não devem competir com novas funcionalidades. I
 
 ### TECH-28 — Otimizações e teste de velocidade do streaming
 
-- **Contexto:** no primeiro play, o código transmite do Drive e também baixa o arquivo inteiro em background para o cache, duplicando tráfego. O Nginx já tem `proxy_buffering off` para a rota de stream e o cache local tem teto de 50 GB. A segunda medição mostrou downloads integrais (`200`) de 53–126 MB vindos do cache local e Range Requests (`206`) frios a 4–22 Mbps. O service worker cacheava HTML/chunks com cache-first e podia manter o bundle antigo; o branch de cache do Nginx também devolvia `200` mesmo com `Range`.
+- **Contexto:** no primeiro play, o código transmite do Drive e também baixa o arquivo inteiro em background para o cache, duplicando tráfego. O Nginx já tem `proxy_buffering off` para a rota de stream e o cache local tem teto de 50 GB. A segunda medição mostrou downloads integrais (`200`) de 53–126 MB vindos do cache local e Range Requests (`206`) frios a 4–22 Mbps. O service worker cacheava HTML/chunks com cache-first e podia manter o bundle antigo; o branch de cache do Nginx também devolvia `200` mesmo com `Range`. O mini player abria um segundo `<video>` e dobrava o consumo; agora ele usa preview estático.
 - **Ação:** testar A/B com:
   - `proxy_buffering off` e `proxy_request_buffering off` em `/api/v1/stream/`, com timeouts maiores (aplicado);
   - usar `streamLocalFile` quando houver `Range` em arquivo cacheado, para garantir `206` (aplicado);
   - service worker sem cache-first de HTML e com versão nova do cache (aplicado);
   - não duplicar o download no primeiro play ou implementar tee (stream + cache na mesma requisição);
   - limitar downloads de cache a 2–4 simultâneos e não cachear arquivos acima de um limite;
-  - remover o segundo `<video autoplay>` do `GlobalMiniPlayer`;
+  - remover o segundo `<video autoplay>` do `GlobalMiniPlayer` (aplicado: preview estático com barra de progresso, sem stream duplicado);
   - preaquecer aulas populares e usar `faststart` no MP4;
   - cache HTTP para mídia e HLS 720p se o MP4 progressivo não estabilizar no mobile.
 - **Métricas:** TTFB, tempo até o primeiro frame, latência de seek, rebuffering, erros 403/429 do Drive, CPU/RAM/disco e egress.
@@ -267,13 +269,13 @@ Regra de trabalho: itens **P0** não devem competir com novas funcionalidades. I
 
 ## 6. Drive e sincronização
 
-### TECH-01 — Reconciliar `feat/questions` com a `main`
+### TECH-01 — Reconciliar `feat/questions` com a `main` (adiado)
 
 - **Contexto:** a branch de questões divergiu em `7f8235d` e está 3 commits à frente, com cerca de 69 arquivos alterados. Ela não contém os últimos ajustes da `main` (README, correções de mobile, `.gitattributes`, sync idempotente).
 - **Riscos:** conflitos silenciosos, regressões de mobile, perda de correções e deploy de uma árvore inconsistente.
 - **Ação:** fazer rebase ou merge controlado, rodar lint, typecheck, Jest e Playwright, e validar o fluxo de cursos + questões em conjunto.
 - **Critério de aceite:** branch atualizada, testes verdes e diff revisado antes do merge.
-- **Prioridade:** P0 se questões forem para produção; P1 caso contrário.
+- **Prioridade:** Adiado. A branch fica congelada; não reconciliar nem mesclar enquanto questões estiverem fora de escopo.
 
 ### TECH-08 — Sync incremental do Drive
 
@@ -323,27 +325,35 @@ Regra de trabalho: itens **P0** não devem competir com novas funcionalidades. I
 ### TECH-18 — Cobertura de testes de experiência
 
 - **Contexto:** o fluxo principal tem testes E2E, mas casos de erro, mobile específico e administração ainda são frágeis.
-- **Ação:** ampliar cenários de falha de login, curso sem matrícula, sync com erro, PDF quebrado e recuperação de sessão.
+- **Ação:** ampliar cenários de falha de login, curso sem matrícula, sync com erro, PDF quebrado e recuperação de sessão. A validação de scroll da sidebar mobile já foi adicionada em `tests/e2e/mobile-navigation.spec.ts`.
 - **Prioridade:** P1.
 
-### TECH-24 — Player e reprodução no mobile
+### TECH-24 — Player e reprodução no mobile (P0)
 
-- **Contexto:** o player usa `<video>` nativo; faltam estados de carregamento/erro, retry, `playsInline`, `preload="metadata"`, poster, fullscreen/PiP e tratamento de rede instável.
-- **Ação:** melhorar a experiência do player no mobile e no desktop, com foco em primeiro frame, seek, retomada de posição e mensagens de erro claras. Testar em 3G/4G simulados e iOS Safari.
-- **Prioridade:** P1.
+- **Contexto:** o player usa `<video>` nativo; já tinha `playsInline` e `preload="metadata"`, mas faltavam erro/retry, tratamento de autoplay bloqueado, fullscreen no iOS e áreas de toque confortáveis.
+- **Implementado:**
+  - overlay de erro com mensagem específica (formato não suportado, rede) e botão "Tentar novamente";
+  - overlay "Toque para reproduzir" quando o navegador bloqueia autoplay com som;
+  - fullscreen com fallback para `webkitEnterFullscreen` no iOS Safari;
+  - controles com alvo mínimo de 44px, `touch-manipulation`, barra de seek mais alta e `overscroll-contain`;
+  - estado de buffering preservado em `waiting`, `playing`, `canplay`, `loadeddata` e `seeked`.
+- **Pendente:** validar em iPhone real e Android 3G/4G; avaliar poster/PiP em etapa futura.
+- **Critério de aceite:** primeiro frame previsível, retomada correta, seek funcional no celular e erro explícito quando o arquivo não tocar.
+- **Prioridade:** P0 (mobile-first).
 
-### TECH-25 — Scroll da sidebar de aulas no mobile
+### TECH-25 — Scroll da sidebar de aulas no mobile (P0)
 
-- **Contexto:** no mobile, a sidebar inline mostra apenas parte das aulas e não rola. O wrapper usa `max-h-[70vh] flex flex-col` com `overflow-hidden`; o filho tem `flex-1 overflow-y-auto` sem `min-h-0`, então não encolhe e é cortado.
-- **Ação:** adicionar `min-h-0` ao container com scroll, remover o `max-h` no mobile ou usar `max-h-[calc(100dvh-...)]`, e testar rolagem/overscroll no iOS e Android.
+- **Contexto:** no mobile, a sidebar inline mostrava apenas parte das aulas e não rolava. O wrapper usava `max-h-[70vh]` e o filho com `overflow-y-auto` não tinha `min-h-0`, então era cortado.
+- **Implementado:** `min-h-0` no wrapper e na árvore, `max-h-[70dvh]`, `overscroll-contain`, safe area no drawer mobile e test ids para validar o scroll.
+- **Pendente:** validar rolagem/overscroll em iOS e Android com curso grande.
 - **Critério de aceite:** todas as aulas ficam acessíveis por rolagem, inclusive em cursos grandes.
-- **Prioridade:** P1.
+- **Prioridade:** P0 (mobile-first).
 
 ---
 
 ## 8. Questões e IA
 
-### TECH-10 — Fase 10: ingestão de provas em PDF
+### TECH-10 — Fase 10: ingestão de provas em PDF (adiado)
 
 - **Contexto:** a fase 9 entregou schema, API, UI e roteador de IA. A fase 10 ainda não foi implementada.
 - **Escopo pendente:**
@@ -357,22 +367,22 @@ Regra de trabalho: itens **P0** não devem competir com novas funcionalidades. I
   - tela de revisão do admin;
   - publicação em lote.
 - **Critério de aceite:** uma prova real importada com pelo menos 95% das questões corretas e fila de revisão funcional.
-- **Prioridade:** P1.
+- **Prioridade:** Adiado com a criação de questões.
 
-### TECH-19 — Worker de IA e PDF
+### TECH-19 — Worker de IA e PDF (adiado)
 
 - **Contexto:** o worker atual só processa a fila `drive` e o job `syncCourse`.
 - **Ação:** criar filas `ai` e `pdf`, com concorrência controlada, prioridades e retomada de jobs. A extração de provas e a geração assíncrona de explicações devem sair do request HTTP.
-- **Prioridade:** P1.
+- **Prioridade:** Adiado com a criação de questões.
 
-### TECH-20 — Explicações síncronas no primeiro acesso
+### TECH-20 — Explicações síncronas no primeiro acesso (adiado)
 
 - **Contexto:** a primeira resposta de uma questão pode disparar uma chamada à cadeia `deep` de forma síncrona.
 - **Riscos:** latência alta, timeout, consumo de cota em horário de pico e falha parcial do fluxo de resposta.
 - **Ação:** enfileirar a geração de explicação e devolver a resposta imediatamente; a explicação aparece quando estiver pronta.
-- **Prioridade:** P1.
+- **Prioridade:** Adiado com a criação de questões.
 
-### TECH-21 — Revisão de erros, simulados e coach
+### TECH-21 — Revisão de erros, simulados e coach (adiado)
 
 - **Contexto:** o modelo de dados prevê `error_reviews`, `simulados` e `ai_jobs`, mas as telas e a lógica ainda não existem.
 - **Ação:** implementar em etapas:
@@ -380,7 +390,7 @@ Regra de trabalho: itens **P0** não devem competir com novas funcionalidades. I
   2. simulados com pontuação por banca;
   3. painel de desempenho por disciplina/assunto;
   4. relatório semanal do coach.
-- **Prioridade:** P2.
+- **Prioridade:** Adiado com a criação de questões.
 
 ### TECH-22 — Bug potencial em `/courses?public=true`
 
@@ -447,23 +457,24 @@ Itens que **não devem ser implementados sem uma decisão explícita**:
 
 ## 11. Checklist de curto prazo
 
-- [ ] Confirmar o commit em produção na VM.
-- [ ] Corrigir os 4 erros de typecheck e incluir `tsc --noEmit` no CI.
+- [x] Confirmar o commit em produção na VM.
+- [x] Corrigir os 4 erros de typecheck e incluir `tsc --noEmit` no CI.
+- [x] Configurar SMTP de produção.
 - [ ] Implementar verificação de `Origin` em mutações.
-- [ ] Configurar SMTP de produção.
 - [ ] Validar streaming real com volume e Nginx.
-- [ ] Reconciliar `feat/questions` com a `main`.
-- [ ] Atualizar `CLAUDE.md` para refletir o estado real do código.
-- [ ] Definir modelo de operação, nome e domínio.
-- [ ] Fechar a taxonomia inicial e as bancas prioritárias.
-- [ ] Planejar a fase 10 (ingestão de provas).
+- [ ] Corrigir o scroll da sidebar de aulas no mobile.
+- [ ] Melhorar player, autoplay, erro/retry e fullscreen no mobile.
+- [ ] Remover o segundo stream do mini player.
+- [ ] Ajustar PDF e anotações para telas pequenas.
 - [ ] Implementar o pipeline 720p e o mapeamento de variantes.
 - [ ] Testar velocidade e capacidade com 20 sessões simultâneas.
-- [ ] Corrigir o scroll da sidebar de aulas no mobile.
 - [ ] Endurecer o preview/sync do Drive contra links de arquivo e pastas grandes.
+- [ ] Atualizar `CLAUDE.md` para refletir o estado real do código.
+- [ ] Definir nome e domínio.
+- [ ] **Adiado:** reconciliar `feat/questions`, taxonomia, bancas, direitos autorais de questões, Gemini e fase 10.
 
 ---
 
 ## 12. Última atualização
 
-- **2026-11-16:** documento reestruturado por prioridade, com separação entre decisões de produto, infraestrutura, segurança, Drive, experiência, questões/IA e qualidade. Foram incorporadas lacunas identificadas na análise do código e das branches. Também foram registrados os 8 itens de produto/experiência pendentes, a decisão de servir vídeo em 720p, o Drive Pro de 5 TB e o plano de teste de velocidade/capacidade para 20 simultâneos. A medição de disco da VM e a reserva de 50 GB para o cache foram registradas em [`infraestrutura-vm.md`](./infraestrutura-vm.md).
+- **2026-11-16:** PROD-04 concluído com SMTP Gmail validado; itens de questões/IA foram adiados por decisão do produto. A prioridade atual passa a ser **experiência mobile**: player, scroll da sidebar, mini player, PDF, anotações e testes em viewport de celular.

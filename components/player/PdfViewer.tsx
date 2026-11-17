@@ -15,7 +15,9 @@ interface PdfViewerProps {
 export default function PdfViewer({ materialId, title }: PdfViewerProps) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState<number>(1);
-  const [scale, setScale] = useState<number>(1.1);
+  const [scale, setScale] = useState<number>(() =>
+    typeof window !== "undefined" && window.innerWidth < 640 ? 0.6 : 1.1,
+  );
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,9 +60,9 @@ export default function PdfViewer({ materialId, title }: PdfViewerProps) {
   return (
     <div className="flex flex-col h-full bg-[#131315] border border-[#2a2a2e] rounded-xl overflow-hidden text-[#ece9e2]">
       {/* Top Toolbar */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-[#1b1b1e] border-b border-[#2a2a2e] text-xs">
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-[#ece9e2] truncate max-w-[200px] sm:max-w-xs">
+      <div className="flex flex-wrap items-center gap-2 px-3 py-2.5 bg-[#1b1b1e] border-b border-[#2a2a2e] text-xs sm:px-4">
+        <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto sm:flex-1">
+          <span className="font-medium text-[#ece9e2] truncate sm:max-w-xs">
             {title || "Documento PDF"}
           </span>
         </div>
@@ -70,7 +72,7 @@ export default function PdfViewer({ materialId, title }: PdfViewerProps) {
           <button
             onClick={() => handlePageChange(pageNumber - 1)}
             disabled={pageNumber <= 1}
-            className="p-1 rounded hover:bg-[#2a2a2e] disabled:opacity-30 disabled:hover:bg-transparent text-[#9a978f] hover:text-[#ece9e2] transition"
+            className="flex min-h-9 min-w-9 items-center justify-center rounded p-1 hover:bg-[#2a2a2e] disabled:opacity-30 disabled:hover:bg-transparent text-[#9a978f] hover:text-[#ece9e2] transition touch-manipulation"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -81,7 +83,7 @@ export default function PdfViewer({ materialId, title }: PdfViewerProps) {
           <button
             onClick={() => handlePageChange(pageNumber + 1)}
             disabled={!!numPages && pageNumber >= numPages}
-            className="p-1 rounded hover:bg-[#2a2a2e] disabled:opacity-30 disabled:hover:bg-transparent text-[#9a978f] hover:text-[#ece9e2] transition"
+            className="flex min-h-9 min-w-9 items-center justify-center rounded p-1 hover:bg-[#2a2a2e] disabled:opacity-30 disabled:hover:bg-transparent text-[#9a978f] hover:text-[#ece9e2] transition touch-manipulation"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -90,8 +92,8 @@ export default function PdfViewer({ materialId, title }: PdfViewerProps) {
         {/* Zoom & Download */}
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setScale((s) => Math.max(0.7, s - 0.15))}
-            className="p-1 rounded hover:bg-[#2a2a2e] text-[#9a978f] hover:text-[#ece9e2] transition"
+            onClick={() => setScale((s) => Math.max(0.4, s - 0.15))}
+            className="flex min-h-9 min-w-9 items-center justify-center rounded p-1 hover:bg-[#2a2a2e] text-[#9a978f] hover:text-[#ece9e2] transition touch-manipulation"
             title="Reduzir zoom"
           >
             <ZoomOut className="w-4 h-4" />
@@ -99,7 +101,7 @@ export default function PdfViewer({ materialId, title }: PdfViewerProps) {
           <span className="font-mono text-[11px] text-[#9a978f]">{Math.round(scale * 100)}%</span>
           <button
             onClick={() => setScale((s) => Math.min(2.0, s + 0.15))}
-            className="p-1 rounded hover:bg-[#2a2a2e] text-[#9a978f] hover:text-[#ece9e2] transition"
+            className="flex min-h-9 min-w-9 items-center justify-center rounded p-1 hover:bg-[#2a2a2e] text-[#9a978f] hover:text-[#ece9e2] transition touch-manipulation"
             title="Aumentar zoom"
           >
             <ZoomIn className="w-4 h-4" />
@@ -109,7 +111,7 @@ export default function PdfViewer({ materialId, title }: PdfViewerProps) {
             target="_blank"
             rel="noopener noreferrer"
             download
-            className="p-1 rounded hover:bg-[#2a2a2e] text-[#9a978f] hover:text-[#d4af37] transition ml-1"
+            className="flex min-h-9 min-w-9 items-center justify-center rounded p-1 hover:bg-[#2a2a2e] text-[#9a978f] hover:text-[#d4af37] transition ml-1 touch-manipulation"
             title="Baixar PDF"
           >
             <Download className="w-4 h-4" />
@@ -118,7 +120,7 @@ export default function PdfViewer({ materialId, title }: PdfViewerProps) {
       </div>
 
       {/* PDF Canvas / Document */}
-      <div className="flex-1 overflow-auto p-4 flex justify-center bg-[#0b0b0c] min-h-[500px]">
+      <div className="flex-1 overflow-auto overscroll-contain p-2 sm:p-4 flex justify-center bg-[#0b0b0c] min-h-[60dvh] sm:min-h-[500px]">
         {error ? (
           <div className="flex flex-col items-center justify-center p-8 text-center text-xs space-y-3">
             <p className="text-[#9a978f]">{error}</p>

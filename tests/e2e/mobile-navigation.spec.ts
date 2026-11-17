@@ -109,6 +109,27 @@ test.describe("Experiência Mobile (E2E) — Viewport Smartphone 390x844", () =>
     const modulesHeader = page.locator("text=Módulos").or(page.locator("text=Conteúdo")).first();
     await expect(modulesHeader).toBeVisible();
 
+    // 3.1. A lista de módulos inline precisa rolar quando há muitas aulas (TECH-25)
+    const inlineSidebar = page.locator('[data-testid="course-sidebar-inline"]');
+    await expect(inlineSidebar).toBeVisible();
+
+    const expandAllBtn = inlineSidebar.getByRole("button", { name: /Expandir Todos/ });
+    if (await expandAllBtn.isVisible()) {
+      await expandAllBtn.click();
+    }
+
+    const modulesTree = inlineSidebar.locator('[data-testid="course-modules-tree"]');
+    await expect(modulesTree).toBeVisible();
+
+    const hasOverflow = await modulesTree.evaluate((el) => el.scrollHeight > el.clientHeight + 1);
+    if (hasOverflow) {
+      await modulesTree.evaluate((el) => {
+        el.scrollTop = el.scrollHeight;
+      });
+      const scrolledToBottom = await modulesTree.evaluate((el) => el.scrollTop > 0);
+      expect(scrolledToBottom).toBeTruthy();
+    }
+
     // 4. Testa Aba "Anotações"
     const notesTabBtn = page.locator(".md\\:hidden button:has-text('Anotações')");
     await notesTabBtn.click();
