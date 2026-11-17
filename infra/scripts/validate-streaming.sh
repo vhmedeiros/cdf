@@ -22,7 +22,12 @@ BASE_URL="${BASE_URL:-}"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 if [ -z "$BASE_URL" ] && [ -f "$REPO_ROOT/.env.production" ]; then
-  BASE_URL="$(grep -E '^WEBSERVER_ORIGIN=' "$REPO_ROOT/.env.production" | head -n1 | cut -d= -f2- | tr -d '"')"
+  BASE_URL="$(
+    grep -E '^[[:space:]]*WEBSERVER_ORIGIN=' "$REPO_ROOT/.env.production" \
+      | head -n1 \
+      | cut -d= -f2- \
+      | tr -d '[:space:]"'
+  )"
 fi
 BASE_URL="${BASE_URL:-http://127.0.0.1:3005}"
 
