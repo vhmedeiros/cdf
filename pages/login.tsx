@@ -43,7 +43,7 @@ export default function LoginPage() {
       if (isAdmin) {
         router.push("/admin/courses");
       } else {
-        router.push("/courses");
+        router.push("/");
       }
     } catch (err: any) {
       setError(err.message || "Erro ao conectar com o servidor.");

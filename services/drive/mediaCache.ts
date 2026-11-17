@@ -22,14 +22,29 @@ export function touchCacheFile(filePath: string): void {
 }
 
 /**
- * Remove arquivos menos recentemente usados (LRU) se o diretório de cache ultrapassar o teto
+ * Remove arquivos menos recentemente usados (LRU) se o diretório de cache ultrapassar o teto.
+ * Também remove downloads incompletos (`.downloading`) antigos, de processos que morreram.
  */
 export function evictOldCacheFiles(bytesToReserve: number = 0): void {
   if (!fs.existsSync(CACHE_DIR)) return;
 
   try {
-    const files = fs
-      .readdirSync(CACHE_DIR)
+    const now = Date.now();
+    const staleDownloadThreshold = 6 * 60 * 60 * 1000;
+    const entries = fs.readdirSync(CACHE_DIR);
+
+    for (const name of entries) {
+      if (!name.endsWith(".downloading")) continue;
+      const fullPath = path.join(CACHE_DIR, name);
+      try {
+        const stat = fs.statSync(fullPath);
+        if (now - Math.max(stat.mtimeMs, stat.ctimeMs) > staleDownloadThreshold) {
+          fs.unlinkSync(fullPath);
+        }
+      } catch {}
+    }
+
+    const files = entries
       .filter((name) => !name.endsWith(".downloading"))
       .map((name) => {
         const fullPath = path.join(CACHE_DIR, name);
@@ -99,6 +114,9 @@ export async function ensureMediaCached(
   if (!fs.existsSync(CACHE_DIR)) {
     fs.mkdirSync(CACHE_DIR, { recursive: true });
   }
+
+  // Aproveita a chamada para limpar downloads interrompidos e respeitar o teto.
+  evictOldCacheFiles(0);
 
   const finalPath = getCachePath(driveFileId, mimeType);
 
@@ -175,6 +193,40 @@ export async function ensureMediaCached(
 }
 
 /**
+ * Interpreta um header Range simples (`bytes=start-end`, `bytes=start-`, `bytes=-suffix`).
+ * Retorna `null` para sintaxe inválida/multi-range e `"unsatisfiable"` quando o range
+ * não pode ser atendido.
+ */
+function parseRangeHeader(
+  rangeHeader: string,
+  totalSize: number,
+): { start: number; end: number } | "unsatisfiable" | null {
+  const match = /^bytes=(\d*)-(\d*)$/.exec(rangeHeader.trim());
+  if (!match) return null;
+
+  const [, startStr, endStr] = match;
+  if (!startStr && !endStr) return null;
+
+  let start: number;
+  let end: number;
+
+  if (!startStr) {
+    const suffixLength = Number.parseInt(endStr, 10);
+    if (!Number.isFinite(suffixLength) || suffixLength <= 0) return null;
+    start = Math.max(0, totalSize - suffixLength);
+    end = totalSize - 1;
+  } else {
+    start = Number.parseInt(startStr, 10);
+    end = endStr ? Number.parseInt(endStr, 10) : totalSize - 1;
+  }
+
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return null;
+  if (start > end || start >= totalSize) return "unsatisfiable";
+
+  return { start, end: Math.min(end, totalSize - 1) };
+}
+
+/**
  * Serve um arquivo local do disco com suporte completo a Range Requests (HTTP 206)
  */
 export function streamLocalFile(
@@ -191,11 +243,9 @@ export function streamLocalFile(
   res.setHeader("Accept-Ranges", "bytes");
 
   if (rangeHeader) {
-    const parts = rangeHeader.replace(/bytes=/, "").split("-");
-    const start = parseInt(parts[0], 10);
-    const end = parts[1] ? parseInt(parts[1], 10) : totalSize - 1;
+    const parsedRange = parseRangeHeader(rangeHeader, totalSize);
 
-    if (start >= totalSize || end >= totalSize) {
+    if (parsedRange === "unsatisfiable") {
       res.writeHead(416, {
         "Content-Range": `bytes */${totalSize}`,
       });
@@ -203,25 +253,29 @@ export function streamLocalFile(
       return;
     }
 
-    const chunkSize = end - start + 1;
+    if (parsedRange) {
+      const { start, end } = parsedRange;
+      const chunkSize = end - start + 1;
 
-    res.writeHead(206, {
-      "Content-Range": `bytes ${start}-${end}/${totalSize}`,
-      "Accept-Ranges": "bytes",
-      "Content-Length": chunkSize,
-      "Content-Type": mimeType,
-    });
+      res.writeHead(206, {
+        "Content-Range": `bytes ${start}-${end}/${totalSize}`,
+        "Accept-Ranges": "bytes",
+        "Content-Length": chunkSize,
+        "Content-Type": mimeType,
+      });
 
-    const stream = fs.createReadStream(filePath, { start, end });
-    stream.pipe(res);
-  } else {
-    res.writeHead(200, {
-      "Content-Length": totalSize,
-      "Content-Type": mimeType,
-      "Accept-Ranges": "bytes",
-    });
-
-    const stream = fs.createReadStream(filePath);
-    stream.pipe(res);
+      const stream = fs.createReadStream(filePath, { start, end });
+      stream.pipe(res);
+      return;
+    }
   }
+
+  res.writeHead(200, {
+    "Content-Length": totalSize,
+    "Content-Type": mimeType,
+    "Accept-Ranges": "bytes",
+  });
+
+  const stream = fs.createReadStream(filePath);
+  stream.pipe(res);
 }
