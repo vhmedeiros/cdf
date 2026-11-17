@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+trap 'echo "FALHOU na linha $LINENO (comando: $BASH_COMMAND)" >&2' ERR
+
+echo "Iniciando validação de streaming..."
+
 # Valida TECH-06: streaming real com cache, Range 206 e sem vazamento de token.
 #
 # Uso (na VM, dentro de ~/cdf):
@@ -24,11 +28,14 @@ BASE_URL="${BASE_URL:-http://127.0.0.1:3005}"
 
 if [ -z "${MATERIAL_ID:-}" ] && command -v docker > /dev/null 2>&1; then
   echo "→ MATERIAL_ID não informado; buscando o vídeo ativo mais recente no banco..."
-  MATERIAL_ID="$(
+  detected_material_id="$(
     docker exec cdf-prod-db sh -lc \
       "psql -U \$POSTGRES_USER -d \$POSTGRES_DB -tAc \"SELECT id FROM materials WHERE kind = 'video' AND is_active ORDER BY created_at DESC LIMIT 1;\"" \
-      | tr -d '[:space:]'
+      2>/dev/null | tr -d '[:space:]' || true
   )"
+  if [ -n "$detected_material_id" ]; then
+    MATERIAL_ID="$detected_material_id"
+  fi
 fi
 : "${MATERIAL_ID:?Defina MATERIAL_ID com o UUID de um material de vídeo}"
 
@@ -48,13 +55,13 @@ pass() {
 }
 
 echo "→ Login em $BASE_URL"
-curl -fsS -c "$COOKIE_JAR" -H "Content-Type: application/json" \
+curl -fsS --connect-timeout 10 --max-time 60 -c "$COOKIE_JAR" -H "Content-Type: application/json" \
   -d "{\"email\":\"${CDF_EMAIL}\",\"password\":\"${CDF_PASSWORD}\"}" \
   "$BASE_URL/api/v1/sessions" > /dev/null || fail "login"
 
 echo "→ Range frio (bytes=0-1023)"
 cold_headers="$(
-  curl -sS -D - -o /dev/null -b "$COOKIE_JAR" \
+  curl -sS --connect-timeout 10 --max-time 120 -D - -o /dev/null -b "$COOKIE_JAR" \
     -H "Range: bytes=0-1023" \
     "$BASE_URL/api/v1/stream/${MATERIAL_ID}"
 )"
@@ -68,7 +75,7 @@ pass "range frio com 206 e sem token"
 
 echo "→ Range quente (mesmo arquivo, agora no cache)"
 warm_headers="$(
-  curl -sS -D - -o /dev/null -b "$COOKIE_JAR" \
+  curl -sS --connect-timeout 10 --max-time 120 -D - -o /dev/null -b "$COOKIE_JAR" \
     -H "Range: bytes=0-1023" \
     "$BASE_URL/api/v1/stream/${MATERIAL_ID}"
 )"
@@ -78,7 +85,7 @@ pass "range quente com 206"
 
 echo "→ Requisição completa (sem Range)"
 full_headers="$(
-  curl -sS -D - -o /dev/null -b "$COOKIE_JAR" "$BASE_URL/api/v1/stream/${MATERIAL_ID}"
+  curl -sS --connect-timeout 10 --max-time 120 -D - -o /dev/null -b "$COOKIE_JAR" "$BASE_URL/api/v1/stream/${MATERIAL_ID}"
 )"
 grep -q " 200 " <<< "$full_headers" || fail "requisição sem Range não retornou 200"
 grep -qi "accept-ranges: bytes" <<< "$full_headers" || fail "Accept-Ranges ausente no 200"
@@ -86,7 +93,7 @@ pass "requisição completa com 200"
 
 echo "→ Range inválido deve retornar 416"
 invalid_headers="$(
-  curl -sS -D - -o /dev/null -b "$COOKIE_JAR" \
+  curl -sS --connect-timeout 10 --max-time 120 -D - -o /dev/null -b "$COOKIE_JAR" \
     -H "Range: bytes=999999999999-" \
     "$BASE_URL/api/v1/stream/${MATERIAL_ID}"
 )"
