@@ -8,12 +8,16 @@ function getTransport() {
   const port = Number(process.env.EMAIL_SMTP_PORT) || 1025;
   const user = process.env.EMAIL_SMTP_USER;
   const pass = process.env.EMAIL_SMTP_PASSWORD;
+  const secure = process.env.EMAIL_SMTP_SECURE
+    ? process.env.EMAIL_SMTP_SECURE === "true"
+    : port === 465;
 
   const auth = user && pass ? { user, pass } : undefined;
 
   return nodemailer.createTransport({
     host,
     port,
+    secure,
     auth,
   });
 }

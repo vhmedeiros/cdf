@@ -22,38 +22,38 @@ Regra de trabalho: itens **P0** não devem competir com novas funcionalidades. I
 
 ## 2. Resumo executivo
 
-| ID      | Item                                                   | Tipo         | Prioridade |
-| ------- | ------------------------------------------------------ | ------------ | ---------- |
-| PROD-01 | Definir nome definitivo da plataforma                  | Decisão      | P1         |
-| PROD-02 | Definir domínio oficial                                | Decisão      | P1         |
-| PROD-03 | Definir modelo de operação: fechado ou comercial       | Decisão      | P0         |
-| PROD-04 | Configurar SMTP transacional de produção               | Infra        | P0         |
-| PROD-05 | Configurar monitoramento com Sentry                    | Infra        | P2         |
-| PROD-06 | Fechar taxonomia inicial de disciplinas e assuntos     | Conteúdo     | P1         |
-| PROD-07 | Definir bancas prioritárias do importador              | Conteúdo     | P1         |
-| PROD-08 | Formalizar diretriz de direitos autorais das questões  | Política     | P0         |
-| PROD-09 | Gerar e configurar a chave Gemini                      | IA           | P1         |
-| PROD-10 | Editar nome e descrição dos cursos                     | Produto      | P1         |
-| PROD-11 | Busca, filtro e paginação de cursos                    | Produto      | P1         |
-| PROD-12 | Categorias de cursos                                   | Produto      | P1         |
-| PROD-13 | Métricas de produto e comportamento                    | Produto      | P2         |
-| TECH-01 | Reconciliar a branch `feat/questions` com a `main`     | Git/entrega  | P0         |
-| TECH-02 | Corrigir os 4 erros atuais de typecheck                | Qualidade    | Concluído  |
-| TECH-03 | Implementar verificação de `Origin`/CSRF nas mutações  | Segurança    | P0         |
-| TECH-04 | Armazenar tokens de sessão, convite e reset como hash  | Segurança    | P1         |
-| TECH-05 | Confirmar qual commit está em produção na VM           | Operação     | Concluído  |
-| TECH-06 | Validar streaming real com volume de cache e Nginx     | Infra        | P0         |
-| TECH-07 | Alinhar `CLAUDE.md` ao que realmente está implementado | Documentação | P1         |
-| TECH-08 | Implementar sync incremental do Drive                  | Drive        | P1         |
-| TECH-09 | Implementar testes das rotas administrativas e erros   | Qualidade    | P1         |
-| TECH-10 | Concluir a fase 10: ingestão de provas em PDF          | Questões     | P1         |
-| TECH-24 | Melhorar player e reprodução no mobile                 | Experiência  | P1         |
-| TECH-25 | Corrigir scroll da sidebar de aulas no mobile          | Bug          | P1         |
-| TECH-26 | Robustez do preview/sync do Drive                      | Drive        | P0         |
-| TECH-27 | Pipeline 720p e variantes de mídia                     | Mídia        | P1         |
-| TECH-28 | Otimizações e teste de velocidade do streaming         | Mídia        | P1         |
-| TECH-29 | Plano de capacidade para 20 simultâneos e 5 TB         | Infra        | P1         |
-| TECH-30 | Normalizar containers e validar mídia do Drive         | Mídia        | P1         |
+| ID      | Item                                                   | Tipo         | Prioridade   |
+| ------- | ------------------------------------------------------ | ------------ | ------------ |
+| PROD-01 | Definir nome definitivo da plataforma                  | Decisão      | P1           |
+| PROD-02 | Definir domínio oficial                                | Decisão      | P1           |
+| PROD-03 | Definir modelo de operação: fechado ou comercial       | Decisão      | Decidido     |
+| PROD-04 | Configurar SMTP transacional de produção               | Infra        | Em andamento |
+| PROD-05 | Configurar monitoramento com Sentry                    | Infra        | P2           |
+| PROD-06 | Fechar taxonomia inicial de disciplinas e assuntos     | Conteúdo     | P1           |
+| PROD-07 | Definir bancas prioritárias do importador              | Conteúdo     | P1           |
+| PROD-08 | Formalizar diretriz de direitos autorais das questões  | Política     | P0           |
+| PROD-09 | Gerar e configurar a chave Gemini                      | IA           | P1           |
+| PROD-10 | Editar nome e descrição dos cursos                     | Produto      | P1           |
+| PROD-11 | Busca, filtro e paginação de cursos                    | Produto      | P1           |
+| PROD-12 | Categorias de cursos                                   | Produto      | P1           |
+| PROD-13 | Métricas de produto e comportamento                    | Produto      | P2           |
+| TECH-01 | Reconciliar a branch `feat/questions` com a `main`     | Git/entrega  | P0           |
+| TECH-02 | Corrigir os 4 erros atuais de typecheck                | Qualidade    | Concluído    |
+| TECH-03 | Implementar verificação de `Origin`/CSRF nas mutações  | Segurança    | P0           |
+| TECH-04 | Armazenar tokens de sessão, convite e reset como hash  | Segurança    | P1           |
+| TECH-05 | Confirmar qual commit está em produção na VM           | Operação     | Concluído    |
+| TECH-06 | Validar streaming real com volume de cache e Nginx     | Infra        | P0           |
+| TECH-07 | Alinhar `CLAUDE.md` ao que realmente está implementado | Documentação | P1           |
+| TECH-08 | Implementar sync incremental do Drive                  | Drive        | P1           |
+| TECH-09 | Implementar testes das rotas administrativas e erros   | Qualidade    | P1           |
+| TECH-10 | Concluir a fase 10: ingestão de provas em PDF          | Questões     | P1           |
+| TECH-24 | Melhorar player e reprodução no mobile                 | Experiência  | P1           |
+| TECH-25 | Corrigir scroll da sidebar de aulas no mobile          | Bug          | P1           |
+| TECH-26 | Robustez do preview/sync do Drive                      | Drive        | P0           |
+| TECH-27 | Pipeline 720p e variantes de mídia                     | Mídia        | P1           |
+| TECH-28 | Otimizações e teste de velocidade do streaming         | Mídia        | P1           |
+| TECH-29 | Plano de capacidade para 20 simultâneos e 5 TB         | Infra        | P1           |
+| TECH-30 | Normalizar containers e validar mídia do Drive         | Mídia        | P1           |
 
 ---
 
@@ -75,18 +75,17 @@ Regra de trabalho: itens **P0** não devem competir com novas funcionalidades. I
 - **Critério de aceite:** domínio estável, HTTPS válido e `WEBSERVER_ORIGIN` atualizado em produção.
 - **Prioridade:** P1.
 
-### PROD-03 — Modelo de operação
+### PROD-03 — Modelo de operação (decidido)
 
-- **Uso próprio/grupo fechado:**
-  - foco em estudos pessoais e convidados;
-  - pode operar com a cota gratuita do Gemini;
-  - dispensa gateway de pagamento e termos comerciais complexos.
-- **Comercial:**
-  - exige plano pago de IA com teto de gastos;
-  - exige gateway de pagamento, nota fiscal, Termos de Uso e Política de Privacidade/LGPD;
-  - aumenta a exigência de disponibilidade, suporte e segurança.
-- **Ação:** definir o modelo antes de investir em cobrança, escalabilidade ou conteúdo de terceiros.
-- **Prioridade:** P0.
+- **Decisão em 2026-11-16:** uso próprio, com acesso por convite apenas para amigos.
+- **Consequências:**
+  - sem gateway de pagamento, nota fiscal ou operação comercial;
+  - sem promessa de SLA; disponibilidade best-effort;
+  - Gemini pode operar na cota gratuita, com controle de uso;
+  - manter Termos de Uso e Política de Privacidade simples, mas compatíveis com LGPD;
+  - segurança continua prioritária porque haverá dados de amigos e conteúdo de cursos.
+- **Ação:** não investir em cobrança/escala comercial; manter convite fechado e revisar privacidade antes de ampliar o grupo.
+- **Prioridade:** Decidido.
 
 ### PROD-06 — Taxonomia inicial de disciplinas e assuntos
 
@@ -157,10 +156,13 @@ Regra de trabalho: itens **P0** não devem competir com novas funcionalidades. I
 ### PROD-04 — SMTP transacional de produção
 
 - **Contexto:** em desenvolvimento o Mailcatcher intercepta os e-mails em `localhost:1080`.
-- **Afeta:** convites de alunos, recuperação e redefinição de senha.
-- **Ação:** contratar ou configurar um provedor (Resend, Brevo, SendGrid, Amazon SES ou Gmail com senha de app) e preencher `EMAIL_SMTP_HOST`, `EMAIL_SMTP_PORT`, `EMAIL_SMTP_USER`, `EMAIL_SMTP_PASSWORD` e `EMAIL_FROM` no `.env.production`.
+- **Decisão em 2026-11-16:** usar o SMTP do Gmail já configurado para o portfólio, com uma **App Password separada** para o CDF.
+- **Configuração prevista:** `EMAIL_SMTP_HOST=smtp.gmail.com`, `EMAIL_SMTP_PORT=465`, `EMAIL_SMTP_SECURE=true`, `EMAIL_SMTP_USER` com o endereço completo da conta e `EMAIL_FROM` igual à conta ou alias verificado no Gmail.
+- **Cuidados:** não reutilizar a mesma App Password do portfólio no CDF; não commitar a senha; manter o `.env.production` com permissão restrita na VM. O limite do Gmail gratuito é de aproximadamente 500 destinatários/dia, suficiente para convites e resets, mas não para envio em massa.
+- **Código:** `infra/email.ts` agora aceita `EMAIL_SMTP_SECURE` e ativa TLS automaticamente na porta 465.
+- **Ação:** criar a App Password no Gmail, preencher o `.env.production` da VM, recriar `web`/`worker` e validar convite e reset.
 - **Critério de aceite:** convite e reset chegam em uma caixa real; falhas de envio são registradas.
-- **Prioridade:** P0.
+- **Prioridade:** Em andamento.
 
 ### PROD-05 — Monitoramento com Sentry
 
