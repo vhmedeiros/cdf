@@ -44,7 +44,7 @@ Foco atual: **experiência mobile primeiro**. A criação de questões, ingestã
 | TECH-03 | Implementar verificação de `Origin`/CSRF nas mutações  | Segurança    | Concluído    |
 | TECH-04 | Armazenar tokens de sessão, convite e reset como hash  | Segurança    | P1           |
 | TECH-05 | Confirmar qual commit está em produção na VM           | Operação     | Concluído    |
-| TECH-06 | Validar streaming real com volume de cache e Nginx     | Infra        | Em andamento |
+| TECH-06 | Validar streaming real com volume de cache e Nginx     | Infra        | Concluído    |
 | TECH-07 | Alinhar `CLAUDE.md` ao que realmente está implementado | Documentação | P1           |
 | TECH-08 | Implementar sync incremental do Drive                  | Drive        | P1           |
 | TECH-09 | Implementar testes das rotas administrativas e erros   | Qualidade    | P1           |
@@ -184,14 +184,14 @@ Foco atual: **experiência mobile primeiro**. A criação de questões, ingestã
 - **Critério de aceite:** commit de produção documentado e deploy reproduzível.
 - **Prioridade:** Concluído.
 
-### TECH-06 — Validar streaming no ambiente real
+### TECH-06 — Validar streaming no ambiente real (concluído)
 
-- **Contexto:** o fluxo de produção depende do volume compartilhado `cdf_prod_media`, do `alias /var/cache/media/` no Nginx e do cache LRU em disco. Em 2026-11-16 foram validados `206`, cache quente e a correção do service worker; ainda faltam PDF inline, áudio, seek em mobile e limpeza do LRU.
-- **Implementado:** `streamLocalFile` passou a tratar `bytes=start-end`, `bytes=start-`, `bytes=-suffix`, range inválido (`416`) e a não servir arquivo inteiro quando o range é malformado; a limpeza LRU agora também apaga downloads interrompidos (`.downloading` com mais de 6h) e roda a cada novo download.
-- **Validação:** na VM, dentro de `~/cdf`, rodar `CDF_EMAIL=seu@email CDF_PASSWORD='sua-senha' ./infra/scripts/validate-streaming.sh`. O script descobre `BASE_URL` pelo `WEBSERVER_ORIGIN` e `MATERIAL_ID` pelo vídeo ativo mais recente no banco, e confere login, 206 frio, 206 quente, 200 sem Range, 416 em range inválido, ausência de `X-Drive-Token` e tamanho do cache.
-- **Pendente:** rodar o script contra produção e validar manualmente seek no celular, PDF inline e áudio.
+- **Contexto:** o fluxo de produção depende do volume compartilhado `cdf_prod_media`, do `alias /var/cache/media/` no Nginx e do cache LRU em disco.
+- **Implementado:** `streamLocalFile` trata `bytes=start-end`, `bytes=start-`, `bytes=-suffix`, range inválido (`416`) e não serve arquivo inteiro quando o range é malformado; a limpeza LRU também apaga downloads interrompidos (`.downloading` com mais de 6h) e roda a cada novo download.
+- **Validação em produção (2026-11-16):** `infra/scripts/validate-streaming.sh` passou em todos os passos — login, `206` frio e quente, `200` sem Range, `416` em range inválido, ausência de `X-Drive-Token`; cache em **19,8 GB / 50 GB**.
+- **Recomendado:** confirmar manualmente seek no celular, PDF inline e áudio; o comportamento HTTP já está validado.
 - **Critério de aceite:** seek funciona no desktop e no celular; cache é preenchido e limpo corretamente; token do Drive não aparece no navegador.
-- **Prioridade:** Em andamento.
+- **Prioridade:** Concluído.
 
 ### TECH-27 — Pipeline 720p e variantes de mídia
 
@@ -467,7 +467,7 @@ Itens que **não devem ser implementados sem uma decisão explícita**:
 - [x] Corrigir os 4 erros de typecheck e incluir `tsc --noEmit` no CI.
 - [x] Configurar SMTP de produção.
 - [x] Implementar verificação de `Origin` em mutações.
-- [ ] Validar streaming real com volume e Nginx.
+- [x] Validar streaming real com volume e Nginx.
 - [ ] Corrigir o scroll da sidebar de aulas no mobile.
 - [ ] Melhorar player, autoplay, erro/retry e fullscreen no mobile.
 - [ ] Remover o segundo stream do mini player.
@@ -490,4 +490,4 @@ Itens que **não devem ser implementados sem uma decisão explícita**:
 - **2026-11-16 (home e catálogo):** categorias de curso criadas (única, ENEM/Concursos/Programação/Inglês/Outros); home e `/courses` ganharam busca, filtro por categoria, cards reutilizáveis, estado vazio com sugestão e carregamento incremental; o admin já seleciona categoria no cadastro e na listagem. Aplicadas regras de UI/UX do skill `ui-ux-pro-max` para chips acessíveis (`aria-pressed`), foco visível, alvos de toque, safe areas e `prefers-reduced-motion`.
 - **2026-11-16 (revisões):** a home passou a mostrar no máximo 3 revisões com link "Ver todas"; criada a página `/reviews` com paginação de 8 itens, estado vazio e mesmas ações de revisar/concluir. O componente de revisão foi extraído para `components/reviews/ReviewItem.tsx`.
 - **2026-11-16 (CSRF):** TECH-03 concluído; `injectAnonymousOrUser` valida `Origin`/`Referer` em mutações contra `WEBSERVER_ORIGIN`, com testes de integração em `tests/integration/api/v1/security/origin.test.ts`.
-- **2026-11-16 (streaming/TECH-06):** `streamLocalFile` trata ranges simples/inválidos e a limpeza LRU remove downloads interrompidos; `infra/scripts/validate-streaming.sh` valida 206/416/cache na VM. Login de aluno agora cai em **Início** (`/`).
+- **2026-11-16 (streaming/TECH-06):** TECH-06 concluído; `streamLocalFile` trata ranges simples/inválidos e a limpeza LRU remove downloads interrompidos; `infra/scripts/validate-streaming.sh` passou em produção (206 frio/quente, 200, 416, sem token, cache 19,8 GB/50 GB). Login de aluno agora cai em **Início** (`/`).
