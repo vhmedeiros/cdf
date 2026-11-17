@@ -130,14 +130,14 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto overscroll-contain bg-black/80 p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-sm animate-fade-in sm:items-center"
       onClick={onClose}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="change-password-title"
-        className="w-full max-w-md overflow-hidden rounded-2xl border border-[#2a2a2e] bg-[#131315] shadow-2xl"
+        className="my-auto w-full max-w-md overflow-y-auto rounded-2xl border border-[#2a2a2e] bg-[#131315] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
