@@ -50,7 +50,7 @@ Foco atual: **experiência mobile primeiro**. A criação de questões, ingestã
 | TECH-09 | Implementar testes das rotas administrativas e erros   | Qualidade    | P1           |
 | TECH-10 | Concluir a fase 10: ingestão de provas em PDF          | Questões     | Adiado       |
 | TECH-24 | Melhorar player e reprodução no mobile                 | Experiência  | Concluído    |
-| TECH-25 | Corrigir scroll da sidebar de aulas no mobile          | Bug          | P0           |
+| TECH-25 | Corrigir scroll da sidebar de aulas no mobile          | Bug          | Concluído    |
 | TECH-26 | Robustez do preview/sync do Drive                      | Drive        | P0           |
 | TECH-27 | Pipeline 720p e variantes de mídia                     | Mídia        | P1           |
 | TECH-28 | Otimizações e teste de velocidade do streaming         | Mídia        | P1           |
@@ -348,13 +348,13 @@ Foco atual: **experiência mobile primeiro**. A criação de questões, ingestã
 - **Critério de aceite:** primeiro frame previsível, retomada correta, seek funcional no celular e erro explícito quando o arquivo não tocar.
 - **Prioridade:** Concluído.
 
-### TECH-25 — Scroll da sidebar de aulas no mobile (P0)
+### TECH-25 — Scroll da sidebar de aulas no mobile (concluído)
 
 - **Contexto:** no mobile, a sidebar inline mostrava apenas parte das aulas e não rolava. O wrapper usava `max-h-[70vh]` e o filho com `overflow-y-auto` não tinha `min-h-0`, então era cortado.
 - **Implementado:** `min-h-0` no wrapper e na árvore, `max-h-[70dvh]`, `overscroll-contain`, safe area no drawer mobile e test ids para validar o scroll.
-- **Pendente:** validar rolagem/overscroll em iOS e Android com curso grande.
+- **Validado em dispositivo (2026-11-16):** lista inline rola até a última aula, drawer lateral rola até o fim e não há rolagem horizontal.
 - **Critério de aceite:** todas as aulas ficam acessíveis por rolagem, inclusive em cursos grandes.
-- **Prioridade:** P0 (mobile-first).
+- **Prioridade:** Concluído.
 
 ---
 
@@ -469,7 +469,7 @@ Itens que **não devem ser implementados sem uma decisão explícita**:
 - [x] Configurar SMTP de produção.
 - [x] Implementar verificação de `Origin` em mutações.
 - [x] Validar streaming real com volume e Nginx.
-- [ ] Corrigir o scroll da sidebar de aulas no mobile.
+- [x] Corrigir o scroll da sidebar de aulas no mobile.
 - [x] Melhorar player, autoplay, erro/retry e fullscreen no mobile.
 - [ ] Remover o segundo stream do mini player.
 - [ ] Ajustar PDF e anotações para telas pequenas.
@@ -492,4 +492,4 @@ Itens que **não devem ser implementados sem uma decisão explícita**:
 - **2026-11-16 (revisões):** a home passou a mostrar no máximo 3 revisões com link "Ver todas"; criada a página `/reviews` com paginação de 8 itens, estado vazio e mesmas ações de revisar/concluir. O componente de revisão foi extraído para `components/reviews/ReviewItem.tsx`.
 - **2026-11-16 (CSRF):** TECH-03 concluído; `injectAnonymousOrUser` valida `Origin`/`Referer` em mutações contra `WEBSERVER_ORIGIN`, com testes de integração em `tests/integration/api/v1/security/origin.test.ts`.
 - **2026-11-16 (streaming/TECH-06):** TECH-06 concluído; `streamLocalFile` trata ranges simples/inválidos e a limpeza LRU remove downloads interrompidos; `infra/scripts/validate-streaming.sh` passou em produção (206 frio/quente, 200, 416, sem token, cache 19,8 GB/50 GB). Login de aluno agora cai em **Início** (`/`).
-- **2026-11-16 (mobile/TECH-24):** validado em dispositivo real; retomada, seek, fullscreen, erro/retry, toques e PDF/áudio OK. TECH-24 concluído.
+- **2026-11-16 (mobile/TECH-24/25):** validados em dispositivo real. TECH-24: retomada, seek, fullscreen, erro/retry, toques e PDF/áudio OK. TECH-25: lista inline e drawer rolam até o fim, sem rolagem horizontal. Ambos concluídos.
