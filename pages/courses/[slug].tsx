@@ -100,9 +100,9 @@ export default function CourseClassroomPage() {
   // Fetch course tree
   const { data, error, isLoading } = useSWR<CourseTree>(slug ? `/api/v1/courses/${slug}` : null);
 
-  // Sync loaded course tree with player context
+  // Sync loaded course tree with player context (inclusive após re-sincronização do mesmo curso)
   useEffect(() => {
-    if (data && (!course || course.id !== data.id)) {
+    if (data && data !== course) {
       setCourse(data);
     }
   }, [data, course, setCourse]);
