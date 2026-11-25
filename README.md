@@ -27,7 +27,7 @@ Cursos comprados ou recebidos costumam ficar em pastas do Google Drive com cente
 - Autoplay da próxima aula com contagem regressiva cancelável e mini-player flutuante que continua tocando ao navegar entre páginas
 - **Progresso salvo no servidor**: heartbeat a cada 15 s e `sendBeacon` ao fechar a aba; reabrir retoma no segundo exato. A aula conta como concluída em 90% assistidos
 - Anotações com timestamp clicável (atalho `N` pausa o vídeo e abre o editor), marcação de importantes e um **caderno do curso** exportável em Markdown
-- Leitor de PDF inline que lembra a última página e modo áudio para estudar com a tela desligada
+- Leitor de PDF inline que lembra a última página, renderização nativa de **Markdown** (com syntax highlighting), **HTML** (sanitizado e isolado) e **texto puro**, além do modo áudio para estudar com a tela desligada
 - **Revisão espaçada** (1, 7 e 30 dias) agendada ao concluir cada aula
 - Sequência de estudo e heatmap de atividade no estilo do GitHub
 - Paleta de comandos `Ctrl/⌘+K` com busca full-text **insensível a acentos** em cursos, aulas e anotações
@@ -50,7 +50,7 @@ Cursos comprados ou recebidos costumam ficar em pastas do Google Drive com cente
 
 **Autenticação sem JWT no cliente.** Sessões em tabela própria com cookie `httpOnly`, `sameSite=lax` e expiração renovada a cada uso. Senhas com bcrypt, verificação do header `Origin` nas mutações e rate-limit no Redis contra força bruta (bloqueio progressivo após 5 erros), reforçado por `limit_req` no Nginx.
 
-**SQL de verdade.** PostgreSQL acessado com `pg` e queries parametrizadas, migrações versionadas com `node-pg-migrate`, busca full-text com `unaccent` e a árvore do curso montada em poucas queries e cacheada no Redis.
+**SQL de verdade.** PostgreSQL acessado com `pg` via pool de conexões (`pg.Pool`) e queries parametrizadas, migrações versionadas com `node-pg-migrate`, busca full-text com `unaccent` e a árvore do curso montada em poucas queries.
 
 ## Arquitetura
 
@@ -72,7 +72,7 @@ flowchart LR
 | Camada          | Tecnologias                                                                     |
 | --------------- | ------------------------------------------------------------------------------- |
 | Front-end       | Next.js 15 (Pages Router), React 19, TypeScript, Tailwind CSS v4, SWR, cmdk     |
-| Mídia           | Vidstack, react-pdf (pdf.js), Web Audio API                                     |
+| Mídia           | Vidstack, react-pdf (pdf.js), react-markdown, DOMPurify, Web Audio API          |
 | Back-end        | API Routes com next-connect, zod para validação, bcryptjs, nodemailer           |
 | Dados           | PostgreSQL 17 (SQL puro com `pg`), node-pg-migrate, Redis                       |
 | Jobs            | BullMQ em processo worker separado                                              |
@@ -109,6 +109,49 @@ npm run worker:dev # opcional: worker de sincronização
 A aplicação fica em `http://localhost:3000` e os e-mails de desenvolvimento em `http://localhost:1080`.
 
 Para importar cursos reais é preciso uma Service Account do Google Cloud com a Drive API habilitada e a pasta compartilhada com o e-mail dela (permissão de leitor). As variáveis de produção estão listadas em `.env.example`.
+
+## Deploy e operação em produção (VM)
+
+Na VM com `.env.production` configurado, o script `deploy.sh` automatiza `git pull`, build das imagens Docker, migrações e restart dos containers (`web`, `worker` e `nginx`):
+
+```bash
+./deploy.sh
+```
+
+Para re-sincronizar todos os cursos em lote pela fila BullMQ do `cdf-prod-worker`:
+
+```bash
+docker exec -i cdf-prod-worker node -e '
+const { Client } = require("pg");
+const { Queue } = require("bullmq");
+
+(async () => {
+  const db = new Client({ connectionString: process.env.DATABASE_URL });
+  await db.connect();
+  const { rows } = await db.query("SELECT id, title FROM courses ORDER BY created_at ASC");
+
+  const u = new URL(process.env.REDIS_URL || "redis://redis:6379");
+  const queue = new Queue("drive", {
+    connection: { host: u.hostname, port: Number(u.port) || 6379, password: u.password || undefined, maxRetriesPerRequest: null }
+  });
+
+  for (const c of rows) {
+    await queue.add("syncCourse", { courseId: c.id }, { jobId: `manual-sync-${c.id}-${Date.now()}` });
+    console.log("Enfileirado:", c.title);
+  }
+
+  await queue.close();
+  await db.end();
+})();
+'
+```
+
+Para acompanhar o processamento ou checar recursos dos containers:
+
+```bash
+docker logs -f cdf-prod-worker
+docker stats --no-stream
+```
 
 ## Estrutura
 
