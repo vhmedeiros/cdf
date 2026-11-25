@@ -30,7 +30,17 @@ export type FilesManifest = {
   }>;
 };
 
-export type MaterialKind = "video" | "audio" | "pdf" | "doc" | "image" | "link" | "other";
+export type MaterialKind =
+  | "video"
+  | "audio"
+  | "pdf"
+  | "doc"
+  | "image"
+  | "link"
+  | "markdown"
+  | "html"
+  | "text"
+  | "other";
 
 export type ParsedMaterial = {
   driveFileId: string;
@@ -121,7 +131,7 @@ export function naturalSortCompare(aName: string, bName: string): number {
   });
 }
 
-export function detectKind(mimeType: string): MaterialKind {
+export function detectKind(mimeType: string, rawName?: string): MaterialKind {
   if (mimeType.startsWith("video/")) return "video";
   if (mimeType.startsWith("audio/")) return "audio";
   if (mimeType === "application/pdf") return "pdf";
@@ -135,6 +145,19 @@ export function detectKind(mimeType: string): MaterialKind {
     return "doc";
   }
   if (mimeType.startsWith("image/")) return "image";
+
+  // O Drive frequentemente serve .md e .html com text/plain — checar a extensão do nome raw
+  const lowerName = rawName?.toLowerCase() ?? "";
+  if (mimeType === "text/markdown" || lowerName.endsWith(".md") || lowerName.endsWith(".mdx")) {
+    return "markdown";
+  }
+  if (mimeType === "text/html" || lowerName.endsWith(".html") || lowerName.endsWith(".htm")) {
+    return "html";
+  }
+  if (mimeType === "text/plain" || lowerName.endsWith(".txt")) {
+    return "text";
+  }
+
   return "other";
 }
 
@@ -294,7 +317,7 @@ function toMaterial(
     driveFileId: file.id,
     rawName: file.name,
     title,
-    kind: detectKind(file.mimeType),
+    kind: detectKind(file.mimeType, file.name),
     mime: file.mimeType,
     sizeBytes: file.size ? Number(file.size) : 0,
     durationSeconds: getDuration(file, ctx),
@@ -322,7 +345,7 @@ function buildLessonsFromFolders(
     );
 
     const materials = sortedFiles.map((file, idx) => {
-      const kind = detectKind(file.mimeType);
+      const kind = detectKind(file.mimeType, file.name);
       const cleanedTitle = cleanTitle(file.name);
       const lowerTitle = cleanedTitle.toLowerCase();
       const displayTitle =
@@ -371,7 +394,7 @@ function buildLessonsFromFiles(files: DriveItem[], ctx: BuildContext): ParsedLes
   let currentLesson: ParsedLesson | null = null;
 
   for (const file of sortedFiles) {
-    if (detectKind(file.mimeType) === "video") {
+    if (detectKind(file.mimeType, file.name) === "video") {
       const material = toMaterial(file, ctx, 1);
       currentLesson = {
         driveFolderId: null,

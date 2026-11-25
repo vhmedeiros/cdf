@@ -9,20 +9,34 @@ import {
   FileSpreadsheet,
   Presentation,
   FileCode,
-  Image as ImageIcon,
-  HelpCircle,
-  Eye,
   BookOpen,
+  FileType,
+  Code,
 } from "lucide-react";
 
-// Lazy load PdfViewer para não pesar no carregamento inicial
+const loadingSlot = (label: string) => (
+  <div className="flex items-center justify-center h-96 text-xs text-[#9a978f]">{label}</div>
+);
+
+// Lazy load dos viewers para não pesar no carregamento inicial
 const PdfViewer = dynamic(() => import("./PdfViewer"), {
   ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center h-96 text-xs text-[#9a978f]">
-      Carregando leitor de PDF...
-    </div>
-  ),
+  loading: () => loadingSlot("Carregando leitor de PDF..."),
+});
+
+const MarkdownViewer = dynamic(() => import("./MarkdownViewer"), {
+  ssr: false,
+  loading: () => loadingSlot("Carregando visualizador Markdown..."),
+});
+
+const HtmlViewer = dynamic(() => import("./HtmlViewer"), {
+  ssr: false,
+  loading: () => loadingSlot("Carregando visualizador HTML..."),
+});
+
+const TextViewer = dynamic(() => import("./TextViewer"), {
+  ssr: false,
+  loading: () => loadingSlot("Carregando arquivo..."),
 });
 
 interface DocumentViewerProps {
@@ -51,8 +65,13 @@ export default function DocumentViewer({
   const drivePreviewUrl = `https://drive.google.com/file/d/${driveFileId}/preview`;
   const driveOpenUrl = `https://drive.google.com/file/d/${driveFileId}/view`;
 
-  // Detecta o tipo de documento e ícone correspondente
+  // Tipos que rendem diretamente na plataforma (sem iframe do Drive)
+  const isMarkdown = kind === "markdown";
+  const isHtml = kind === "html";
+  const isText = kind === "text";
   const isPdf = kind === "pdf" || mime.includes("pdf");
+  const isRenderedLocally = isMarkdown || isHtml || isText || (isPdf && viewMode === "canvas");
+
   const isPresentation =
     mime.includes("presentation") ||
     mime.includes("powerpoint") ||
@@ -70,6 +89,27 @@ export default function DocumentViewer({
     title.endsWith(".doc");
 
   const getFormatBadge = () => {
+    if (isMarkdown) {
+      return {
+        label: "Markdown",
+        icon: Code,
+        color: "text-[#79c0ff] bg-[#79c0ff]/10 border-[#79c0ff]/30",
+      };
+    }
+    if (isHtml) {
+      return {
+        label: "HTML",
+        icon: FileType,
+        color: "text-[#f8a95a] bg-[#f8a95a]/10 border-[#f8a95a]/30",
+      };
+    }
+    if (isText) {
+      return {
+        label: "Texto",
+        icon: FileText,
+        color: "text-[#9a978f] bg-[#2a2a2e] border-[#3a3a3e]",
+      };
+    }
     if (isPresentation) {
       return {
         label: "Apresentação / Slides",
@@ -182,15 +222,18 @@ export default function DocumentViewer({
             <span className="hidden sm:inline">Baixar</span>
           </a>
 
-          <a
-            href={driveOpenUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-2 rounded-xl bg-[#1b1b1e] border border-[#2a2a2e] hover:border-[#d4af37] text-[#9a978f] hover:text-[#d4af37] transition text-xs"
-            title="Abrir no Google Drive em nova aba"
-          >
-            <ExternalLink className="w-4 h-4" />
-          </a>
+          {/* Botão de abrir no Drive só para tipos que usam iframe do Drive */}
+          {!isRenderedLocally && (
+            <a
+              href={driveOpenUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 rounded-xl bg-[#1b1b1e] border border-[#2a2a2e] hover:border-[#d4af37] text-[#9a978f] hover:text-[#d4af37] transition text-xs"
+              title="Abrir no Google Drive em nova aba"
+            >
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          )}
 
           <button
             onClick={() => setIsFullscreen(!isFullscreen)}
@@ -204,11 +247,36 @@ export default function DocumentViewer({
 
       {/* Área do Visualizador */}
       <div className="relative flex-1 bg-[#0b0b0c] flex items-center justify-center min-h-[550px] sm:min-h-[680px]">
-        {isPdf && viewMode === "canvas" ? (
+        {/* Markdown — renderizado diretamente */}
+        {isMarkdown && (
+          <div className="w-full h-full">
+            <MarkdownViewer materialId={materialId} title={title} />
+          </div>
+        )}
+
+        {/* HTML — iframe srcdoc com sanitização */}
+        {isHtml && (
+          <div className="w-full h-full">
+            <HtmlViewer materialId={materialId} title={title} />
+          </div>
+        )}
+
+        {/* Texto puro — <pre> simples */}
+        {isText && (
+          <div className="w-full h-full">
+            <TextViewer materialId={materialId} title={title} />
+          </div>
+        )}
+
+        {/* PDF — leitor próprio ou iframe Drive */}
+        {isPdf && viewMode === "canvas" && !isMarkdown && !isHtml && !isText && (
           <div className="w-full h-full">
             <PdfViewer materialId={materialId} title={title} />
           </div>
-        ) : (
+        )}
+
+        {/* Fallback: iframe Drive Preview (doc, planilha, ppt, outros) */}
+        {!isMarkdown && !isHtml && !isText && !(isPdf && viewMode === "canvas") && (
           <div className="w-full h-full relative">
             <iframe
               src={drivePreviewUrl}
