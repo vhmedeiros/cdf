@@ -1,10 +1,10 @@
-import { Client, QueryResult, QueryResultRow } from "pg";
+import { Client, Pool, QueryResult, QueryResultRow } from "pg";
 
-async function getNewClient(): Promise<Client> {
+function getConnectionConfig() {
   const useSsl = process.env.POSTGRES_SSL === "true";
   const ssl = useSsl ? { rejectUnauthorized: false } : false;
 
-  const config = process.env.DATABASE_URL
+  return process.env.DATABASE_URL
     ? { connectionString: process.env.DATABASE_URL, ssl }
     : {
         host: process.env.POSTGRES_HOST,
@@ -14,9 +14,25 @@ async function getNewClient(): Promise<Client> {
         password: process.env.POSTGRES_PASSWORD,
         ssl,
       };
+}
 
-  const client = new Client(config);
+// Reutiliza o mesmo Pool entre reloads (HMR) no Next.js em dev e mantém pool único em produção
+const globalForPg = globalThis as unknown as { __cdfPgPool?: Pool };
 
+function getPool(): Pool {
+  if (!globalForPg.__cdfPgPool) {
+    globalForPg.__cdfPgPool = new Pool({
+      ...getConnectionConfig(),
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+    });
+  }
+  return globalForPg.__cdfPgPool;
+}
+
+async function getNewClient(): Promise<Client> {
+  const client = new Client(getConnectionConfig());
   await client.connect();
   return client;
 }
@@ -25,16 +41,11 @@ async function query<T extends QueryResultRow = any>(
   queryText: string,
   values?: any[],
 ): Promise<QueryResult<T>> {
-  let client: Client | undefined;
   try {
-    client = await getNewClient();
-    const result = await client.query<T>(queryText, values);
-    return result;
+    return await getPool().query<T>(queryText, values);
   } catch (error) {
     console.error("Database query error:", error);
     throw error;
-  } finally {
-    await client?.end();
   }
 }
 
